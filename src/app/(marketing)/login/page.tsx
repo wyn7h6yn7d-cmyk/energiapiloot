@@ -1,13 +1,17 @@
-"use client";
-
 import Link from "next/link";
-import { useState } from "react";
-
+import { loginAction } from "@/app/(marketing)/login/actions";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { LinkButton } from "@/components/ui/link-button";
 
-export default function LoginPage() {
-  const [email, setEmail] = useState("");
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; next?: string }>;
+}) {
+  const sp = await searchParams;
+  const next = sp.next ?? "/dashboard";
+  const error = sp.error;
 
   return (
     <div className="min-h-screen px-6 py-16">
@@ -19,27 +23,38 @@ export default function LoginPage() {
 
         <h1 className="mt-6 text-2xl font-semibold tracking-tight">Logi sisse</h1>
         <p className="mt-2 text-sm text-foreground/65">
-          Autentimise ühendame järgmisena Supabase’iga. Praegu on see UI ja routing’u vundament.
+          Sisene oma kontoga ja jätka töölauda.
         </p>
 
-        <div className="mt-8 rounded-2xl border border-border/60 bg-card/40 p-6 backdrop-blur-md">
+        <form action={loginAction} className="mt-8 ep-card p-6">
+          <input type="hidden" name="next" value={next} />
           <label className="block text-xs font-medium text-foreground/70">E-post</label>
-          <input
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@company.com"
-            className="mt-2 w-full rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
-          />
+          <div className="mt-2">
+            <Input name="email" type="email" placeholder="you@company.com" required />
+          </div>
+
+          <label className="mt-4 block text-xs font-medium text-foreground/70">Parool</label>
+          <div className="mt-2">
+            <Input name="password" type="password" required />
+          </div>
+
+          {error ? <p className="mt-3 text-sm text-destructive">{error}</p> : null}
 
           <div className="mt-6 flex flex-col gap-3">
-            <Button size="lg" disabled>
+            <Button size="lg" type="submit">
               Jätka
             </Button>
             <LinkButton href="/register" size="lg" variant="outline">
               Loo konto
             </LinkButton>
+            <Link
+              href={`/forgot-password${next ? `?next=${encodeURIComponent(next)}` : ""}`}
+              className="text-sm text-foreground/70 underline underline-offset-4"
+            >
+              Unustasid parooli?
+            </Link>
           </div>
-        </div>
+        </form>
 
         <p className="mt-6 text-xs text-foreground/55">
           Jätkates nõustud{" "}

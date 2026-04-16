@@ -1,13 +1,16 @@
-"use client";
-
 import Link from "next/link";
-import { useState } from "react";
-
+import { registerAction } from "@/app/(marketing)/register/actions";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { LinkButton } from "@/components/ui/link-button";
 
-export default function RegisterPage() {
-  const [email, setEmail] = useState("");
+export default async function RegisterPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const sp = await searchParams;
+  const error = sp.error;
 
   return (
     <div className="min-h-screen px-6 py-16">
@@ -22,24 +25,28 @@ export default function RegisterPage() {
           Alusta baasstsenaariumiga. Täpsemad simulaatorid saad hiljem paketiga juurde.
         </p>
 
-        <div className="mt-8 rounded-2xl border border-border/60 bg-card/40 p-6 backdrop-blur-md">
+        <form action={registerAction} className="mt-8 ep-card p-6">
           <label className="block text-xs font-medium text-foreground/70">E-post</label>
-          <input
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@company.com"
-            className="mt-2 w-full rounded-xl border border-border/60 bg-background/40 px-3 py-2 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/30"
-          />
+          <div className="mt-2">
+            <Input name="email" type="email" placeholder="you@company.com" required />
+          </div>
+
+          <label className="mt-4 block text-xs font-medium text-foreground/70">Parool</label>
+          <div className="mt-2">
+            <Input name="password" type="password" required minLength={8} />
+          </div>
+
+          {error ? <p className="mt-3 text-sm text-destructive">{error}</p> : null}
 
           <div className="mt-6 flex flex-col gap-3">
-            <Button size="lg" disabled>
+            <Button size="lg" type="submit">
               Loo konto
             </Button>
             <LinkButton href="/login" size="lg" variant="outline">
               Mul on juba konto
             </LinkButton>
           </div>
-        </div>
+        </form>
 
         <p className="mt-6 text-xs text-foreground/55">
           Jätkates nõustud{" "}
