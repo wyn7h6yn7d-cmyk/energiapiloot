@@ -148,6 +148,8 @@ export function MarketPriceBoard({ area }: { area: "EE" | "LV" | "LT" | "FI" }) 
     return {
       current,
       currentEurPerMwh: current?.eurPerMwh ?? null,
+      currentHourLabel:
+        new Date(nowIso).toLocaleTimeString("et-EE", { hour: "2-digit", minute: "2-digit" }) ?? null,
       today,
       tomorrow,
       tomorrowAvailable: tomorrow.length >= 12,
@@ -279,6 +281,14 @@ export function MarketPriceBoard({ area }: { area: "EE" | "LV" | "LT" | "FI" }) 
                       <stop offset="100%" stopColor="oklch(0.83 0.14 205 / 6%)" />
                     </linearGradient>
                   </defs>
+                  {computed.currentHourLabel ? (
+                    <ReferenceLine
+                      x={computed.currentHourLabel}
+                      stroke="oklch(1 0 0 / 22%)"
+                      strokeDasharray="6 6"
+                      strokeWidth={1}
+                    />
+                  ) : null}
                   {typeof computed.currentEurPerMwh === "number" ? (
                     <ReferenceLine
                       y={computed.currentEurPerMwh}
