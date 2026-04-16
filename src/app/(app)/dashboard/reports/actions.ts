@@ -69,7 +69,7 @@ export async function generateReportAction(input: {
 
   const ent = await getMyEntitlements();
   if (!ent.reports.allowedTypes.includes(input.report_type)) {
-    throw new Error("Sinu pakett ei sisalda seda raportit.");
+    throw new Error("See aruanne ei ole selles keskkonnas aktiveeritud.");
   }
 
   const { profile } = await getMyProfile();

@@ -29,9 +29,6 @@ export function ProductSiteNav({ className }: ProductSiteNavProps) {
         </div>
 
         <nav className="pointer-events-auto flex flex-wrap items-center justify-end gap-1 sm:gap-2">
-          <LinkButton href="/#problem" variant="ghost" className="hidden md:inline-flex text-xs md:text-sm">
-            Teekond
-          </LinkButton>
           <LinkButton href="/simulatsioonid" variant="ghost" className="hidden sm:inline-flex text-xs md:text-sm">
             Simulatsioonid
           </LinkButton>
@@ -41,15 +38,18 @@ export function ProductSiteNav({ className }: ProductSiteNavProps) {
           <LinkButton href="/tarbimine" variant="ghost" className="hidden lg:inline-flex text-xs md:text-sm">
             Tarbimine
           </LinkButton>
-          <LinkButton href="/pricing#avamine" variant="ghost" className="hidden lg:inline-flex text-xs md:text-sm">
-            Premium
+          <LinkButton href="/borsihind" variant="ghost" className="hidden xl:inline-flex text-xs md:text-sm">
+            Börsihind
+          </LinkButton>
+          <LinkButton href="/pricing" variant="ghost" className="hidden lg:inline-flex text-xs md:text-sm">
+            Info
           </LinkButton>
           <LinkButton
             href="/simulatsioonid"
             variant="gradient"
             className="rounded-[min(var(--radius-md),12px)] px-3.5 text-xs font-semibold shadow-[0_0_36px_-8px_oklch(0.83_0.14_205_/_0.68)] sm:px-4 sm:text-sm"
           >
-            Alusta tasuta
+            Alusta testimist
           </LinkButton>
         </nav>
       </div>

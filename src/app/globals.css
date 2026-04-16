@@ -162,6 +162,17 @@
   --glow-soft: 0 0 0 1px oklch(0 0 0 / 6%), 0 14px 70px -38px oklch(0 0 0 / 24%);
 }
 
+/* Improve anchor + sticky header interactions across the site */
+html {
+  scroll-padding-top: 7rem;
+}
+
+@media (min-width: 768px) {
+  html {
+    scroll-padding-top: 8rem;
+  }
+}
+
 .dark {
   /* Brand baseline — deeper “cinema black” with cool bias */
   --background: oklch(0.095 0.018 255);

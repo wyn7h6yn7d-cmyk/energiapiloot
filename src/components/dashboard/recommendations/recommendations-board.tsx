@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
-import { PaywallCard } from "@/components/billing/paywall-card";
 import { getMyEntitlementsAction } from "@/app/(app)/billing/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -61,13 +60,7 @@ export function RecommendationsBoard({ decision }: { decision: DecisionEngineOut
 
   return (
     <div className="grid gap-6">
-      {ent && !ent.advancedRecommendations ? (
-        <PaywallCard
-          title="Investeeringute detailsoovitused on lukus"
-          description="Tasuta paketis kuvame põhisoovitusi: leping, käitumine ja andmete jälgimine. Plus ja Pro paketiga avanevad ka päikese, aku ja kütte prioriteedid."
-          requiredPlan="plus"
-        />
-      ) : null}
+      {/* Full-access test mode: no plan gating UI. */}
 
       <div className="grid gap-4 md:grid-cols-12">
         <Panel className="md:col-span-7">

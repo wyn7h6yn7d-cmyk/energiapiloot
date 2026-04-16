@@ -18,8 +18,8 @@ export default function PublicConsumptionLabPage() {
           Muster, kulud ja paindlikkus — ilma kontota.
         </h1>
         <p className="mt-4 max-w-3xl text-pretty text-base leading-relaxed text-foreground/70">
-          Seadista profiil ja näe kohe, kuidas tipud ja baas-koormus arvet kujundavad. Täisvaade (draiverid, lipud,
-          PDF) avaneb ühe ostuga.
+          Seadista profiil ja näe kohe, kuidas tipud ja baas-koormus arvet kujundavad. Kõik kihid on praegu testimiseks
+          avatud.
         </p>
       </div>
 

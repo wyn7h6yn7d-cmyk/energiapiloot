@@ -45,10 +45,10 @@ export function PaywallCard({
           </div>
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <Link href="/pricing">
-              <Button variant="gradient">Vaata pakette</Button>
+              <Button variant="gradient">Toote info</Button>
             </Link>
             <Link href="/pricing">
-              <Button variant="outline">Uuenda</Button>
+              <Button variant="outline">Ava lehed</Button>
             </Link>
           </div>
         </div>

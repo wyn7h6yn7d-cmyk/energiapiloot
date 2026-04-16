@@ -86,10 +86,10 @@ export function SettingsClient({
       <div className="flex flex-col items-start justify-between gap-4 lg:flex-row">
         <div>
           <p className="text-xs font-medium tracking-wide text-foreground/60">Seaded</p>
-          <h1 className="mt-3 text-balance text-3xl font-semibold tracking-tight">Konto ja eelistused</h1>
+          <h1 className="mt-3 text-balance text-3xl font-semibold tracking-tight">Profiil ja eelistused</h1>
           <p className="mt-3 max-w-3xl text-pretty text-base leading-relaxed text-foreground/70">
-            Halda profiili, objekte, varasid, lepinguid, teavitusi ja arveldust. Kõik on seotud sinu objektiga, et
-            arvutused ja raportid oleksid auditeeritavad.
+            Halda profiili, objekte, varasid, lepinguid ja teavitusi. Kõik seotakse sinu objektiga, et arvutused ja
+            aruanded oleksid järjepidevad.
           </p>
         </div>
         {toast ? (
@@ -116,13 +116,13 @@ export function SettingsClient({
               <PanelHeader>
                 <div>
                   <PanelTitle>Profiil</PanelTitle>
-                  <PanelDescription>Põhiandmed ja konto tüüp.</PanelDescription>
+                  <PanelDescription>Põhiandmed ja kasutusviis.</PanelDescription>
                 </div>
                 <Badge variant="neutral">{profile?.user_type === "business" ? "Äri" : "Kodu"}</Badge>
               </PanelHeader>
               <div className="px-6 pb-6">
                 <div className="grid gap-4">
-                  <Field label="E-post" hint="Sisselogimise identiteet.">
+                  <Field label="E-post" hint="Kontakt ja töölauda siduv identiteet.">
                     <Input value={userEmail ?? ""} disabled />
                   </Field>
                   <Field label="Nimi" hint="Kuidas sind töölaudas nimetame.">
@@ -432,16 +432,16 @@ export function SettingsClient({
             <Panel>
               <PanelHeader>
                 <PanelTitle>Arveldus</PanelTitle>
-                <PanelDescription>Stripe sünk ja arveldusportaal lisanduvad.</PanelDescription>
+                <PanelDescription>Test-buildis on arveldus välja lülitatud.</PanelDescription>
               </PanelHeader>
               <div className="px-6 pb-6">
                 <p className="text-sm text-foreground/70">
-                  Hetkel on paywall ja paketid olemas, kuid checkout/portaal on placeholder. Kui Stripe ühendame,
-                  ilmub siia arveldusportaal ja arved.
+                  Selles versioonis saad kogu funktsionaalsust vabalt proovida. Kui lisame hiljem arveldusvoo, ilmuvad
+                  siia tellimuse staatus, arved ja haldus.
                 </p>
                 <div className="mt-4">
                   <Button variant="outline" onClick={() => (window.location.href = "/pricing")}>
-                    Vaata pakette
+                    Toote info
                   </Button>
                 </div>
               </div>

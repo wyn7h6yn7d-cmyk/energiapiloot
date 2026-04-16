@@ -5,8 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Panel, PanelDescription, PanelHeader, PanelTitle } from "@/components/ui/panel";
 import type { ReportType } from "@/lib/reports/types";
-import { getMyEntitlements } from "@/lib/billing/server";
-import { PaywallCard } from "@/components/billing/paywall-card";
+import { FULL_ACCESS_TEST_MODE } from "@/lib/feature-flags";
 
 const REPORT_TEMPLATES: { type: ReportType; title: string; description: string }[] = [
   {
@@ -40,7 +39,6 @@ function statusLabel(s: string) {
 
 export default async function ReportsPage() {
   const reports = await listReportsAction();
-  const ent = await getMyEntitlements();
 
   return (
     <div className="grid gap-6">
@@ -63,9 +61,7 @@ export default async function ReportsPage() {
                 <PanelTitle>{t.title}</PanelTitle>
                 <PanelDescription>{t.description}</PanelDescription>
               </div>
-              <Badge variant={ent.reports.allowedTypes.includes(t.type) ? "green" : "neutral"}>
-                {ent.reports.allowedTypes.includes(t.type) ? "Saadaval" : "Lukus"}
-              </Badge>
+              <Badge variant="green">{FULL_ACCESS_TEST_MODE ? "Test-build: avatud" : "Saadaval"}</Badge>
             </PanelHeader>
             <div className="px-6 pb-6">
               <form
@@ -74,7 +70,7 @@ export default async function ReportsPage() {
                   await generateReportAction({ report_type: t.type });
                 }}
               >
-                <Button variant="gradient" type="submit" disabled={!ent.reports.allowedTypes.includes(t.type)}>
+                <Button variant="gradient" type="submit">
                   Loo aruanne
                 </Button>
               </form>
@@ -85,14 +81,6 @@ export default async function ReportsPage() {
           </Panel>
         ))}
       </div>
-
-      {!ent.reports.allowedTypes.includes("contract_risk_summary") ? (
-        <PaywallCard
-          title="Aruanded sõltuvad paketist"
-          description="Tasuta paketiga saad koostada kuu energia kokkuvõtte. Plus ja Pro paketiga lisanduvad lepingu riski ülevaade, säästu võimaluste kokkuvõte ja investeeringu aruanne."
-          requiredPlan="plus"
-        />
-      ) : null}
 
       <Panel>
         <PanelHeader>

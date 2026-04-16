@@ -19,7 +19,9 @@ export function MarketingShell({ children }: PropsWithChildren) {
       <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 ep-grid-overlay opacity-80" />
       <ProductSiteNav />
 
-      <main className="relative mx-auto w-full max-w-6xl px-6 py-12 md:py-16">{children}</main>
+      <main className="relative mx-auto w-full max-w-6xl px-6 pb-[max(3rem,env(safe-area-inset-bottom,0px))] pt-[max(6rem,env(safe-area-inset-top,0px))] md:pb-16 md:pt-28">
+        {children}
+      </main>
 
       <CinematicFooter variant="compact" />
     </div>

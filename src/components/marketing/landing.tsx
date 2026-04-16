@@ -2,30 +2,23 @@
 
 import { LinkButton } from "@/components/ui/link-button";
 import { MarketingNav } from "@/components/marketing/marketing-nav";
-import { ScrollSection } from "@/components/marketing/scroll-section";
 import { Badge } from "@/components/ui/badge";
-import { useDeviceProfile, useScrollStory } from "@/lib/motion/use-scroll-story";
-import { useScrollChoreography } from "@/lib/motion/use-scroll-choreography";
-import { type ReactNode, useRef } from "react";
+import { useDeviceProfile } from "@/lib/motion/use-scroll-story";
 import { MobileHeroFallback } from "@/components/marketing/mobile-hero-fallback";
 import { HeroSceneLazy } from "@/components/marketing/hero-scene-lazy";
 import { CinematicFooter } from "@/components/marketing/cinematic-footer";
 import { cn } from "@/lib/utils";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 export function Landing() {
-  const containerRef = useRef<HTMLDivElement | null>(null);
   const device = useDeviceProfile();
   const mode = device.mode;
-  const storySections = 6;
-  const { progress } = useScrollStory({ container: containerRef, sectionCount: storySections, mode });
-
-  useScrollChoreography({ container: containerRef, mode });
 
   return (
-    <div ref={containerRef} className="relative w-full">
+    <div className="relative w-full">
       {!device.preferMobileFallback ? (
         <HeroSceneLazy
-          progress={progress}
+          progress={0}
           mode={mode}
           heroRangeEnd={0.26}
           panels={!device.isMobile}
@@ -45,7 +38,7 @@ export function Landing() {
 
         <main>
           {/* HERO */}
-          <section className="relative min-h-[100svh] overflow-hidden pt-20 md:pt-28" data-section="hero">
+          <section className="relative overflow-hidden pt-8 md:pt-10" data-section="hero">
             <div
               aria-hidden
               className="pointer-events-none absolute inset-y-0 left-0 z-[5] hidden w-[min(92%,640px)] bg-gradient-to-r from-[oklch(0.06_0.02_255_/_0.94)] via-[oklch(0.07_0.02_255_/_0.55)] to-transparent md:block"
@@ -73,16 +66,16 @@ export function Landing() {
               </svg>
             </div>
             <div className="ep-container relative z-10">
-              <div className="grid items-start gap-12 md:grid-cols-12 md:gap-10">
+              <div className="grid items-start gap-10 md:grid-cols-12 md:gap-10">
                 <div className="md:col-span-7">
-                  <div className="relative max-w-2xl" data-hero-pin>
+                  <div className="relative max-w-2xl">
                     <div
                       aria-hidden
                       className="pointer-events-none absolute -inset-6 -z-10 rounded-[2rem] bg-[radial-gradient(900px_520px_at_18%_35%,oklch(0.83_0.14_205_/_12%),transparent_62%),radial-gradient(720px_480px_at_78%_65%,oklch(0.82_0.16_145_/_8%),transparent_58%)]"
                     />
                     <div className="flex flex-wrap items-center gap-2" data-reveal>
                       <Badge variant="cyan" className="border-[oklch(0.83_0.14_205_/_35%)] shadow-[0_0_20px_-6px_oklch(0.83_0.14_205_/_0.45)]">
-                        Avalik premium
+                        Avalik test
                       </Badge>
                       {mode === "lite" ? <Badge variant="warm">Kergem vaade</Badge> : null}
                     </div>
@@ -100,8 +93,7 @@ export function Landing() {
                       Elekter, tarbimine ja investeering ühes vaates — nii kodus kui väikses ettevõttes.
                     </p>
                     <p className="mt-5 max-w-2xl text-pretty text-base leading-relaxed text-foreground/68 md:text-[1.05rem]" data-reveal>
-                      Kui kerid, avaneb lugu: miks see keeruline tundub, kuidas me selle üheks jooneks tõmbame, ja kuidas
-                      saad kohe proovida. Kontot ei küsita. Täisvaate ja laaditava PDF-i avad ühe ostuga, kui oled valmis.
+                      Selge mudel aitab näha, mida “leping”, “tipp” ja “investeering” päriselt tähendavad. Kontot ei küsita.
                     </p>
 
                     <div className="pointer-events-auto mt-10 flex flex-col gap-3 sm:flex-row sm:items-center" data-reveal>
@@ -114,19 +106,19 @@ export function Landing() {
                         Käivita simulatsioon
                       </LinkButton>
                       <LinkButton
-                        href="/pricing#avamine"
+                        href="/leping"
                         size="lg"
                         variant="outline"
                         className="min-h-11 rounded-xl border-[oklch(1_0_0_/_16%)] bg-[oklch(1_0_0_/_5%)] px-6 text-[0.95rem] font-semibold tracking-tight"
                       >
-                        Ava täisvaade
+                        Ava lepingu labor
                       </LinkButton>
                     </div>
 
-                    <div className="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4" data-reveal>
-                      <Kpi label="1 · Ilma kontota" value="Kohe" hint="Tööriistad käivad brauseris." />
-                      <Kpi label="2 · Esmalt selgus" value="Ülevaade" hint="Näed suunda enne kui maksad." />
-                      <Kpi label="3 · Kui valmis" value="Üks kord" hint="Täisvaade ja PDF ühe ostuga." />
+                    <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4" data-reveal>
+                      <Kpi label="Ilma kontota" value="Kohe" hint="Brauseris, ilma hõõrdumiseta." />
+                      <Kpi label="Loogika" value="Jälgitav" hint="Eeldused ja arvutus ühes vaates." />
+                      <Kpi label="Fookus" value="Otsus" hint="Mõju enne allkirja ja ostu." />
                     </div>
                   </div>
                 </div>
@@ -134,11 +126,33 @@ export function Landing() {
                 <div className="md:col-span-5">
                   <div data-reveal>
                     {device.preferMobileFallback ? (
-                      <MobileHeroFallback
-                        label={device.reducedMotion ? "Staatiline vaade" : "Lihtsustatud vaade"}
-                      />
+                      <MobileHeroFallback label={device.reducedMotion ? "Staatiline vaade" : "Lihtsustatud vaade"} />
                     ) : (
-                      <HeroPreview progress={progress} reducedMotion={device.reducedMotion} />
+                      <div className="ep-holo-panel pointer-events-auto p-6 md:p-8">
+                        <p className="ep-eyebrow-caps text-foreground/50">Kiire start</p>
+                        <p className="ep-display mt-3 text-xl font-semibold tracking-tight md:text-2xl">
+                          Vali tööriist ja testi.
+                        </p>
+                        <p className="mt-3 text-sm leading-relaxed text-foreground/68">
+                          Kolm teed, sama loogika: simulatsioon, leping ja tarbimine. Kihid on testimiseks nähtavad.
+                        </p>
+                        <div className="mt-6 grid gap-3">
+                          <LinkButton href="/simulatsioonid" variant="gradient" className="w-full">
+                            Simulatsioonid
+                          </LinkButton>
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            <LinkButton href="/leping" variant="outline" className="w-full">
+                              Leping
+                            </LinkButton>
+                            <LinkButton href="/tarbimine" variant="outline" className="w-full">
+                              Tarbimine
+                            </LinkButton>
+                          </div>
+                          <LinkButton href="/pricing" variant="ghost" className="text-foreground/55 hover:text-foreground/78">
+                            Toote info →
+                          </LinkButton>
+                        </div>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -146,79 +160,126 @@ export function Landing() {
             </div>
           </section>
 
-          {/* STORY — single continuum */}
-          <div className="ep-story-continuum">
-            <ScrollSection
-              beat={1}
-              totalBeats={storySections}
-              id="problem"
-              accent="warm"
-              eyebrow="Miks see nii keeruline tundub"
-              title="Elekter jääb tihti pooleli — “umbes” ja “äkki”."
-              body="Hinnad liiguvad, lepinguid on raske kõrvuti panna ja investeering tundub õnnemänguna. Tiputunnid ja tegelik mõju jäävad sageli varju — kuni arve üllatab."
-              badge={{ label: "Otsus vajab selget jutustust, mitte killustatud tabeleid.", variant: "warm" }}
-              right={<ProblemPanel />}
-            />
+          {/* 2) WHY THIS MATTERS */}
+          <section className="ep-container pb-8 pt-12 md:pb-10 md:pt-16" aria-label="Miks see oluline on">
+            <div className="grid gap-8 md:grid-cols-12 md:items-start">
+              <div className="md:col-span-5">
+                <p className="ep-eyebrow-caps text-foreground/50">Miks see loeb</p>
+                <h2 className="ep-display mt-4 text-balance text-2xl font-semibold tracking-tight text-foreground/95 md:text-3xl">
+                  Energiaotsus on tavaliselt udune — kuni arve teeb selle valusaks.
+                </h2>
+              </div>
+              <div className="md:col-span-7">
+                <div className="ep-cinema-card p-6 md:p-7">
+                  <p className="text-sm leading-relaxed text-foreground/72">
+                    Energiapiloot tõmbab lepingu, tarbimise ja investeeringu üheks loogikaks. Sa näed mõju enne kui
+                    kirjutad alla — ja saad otsust hiljem sama keele ja eeldustega uuesti kontrollida.
+                  </p>
+                  <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                    <MiniPoint t="Vähem müra" s="Fookus kõige olulisemale." />
+                    <MiniPoint t="Selged eeldused" s="Tead, mis on “sees”." />
+                    <MiniPoint t="Võrdlus ühes mudelis" s="Õunad õuntega." />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
 
-            <ScrollSection
-              beat={2}
-              totalBeats={storySections}
-              id="solution"
-              accent="cyan"
-              eyebrow="Kuidas me aitame"
-              title="Üks loogika kogu pildi jaoks."
-              body="Leping, tarbimine ja investeering ei ela eraldi kaustades — need kohtuvad samas mudelis. Näed mõju enne kui kirjutad alla; põhjendus jääb sulle."
-              badge={{ label: "Eeldused lauale · arusaadav joon", variant: "neutral" }}
-              right={<SolutionPanel />}
-            />
+          {/* 3) CORE TOOLS PREVIEW */}
+          <section className="ep-container pb-10 pt-4 md:pb-14" aria-label="Põhitööriistad">
+            <div className="flex items-end justify-between gap-6">
+              <div>
+                <p className="ep-eyebrow-caps text-foreground/50">Tööriistad</p>
+                <h2 className="ep-display mt-4 text-balance text-2xl font-semibold tracking-tight text-foreground/95 md:text-3xl">
+                  Alusta sealt, mis täna põletab.
+                </h2>
+              </div>
+            </div>
+            <div className="mt-7 grid gap-4 md:grid-cols-3">
+              <ToolCard
+                title="Simulatsioonid"
+                body="Rahavoog, tundlikkus ja eeldused — et investeering ei oleks õnnemäng."
+                href="/simulatsioonid"
+              />
+              <ToolCard
+                title="Lepingu labor"
+                body="Börs, fikseeritud ja hübriid kõrvuti sama tarbimisprofiiliga."
+                href="/leping"
+              />
+              <ToolCard
+                title="Tarbimise labor"
+                body="Muster, tipud ja baas-koormus — kiiresti arusaadavaks."
+                href="/tarbimine"
+              />
+            </div>
+          </section>
 
-            <ScrollSection
-              beat={3}
-              totalBeats={storySections}
-              id="proovi"
-              accent="cyan"
-              eyebrow="Proovi kohe"
-              title="Kolm tööriista, üks ja sama selgus."
-              body="Simulatsioon, leping või tarbimine — kõik avanevad kohe. Näed kohe peamisi näitajaid ja suunda; graafikud, täishinnang ja eksport tulevad täisvaatega."
-              badge={{ label: "Registreerimist ei küsita", variant: "cyan" }}
-              right={<TryToolsPanel />}
-            />
+          {/* 4) LIVE / INTERACTIVE OVERVIEW */}
+          <section className="ep-container pb-10 pt-4 md:pb-14" aria-label="Interaktiivne ülevaade">
+            <div className="grid gap-8 md:grid-cols-12 md:items-start">
+              <div className="md:col-span-5">
+                <p className="ep-eyebrow-caps text-foreground/50">Interaktiivne ülevaade</p>
+                <h2 className="ep-display mt-4 text-balance text-2xl font-semibold tracking-tight text-foreground/95 md:text-3xl">
+                  Väike mudel. Päris reaktsioon.
+                </h2>
+                <p className="mt-4 text-sm leading-relaxed text-foreground/68">
+                  Muuda tarbimist või lepingutingimust ja vaata kohe, kuidas suund ja risk nihkuvad. Sama loogika elab
+                  tööriistades tervikuna — siin on see lihtsalt kompaktse preview’na.
+                </p>
+              </div>
+              <div className="md:col-span-7">
+                <LiveOverviewPanel />
+              </div>
+            </div>
+          </section>
 
-            <ScrollSection
-              beat={4}
-              totalBeats={storySections}
-              id="premium"
-              accent="warm"
-              eyebrow="Täisvaade"
-              title="Esmalt näed suunda — siis avad kogu pildi."
-              body="Me ei müü tühja lehte: osa jääb näha, ülejäänu kutsub avama. Täisvaade, interaktiivne kokkuvõte ja laaditav PDF ühe ostuga, kui oled veendunud."
-              badge={{ label: "Ühekordne ost · tellimust ei sunni", variant: "warm" }}
-              right={<PremiumJourneyPanel />}
-            />
+          {/* 5) TRUST / RELIABILITY */}
+          <section className="ep-container pb-10 pt-4 md:pb-14" aria-label="Usaldus ja töökindlus">
+            <div className="grid gap-4 md:grid-cols-12 md:items-start">
+              <div className="md:col-span-5">
+                <p className="ep-eyebrow-caps text-foreground/50">Usaldus</p>
+                <h2 className="ep-display mt-4 text-balance text-2xl font-semibold tracking-tight text-foreground/95 md:text-3xl">
+                  Tööriist, mitte loosung.
+                </h2>
+              </div>
+              <div className="md:col-span-7">
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <TrustCard title="Jälgitav loogika" body="Eeldused ja põhjendus on nähtavad, mitte peidus." />
+                  <TrustCard title="Serveri adapterid" body="Välised teenused on kapseldatud (timeout + retry)." />
+                  <TrustCard title="Puhas UX" body="Üks voog: sisendid → mõju → otsus." />
+                </div>
+              </div>
+            </div>
+          </section>
 
-            <ScrollSection
-              beat={5}
-              totalBeats={storySections}
-              id="trust"
-              accent="neutral"
-              eyebrow="Usaldus"
-              title="Selge arhitektuur, mitte tühi lubadus."
-              body="Loogika on lahti seletatav, kogume ainult seda, mis otsust toetab, ja makse käib turvaliselt. Täisvaade tähendab sügavamat väljundit — mitte musta kasti."
-              right={<TrustPanel />}
-            />
-
-            <ScrollSection
-              beat={6}
-              totalBeats={storySections}
-              id="cta"
-              accent="green"
-              eyebrow="Järgmine samm"
-              title="Alusta täna — kaks minutit piisab."
-              body="Käivita simulatsioon või ava lepingu labor. Näed kohe, kas suund tundub õige. Täisvaate avad siis, kui oled valmis."
-              badge={{ label: "Tasuta katse · täisvaade sinu valik", variant: "green" }}
-              right={<FinalCtaPanel />}
-            />
-          </div>
+          {/* 6) FINAL CTA */}
+          <section className="ep-container pb-8 pt-4 md:pb-12" aria-label="Järgmine samm">
+            <div className="ep-cinema-panel relative overflow-hidden rounded-[1.75rem] p-8 md:p-10">
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-[oklch(0.83_0.14_205_/_0.16)] blur-3xl"
+              />
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-[oklch(0.83_0.14_205_/_0.45)] to-transparent"
+              />
+              <p className="ep-eyebrow-caps text-foreground/50">Järgmine samm</p>
+              <h2 className="ep-display mt-4 text-balance text-2xl font-semibold tracking-tight text-foreground/95 md:text-3xl">
+                Tee esimene test nüüd.
+              </h2>
+              <p className="mt-4 max-w-2xl text-pretty text-sm leading-relaxed text-foreground/68">
+                Alusta simulatsioonist või ava üks labor. Saad kohe signaali, kas suund ja eeldused tunduvad õiged.
+              </p>
+              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+                <LinkButton href="/simulatsioonid" size="lg" variant="gradient" className="min-h-11 rounded-xl px-6 font-semibold">
+                  Käivita simulatsioon
+                </LinkButton>
+                <LinkButton href="/tarbimine" size="lg" variant="outline" className="min-h-11 rounded-xl px-6 font-semibold">
+                  Ava tarbimise labor
+                </LinkButton>
+              </div>
+            </div>
+          </section>
 
           <CinematicFooter />
         </main>
@@ -245,344 +306,502 @@ function Kpi({
   );
 }
 
-function smoothstepHero(x: number) {
-  const t = Math.max(0, Math.min(1, x));
-  return t * t * (3 - 2 * t);
+function MiniPoint({ t, s }: { t: string; s: string }) {
+  return (
+    <div className="rounded-xl border border-[oklch(1_0_0_/_8%)] bg-[oklch(0_0_0_/_18%)] p-4 shadow-[inset_0_1px_0_0_oklch(1_0_0_/_5%)]">
+      <p className="text-xs font-semibold tracking-tight text-foreground/88">{t}</p>
+      <p className="mt-2 text-[11px] leading-relaxed text-foreground/58">{s}</p>
+    </div>
+  );
 }
 
-function HeroPreview({ progress, reducedMotion }: { progress: number; reducedMotion: boolean }) {
-  const heroT = Math.min(1, Math.max(0, progress / 0.26));
-  const clarity = smoothstepHero(heroT);
-  const chaos = 1 - clarity;
-
+function ToolCard({ title, body, href }: { title: string; body: string; href: string }) {
   return (
-    <div className="ep-holo-panel pointer-events-auto p-6 md:p-8">
-      <div
-        className="relative z-10"
-        style={
-          reducedMotion
-            ? undefined
-            : {
-                transform: `perspective(1200px) rotateY(${-4 + clarity * 3}deg) rotateX(${2 - clarity * 2.5}deg)`,
-                transition: "transform 0.35s ease-out",
-              }
-        }
-      >
-        <div className="flex items-start justify-between gap-4">
-          <div className="min-w-0">
-            <p className="ep-eyebrow-caps text-foreground/50">Elav ülevaade</p>
-            <p className="ep-display mt-3 text-xl font-semibold tracking-tight md:text-2xl">Signaal tõmbub fookusesse</p>
-            <p className="mt-3 text-sm leading-relaxed text-foreground/68">
-              Müra taandub — struktuur tuleb esile. Näed, kuhu tähelepanu kõigepealt panna, enne kui süvened täisvaatesse.
-            </p>
-          </div>
-          <div className="relative hidden shrink-0 sm:block">
-            <div
-              className="rounded-full border border-[oklch(0.83_0.14_205_/_32%)] bg-[oklch(0.83_0.14_205_/_10%)] px-3 py-1.5 text-[10px] font-medium uppercase tracking-widest text-[oklch(0.88_0.08_205)] shadow-[0_0_24px_-6px_oklch(0.83_0.14_205_/_0.5)]"
-              style={{ opacity: 0.55 + clarity * 0.45 }}
-            >
-              Uuenev mudel
-            </div>
-            <svg
-              viewBox="0 0 80 96"
-              className="pointer-events-none absolute -right-1 top-full mt-2 h-20 w-16"
-              fill="none"
-              aria-hidden
-              style={{ opacity: 0.12 + chaos * 0.58 }}
-            >
-              <path
-                d="M8 4 L22 38 L18 40 L34 88 L40 86 L52 44 L48 42 L62 8"
-                stroke="oklch(0.88 0.12 200)"
-                strokeWidth="1.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className={reducedMotion ? "" : "animate-[ep-flicker-soft_2.8s_ease-in-out_infinite]"}
-              />
-            </svg>
-          </div>
-        </div>
-
-        <div className="mt-5">
-          <div className="flex items-center justify-between gap-3 text-[10px] font-medium uppercase tracking-wider text-foreground/45">
-            <span>Selgus</span>
-            <span className="font-mono text-[oklch(0.82_0.14_205)]">{Math.round(clarity * 100)}%</span>
-          </div>
-          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[oklch(0_0_0_/_35%)] shadow-[inset_0_0_0_1px_oklch(1_0_0_/_6%)]">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-[oklch(0.83_0.14_205)] via-[oklch(0.82_0.16_145)] to-[oklch(0.83_0.14_205)]"
-              style={{
-                width: `${Math.round(clarity * 100)}%`,
-                boxShadow: "0 0 18px oklch(0.83 0.14 205 / 0.45)",
-                transition: "width 0.25s ease-out",
-              }}
-            />
-          </div>
-        </div>
-
-        <div className="mt-7 grid gap-3">
-          <MiniStat label="Kuu tarbimine" value="420 kWh" dim={chaos > 0.45} />
-          <MiniStat label="Säästu vahemik" value="18–43 € / kuu" dim={chaos > 0.25} />
-          <MiniStat label="Soovitus" value="Lepingu + tipu vaade" dim={false} />
-        </div>
-
-        <div className="mt-8 flex flex-col gap-3 border-t border-[oklch(1_0_0_/_10%)] pt-6 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs leading-relaxed text-foreground/50">
-            Kerimine toob stuudio fookusesse: kaos kahaneb, joon tugevneb.
-          </p>
-          <LinkButton
-            href="/simulatsioonid"
-            size="sm"
-            variant="secondary"
-            className="shrink-0 border-[oklch(1_0_0_/_14%)] bg-[oklch(1_0_0_/_4%)]"
-          >
-            Proovi kohe
-          </LinkButton>
-        </div>
+    <div className="ep-cinema-card p-6">
+      <p className="ep-display text-base font-semibold tracking-tight text-foreground/92">{title}</p>
+      <p className="mt-2 text-sm leading-relaxed text-foreground/62">{body}</p>
+      <div className="mt-5">
+        <LinkButton href={href} variant="outline" size="sm">
+          Ava
+        </LinkButton>
       </div>
     </div>
   );
 }
 
-function MiniStat({ label, value, dim }: { label: string; value: string; dim?: boolean }) {
+function TrustCard({ title, body }: { title: string; body: string }) {
   return (
-    <div
-      className={cn(
-        "rounded-xl border px-4 py-3 shadow-[inset_0_1px_0_0_oklch(1_0_0_/_6%)] transition-[border-color,background-color,opacity] duration-300",
-        dim
-          ? "border-[oklch(0.83_0.14_205_/_12%)] bg-[oklch(0_0_0_/_18%)] opacity-75"
-          : "border-[oklch(0.83_0.14_205_/_22%)] bg-[oklch(0_0_0_/_28%)]"
-      )}
-    >
-      <p className="text-[11px] font-medium uppercase tracking-wider text-foreground/50">{label}</p>
-      <p className="mt-1.5 text-sm font-medium text-foreground/88">{value}</p>
+    <div className="ep-cinema-card p-6">
+      <p className="text-sm font-semibold tracking-tight text-foreground/90">{title}</p>
+      <p className="mt-2 text-sm leading-relaxed text-foreground/65">{body}</p>
     </div>
   );
 }
 
-function PanelChrome({
-  kicker,
-  title,
-  subtitle,
-  right,
-  children,
+function fmtEur(n: number) {
+  return `${Math.round(n).toLocaleString("et-EE")} €`;
+}
+
+function clamp(n: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, n));
+}
+
+function fmtPct(n: number) {
+  return `${Math.round(n)}%`;
+}
+
+function fmtCentsPerKwh(n: number) {
+  return `${n.toFixed(1)} s/kWh`;
+}
+
+function Sparkline({
+  values,
   className,
 }: {
-  kicker: string;
-  title: string;
-  subtitle?: string;
-  right?: ReactNode;
-  children: ReactNode;
+  values: number[];
   className?: string;
 }) {
-  return (
-    <div className={cn("ep-cinema-panel ep-story-panel-frame rounded-[1.75rem] p-6 md:p-7", className)}>
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="ep-eyebrow-caps text-foreground/48">{kicker}</p>
-          <p className="ep-display mt-3 text-xl font-semibold tracking-tight">{title}</p>
-          {subtitle ? (
-            <p className="mt-3 text-sm leading-relaxed text-foreground/68">{subtitle}</p>
-          ) : null}
-        </div>
-        {right ? <div className="shrink-0">{right}</div> : null}
-      </div>
-      <div className="mt-7">{children}</div>
-    </div>
-  );
-}
+  const w = 240;
+  const h = 72;
+  const pad = 6;
+  const v = values.length ? values : [0, 1, 0.6, 1.2, 0.8];
+  const min = Math.min(...v);
+  const max = Math.max(...v);
+  const span = Math.max(1e-6, max - min);
 
-function Sparkline({ values }: { values: number[] }) {
-  const max = Math.max(...values, 1);
-  return (
-    <div className="flex h-12 items-end gap-[3px] rounded-lg border border-[oklch(1_0_0_/_6%)] bg-[oklch(0_0_0_/_18%)] px-2 pb-2 pt-3">
-      {values.map((v, idx) => (
-        <div
-          key={`${idx}-${v}`}
-          className="ep-spark-bar w-1.5 min-h-[6px] rounded-full"
-          style={{ height: `${Math.max(14, (v / max) * 100)}%` }}
-        />
-      ))}
-    </div>
-  );
-}
+  const pts = v.map((val, i) => {
+    const x = pad + (i * (w - pad * 2)) / Math.max(1, v.length - 1);
+    const y = pad + ((max - val) / span) * (h - pad * 2);
+    return { x, y };
+  });
 
-function ProblemPanel() {
+  const d = pts
+    .map((p, i) => `${i === 0 ? "M" : "L"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`)
+    .join(" ");
+
+  const fillD = `${d} L ${w - pad} ${h - pad} L ${pad} ${h - pad} Z`;
+
   return (
-    <PanelChrome
-      className="pointer-events-auto"
-      kicker="Ülevaade"
-      title="Miks see pea ringi käib?"
-      subtitle="Hea otsus vajab seoseid — mitte killustatud Excelit, mis homme juba vale on."
-      right={<Badge variant="warm">Reaalsus</Badge>}
+    <svg
+      viewBox={`0 0 ${w} ${h}`}
+      width={w}
+      height={h}
+      className={cn("h-[72px] w-full", className)}
+      aria-hidden
     >
-      <div className="grid gap-4 md:grid-cols-5">
-        <div className="md:col-span-2">
-          <Sparkline values={[12, 18, 16, 22, 31, 27, 35, 29, 33, 41, 38, 44]} />
-          <p className="mt-3 text-xs text-foreground/55">
-            Hinnad ja tiputunnid liiguvad kiiremini kui mälu mahutab.
+      <defs>
+        <linearGradient id="epSparkFill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="oklch(0.83 0.14 205 / 26%)" />
+          <stop offset="100%" stopColor="oklch(0.83 0.14 205 / 0%)" />
+        </linearGradient>
+        <linearGradient id="epSparkLine" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="oklch(0.83 0.14 205 / 92%)" />
+          <stop offset="70%" stopColor="oklch(0.82 0.16 145 / 72%)" />
+          <stop offset="100%" stopColor="oklch(0.83 0.14 205 / 78%)" />
+        </linearGradient>
+      </defs>
+      <path d={fillD} fill="url(#epSparkFill)" />
+      <path d={d} fill="none" stroke="url(#epSparkLine)" strokeWidth="2.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function LiveOverviewPanel() {
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const [tab, setTab] = useState<"consumption" | "contract">("consumption");
+
+  const [priceEurPerMwh, setPriceEurPerMwh] = useState(120);
+  const [monthlyKwh, setMonthlyKwh] = useState(420);
+  const [shiftPct, setShiftPct] = useState(14);
+
+  const [fixedCentsPerKwh, setFixedCentsPerKwh] = useState(16.9);
+  const [retailerMarginCents, setRetailerMarginCents] = useState(1.2);
+
+  const [feed, setFeed] = useState<{
+    ok: boolean;
+    date?: string;
+    avgEurPerMwh?: number | null;
+    minEurPerMwh?: number | null;
+    maxEurPerMwh?: number | null;
+    points?: Array<{ ts: string; value: number }>;
+    sourceLabel: string;
+    updatedLabel: string;
+  }>({
+    ok: false,
+    sourceLabel: "Demo (simuleeritud)",
+    updatedLabel: "kohe",
+  });
+
+  const [demoTick, setDemoTick] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/integrations/day-ahead", { method: "GET" })
+      .then(async (res) => {
+        const data = (await res.json().catch(() => null)) as
+          | null
+          | {
+              ok?: boolean;
+              date?: string;
+              avgEurPerMwh?: number | null;
+              minEurPerMwh?: number | null;
+              maxEurPerMwh?: number | null;
+              points?: Array<{ ts: string; value: number }>;
+              source?: string;
+            };
+        if (cancelled) return;
+        if (!data || data.ok !== true) return;
+
+        const avg = typeof data.avgEurPerMwh === "number" ? data.avgEurPerMwh : null;
+        const min = typeof data.minEurPerMwh === "number" ? data.minEurPerMwh : null;
+        const max = typeof data.maxEurPerMwh === "number" ? data.maxEurPerMwh : null;
+        const points = Array.isArray(data.points) ? data.points.filter((p) => p && typeof p.value === "number") : [];
+
+        setFeed({
+          ok: true,
+          date: typeof data.date === "string" ? data.date : undefined,
+          avgEurPerMwh: avg,
+          minEurPerMwh: min,
+          maxEurPerMwh: max,
+          points,
+          sourceLabel: "Elering NPS (börsihind)",
+          updatedLabel: "täna",
+        });
+
+        if (typeof avg === "number" && Number.isFinite(avg)) {
+          setPriceEurPerMwh((p) => clamp(Math.round(avg / 5) * 5, 40, 280) || p);
+        }
+      })
+      .catch(() => {
+        /* demo fallback */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        const hit = entries.some((e) => e.isIntersecting);
+        if (!hit) return;
+        setDemoTick((t) => t + 1);
+      },
+      { threshold: 0.35 }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  const sparkValues = useMemo(() => {
+    if (feed.ok && feed.points && feed.points.length >= 12) {
+      // Normalize to keep sparkline stable and readable.
+      const slice = feed.points.slice(0, 24);
+      const vals = slice.map((p) => p.value);
+      const min = Math.min(...vals);
+      const max = Math.max(...vals);
+      const span = Math.max(1e-6, max - min);
+      return vals.map((v) => (v - min) / span);
+    }
+
+    const base = clamp(priceEurPerMwh, 40, 280);
+    const amp = clamp(22 + (base / 280) * 26, 18, 44);
+    const seed = (demoTick % 7) + 1;
+    return Array.from({ length: 24 }, (_, i) => {
+      const x = (i + seed) / 24;
+      const y = 0.5 + Math.sin(x * Math.PI * 2) * 0.22 + Math.sin(x * Math.PI * 6) * 0.08;
+      // tie volatility to price
+      const v = (y * amp + base * 0.02) / (amp + base * 0.02);
+      return clamp(v, 0.06, 0.98);
+    });
+  }, [demoTick, feed.ok, feed.points, priceEurPerMwh]);
+
+  const model = useMemo(() => {
+    const eurPerKwh = priceEurPerMwh / 1000;
+    const baseMonthly = monthlyKwh * eurPerKwh;
+    const shiftedKwh = (monthlyKwh * shiftPct) / 100;
+    const min = typeof feed.minEurPerMwh === "number" ? feed.minEurPerMwh : priceEurPerMwh * 0.72;
+    const max = typeof feed.maxEurPerMwh === "number" ? feed.maxEurPerMwh : priceEurPerMwh * 1.28;
+    const spread = Math.max(0, max - min);
+    // Heuristic: shifting moves energy from expensive to cheap hours.
+    const savedPerKwh = (spread / 1000) * 0.65;
+    const saved = clamp(shiftedKwh * savedPerKwh, 0, baseMonthly * 0.45);
+    const volatility = clamp(spread / Math.max(1, priceEurPerMwh), 0, 0.9);
+
+    const nextAction =
+      monthlyKwh >= 650 ? "Ava tarbimise labor (tipud + baas-koormus)" : "Kontrolli lepingut (fikseeritud vs börs)";
+
+    const insight =
+      volatility >= 0.22 && shiftPct < 10
+        ? "Hind kõigub — isegi väike ajastus võib anda reaalse võidu."
+        : shiftPct >= 20
+          ? "Hea: nihutad juba märgatava osa tarbimisest odavamasse aknasse."
+          : "Tüüpiline muster: sääst tekib siis, kui tippude osa väheneb.";
+
+    return {
+      eurPerKwh,
+      baseMonthly,
+      saved,
+      newMonthly: Math.max(0, baseMonthly - saved),
+      volatility,
+      insight,
+      nextAction,
+    };
+  }, [feed.maxEurPerMwh, feed.minEurPerMwh, monthlyKwh, priceEurPerMwh, shiftPct]);
+
+  const contractModel = useMemo(() => {
+    const spotCents = (priceEurPerMwh / 10) + retailerMarginCents; // €/MWh -> s/kWh
+    const delta = fixedCentsPerKwh - spotCents;
+    const verdict = delta <= 0 ? "Fikseeritud tundub hetkel odavam" : "Börs + marginaal tundub hetkel odavam";
+    const hint =
+      Math.abs(delta) < 0.8
+        ? "Vahe on väike — otsusta riskitaluvuse järgi ja vaata profiili tippe."
+        : delta <= 0
+          ? "Kui su fikseeritud hind on alla spot-keskmise, on see tugev kaitse volatiilsuse vastu."
+          : "Kui spot-keskmine on madal, tasub vaadata, kas tipud on ajastatavad või kas hübriid sobib.";
+
+    const nextBestHref = delta <= 0 ? "/leping" : "/tarbimine";
+    const nextBestLabel = delta <= 0 ? "Ava lepingu labor" : "Ava tarbimise labor";
+
+    return {
+      spotCents,
+      delta,
+      verdict,
+      hint,
+      nextBestHref,
+      nextBestLabel,
+    };
+  }, [fixedCentsPerKwh, priceEurPerMwh, retailerMarginCents]);
+
+  return (
+    <div ref={rootRef} className="ep-holo-panel p-6 md:p-8">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="ep-eyebrow-caps text-foreground/50">Elav ülevaade</p>
+            <Badge
+              variant="neutral"
+              className="border-[oklch(1_0_0_/_12%)] bg-[oklch(1_0_0_/_4%)] text-foreground/70"
+            >
+              {feed.sourceLabel} • {feed.updatedLabel}
+            </Badge>
+          </div>
+          <p className="ep-display mt-3 text-xl font-semibold tracking-tight md:text-2xl">
+            Sisend → mõju → järgmine samm
+          </p>
+          <p className="mt-3 text-sm leading-relaxed text-foreground/68">
+            Muuda tarbimist või lepingutingimust ja vaata kohe, kuhu suund liigub. See on sama loogika, mis tööriistades —
+            lihtsalt kompaktsemalt.
           </p>
         </div>
-        <div className="md:col-span-3 space-y-2 text-sm text-foreground/70">
-          <Bullet staggerReveal>Hinnariski tabad alles siis, kui on hilja</Bullet>
-          <Bullet staggerReveal>Lepinguid ei saa võrrelda nagu õunu</Bullet>
-          <Bullet staggerReveal>Investeeringu tasuvus jääb udusse</Bullet>
-          <Bullet staggerReveal>Tarbimise tipud jäävad märkamata</Bullet>
-        </div>
-      </div>
-    </PanelChrome>
-  );
-}
-
-function SolutionPanel() {
-  return (
-    <PanelChrome
-      className="pointer-events-auto"
-      kicker="Mudel"
-      title="Üks joon läbi lepingu, tarbimise ja investeeringu."
-      subtitle="Sama loogika, sama keel — otsus, mida saab teisel päeval uuesti seletada."
-      right={<Badge variant="cyan">Kontroll</Badge>}
-    >
-      <div className="space-y-3">
-        <MiniStat label="Leping" value="börs või fikseeritud — päris mõju, mitte loosung" />
-        <MiniStat label="Simulatsioon" value="enne ja pärast samade eeldustega" />
-        <MiniStat label="Soovitus" value="põhjus laual, mitte õhk" />
-      </div>
-    </PanelChrome>
-  );
-}
-
-function TryToolsPanel() {
-  return (
-    <PanelChrome
-      className="pointer-events-auto"
-      kicker="Tööriistad"
-      title="Alusta sealt, kust sul täna põletab."
-      subtitle="Kõik kolm annavad kohe suuna. Täisvaade lisab sügavuse, graafikud ja dokumendi, mida jagada."
-      right={<Badge variant="cyan">Kohe</Badge>}
-    >
-      <div className="grid gap-3">
-        <LinkButton href="/simulatsioonid" variant="gradient" className="w-full shadow-[0_0_28px_-8px_oklch(0.83_0.14_205_/_0.55)]">
-          Simulatsioonid
-        </LinkButton>
-        <div className="grid gap-3 sm:grid-cols-2">
-          <LinkButton href="/leping" variant="outline" className="w-full border-[oklch(1_0_0_/_14%)] bg-[oklch(1_0_0_/_4%)]">
-            Lepingu vaade
-          </LinkButton>
-          <LinkButton href="/tarbimine" variant="outline" className="w-full border-[oklch(1_0_0_/_14%)] bg-[oklch(1_0_0_/_4%)]">
-            Tarbimise vaade
-          </LinkButton>
-        </div>
-      </div>
-    </PanelChrome>
-  );
-}
-
-function PremiumJourneyPanel() {
-  return (
-    <PanelChrome
-      className="pointer-events-auto"
-      kicker="Täisvaade"
-      title="Esmalt näed joont — siis avad terve pildi."
-      subtitle="Osaliselt nähtav, ülejäänu kutsub avama. Ühe ostuga graafikud, täiskokkuvõte ja PDF, kui oled valmis."
-      right={<Badge variant="warm">Avamine</Badge>}
-    >
-      <div className="space-y-2 text-sm text-foreground/72">
-        <Bullet staggerReveal>Osaliselt jääb näha — me ei müü musta lehte</Bullet>
-        <Bullet staggerReveal>Kerge hägu, mitte tüli: täisvaade peab tunduma väärtuslik, mitte pealetükkiv</Bullet>
-        <Bullet staggerReveal>Üks ost või eraldi kihid — makse ühendame turvaliselt, kui oled valmis</Bullet>
-      </div>
-      <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-        <LinkButton
-          href="/pricing#avamine"
-          variant="gradient"
-          className="min-h-10 rounded-xl font-semibold sm:flex-1"
-        >
-          Vaata hindu ja avamine
-        </LinkButton>
-        <LinkButton href="/?unlock=demo" variant="outline" className="border-[oklch(1_0_0_/_14%)] bg-[oklch(1_0_0_/_4%)] sm:flex-1">
-          Proovi täisvaadet (demo)
-        </LinkButton>
-      </div>
-    </PanelChrome>
-  );
-}
-
-function TrustPanel() {
-  return (
-    <PanelChrome
-      className="pointer-events-auto"
-      kicker="Usaldus"
-      title="Ausus on siin struktuuris, mitte slaidil."
-      subtitle="Loogika on lahti räägitav, andmeid küsime ainult vajalikku, makse käib turvaliselt."
-      right={<Badge variant="warm">Põhimõtted</Badge>}
-    >
-      <div className="grid gap-3 sm:grid-cols-3">
-        {[
-          { t: "Loogika laual", s: "Eeldused ja arvutus on jälgitavad." },
-          { t: "Vähe, aga täpselt", s: "Kogume ainult seda, mis otsust kannab." },
-          { t: "Turvaline makse", s: "Tuntud maksena ja selged piirid." },
-        ].map((x) => (
-          <div
-            key={x.t}
-            data-reveal-stagger=""
-            className="rounded-xl border border-[oklch(1_0_0_/_8%)] bg-[oklch(0_0_0_/_20%)] px-4 py-4 shadow-[inset_0_1px_0_0_oklch(1_0_0_/_5%)]"
-          >
-            <p className="text-xs font-semibold tracking-tight text-foreground/85">{x.t}</p>
-            <p className="mt-2 text-[11px] leading-relaxed text-foreground/55">{x.s}</p>
+        <div className="w-full max-w-[20rem]">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-foreground/50">Börsihind (€/MWh)</p>
+            <p className="font-mono text-lg font-semibold text-[oklch(0.88_0.08_205)]">{priceEurPerMwh}</p>
           </div>
-        ))}
+          <div className="mt-2 rounded-2xl border border-[oklch(1_0_0_/_10%)] bg-[oklch(0_0_0_/_18%)] p-3 shadow-[inset_0_1px_0_0_oklch(1_0_0_/_6%)]">
+            <Sparkline values={sparkValues} />
+          </div>
+        </div>
       </div>
-      <p className="mt-6 text-sm leading-relaxed text-foreground/62">
-        Partnerlused ja mõõdikud kasvavad edasi; toode on mõeldud juba täna päris otsusteks, mitte ainult mänguks.
-      </p>
-    </PanelChrome>
+
+      <div className="mt-6 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setTab("consumption")}
+          className={cn(
+            "rounded-xl border px-3 py-2 text-xs font-semibold tracking-tight transition",
+            tab === "consumption"
+              ? "border-[oklch(0.83_0.14_205_/_40%)] bg-[oklch(0.83_0.14_205_/_10%)] text-foreground"
+              : "border-[oklch(1_0_0_/_12%)] bg-[oklch(1_0_0_/_4%)] text-foreground/70 hover:text-foreground"
+          )}
+        >
+          Tarbimine
+        </button>
+        <button
+          type="button"
+          onClick={() => setTab("contract")}
+          className={cn(
+            "rounded-xl border px-3 py-2 text-xs font-semibold tracking-tight transition",
+            tab === "contract"
+              ? "border-[oklch(0.82_0.16_145_/_38%)] bg-[oklch(0.82_0.16_145_/_10%)] text-foreground"
+              : "border-[oklch(1_0_0_/_12%)] bg-[oklch(1_0_0_/_4%)] text-foreground/70 hover:text-foreground"
+          )}
+        >
+          Leping
+        </button>
+      </div>
+
+      {tab === "consumption" ? (
+        <>
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            <StatChip label="Kuukulu (hinnang)" value={fmtEur(model.newMonthly)} hint={`~${fmtEur(model.baseMonthly)} enne`} />
+            <StatChip label="Säästu suund" value={model.saved > 1 ? `−${fmtEur(model.saved)}` : "Neutraalne"} hint={`${shiftPct}% ajastust`} />
+            <StatChip label="Hind (kWh)" value={`${model.eurPerKwh.toFixed(3)} €/kWh`} hint={`${monthlyKwh} kWh/kuu`} />
+          </div>
+
+          <div className="mt-7 grid gap-4">
+            <SliderRow
+              label="Börsihind (€/MWh)"
+              value={priceEurPerMwh}
+              min={40}
+              max={280}
+              step={5}
+              onChange={setPriceEurPerMwh}
+            />
+            <SliderRow
+              label="Kuu tarbimine (kWh)"
+              value={monthlyKwh}
+              min={120}
+              max={1400}
+              step={20}
+              onChange={setMonthlyKwh}
+            />
+            <SliderRow
+              label="Ajastatav osa (%)"
+              value={shiftPct}
+              min={0}
+              max={40}
+              step={1}
+              onChange={setShiftPct}
+            />
+          </div>
+
+          <div className="mt-7 grid gap-3 rounded-2xl border border-[oklch(1_0_0_/_10%)] bg-[oklch(0_0_0_/_18%)] p-5 shadow-[inset_0_1px_0_0_oklch(1_0_0_/_6%)]">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold tracking-tight text-foreground/88">Insight</p>
+                <p className="mt-2 text-sm leading-relaxed text-foreground/68">{model.insight}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-[11px] font-medium uppercase tracking-wider text-foreground/50">Volatiilsus</p>
+                <p className="mt-2 font-mono text-sm text-foreground/80">{fmtPct(model.volatility * 100)}</p>
+              </div>
+            </div>
+            <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs leading-relaxed text-foreground/50">Järgmine parim samm: {model.nextAction}</p>
+              <LinkButton
+                href={monthlyKwh >= 650 ? "/tarbimine" : "/leping"}
+                size="sm"
+                variant="secondary"
+                className="shrink-0 border-[oklch(1_0_0_/_14%)] bg-[oklch(1_0_0_/_4%)]"
+              >
+                {monthlyKwh >= 650 ? "Ava tarbimise labor" : "Ava lepingu labor"}
+              </LinkButton>
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
+            <StatChip label="Spot + marginaal" value={fmtCentsPerKwh(contractModel.spotCents)} hint={`~${priceEurPerMwh} €/MWh + ${retailerMarginCents.toFixed(1)} s`} />
+            <StatChip label="Fikseeritud" value={fmtCentsPerKwh(fixedCentsPerKwh)} hint="Sinu lepinguhind" />
+            <StatChip label="Vahe" value={`${contractModel.delta <= 0 ? "−" : "+"}${fmtCentsPerKwh(Math.abs(contractModel.delta))}`} hint={contractModel.verdict} />
+          </div>
+
+          <div className="mt-7 grid gap-4">
+            <SliderRow
+              label="Fikseeritud hind (s/kWh)"
+              value={Number(fixedCentsPerKwh.toFixed(1))}
+              min={9.5}
+              max={29.9}
+              step={0.1}
+              onChange={(v) => setFixedCentsPerKwh(v)}
+            />
+            <SliderRow
+              label="Müüja marginaal (s/kWh)"
+              value={Number(retailerMarginCents.toFixed(1))}
+              min={0.0}
+              max={3.5}
+              step={0.1}
+              onChange={(v) => setRetailerMarginCents(v)}
+            />
+          </div>
+
+          <div className="mt-7 grid gap-3 rounded-2xl border border-[oklch(1_0_0_/_10%)] bg-[oklch(0_0_0_/_18%)] p-5 shadow-[inset_0_1px_0_0_oklch(1_0_0_/_6%)]">
+            <p className="text-sm font-semibold tracking-tight text-foreground/88">{contractModel.verdict}</p>
+            <p className="text-sm leading-relaxed text-foreground/68">{contractModel.hint}</p>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs leading-relaxed text-foreground/50">
+                Järgmine parim samm: vaata kas su tarbimise tipud suurendavad “halba tundi” või kas leping kaitseb piisavalt.
+              </p>
+              <LinkButton
+                href={contractModel.nextBestHref}
+                size="sm"
+                variant="secondary"
+                className="shrink-0 border-[oklch(1_0_0_/_14%)] bg-[oklch(1_0_0_/_4%)]"
+              >
+                {contractModel.nextBestLabel}
+              </LinkButton>
+            </div>
+          </div>
+        </>
+      )}
+
+      <div className="mt-7 flex flex-wrap items-center justify-between gap-3 border-t border-[oklch(1_0_0_/_10%)] pt-5">
+        <p className="text-xs leading-relaxed text-foreground/50">
+          {feed.ok ? (
+            <>
+              Allikas: <span className="text-foreground/70">Elering Dashboard (NPS)</span>. See paneel näitab põhimõtet —
+              tööriistades seod tulemuse oma profiiliga.
+            </>
+          ) : (
+            <>
+              Demo-vaade: loogika ja reaktsioon on päris, hinnamuster on simuleeritud. Kui live-feed on saadaval, ilmub
+              see siia automaatselt.
+            </>
+          )}
+        </p>
+        <LinkButton href="/tarbimine" size="sm" variant="ghost" className="text-foreground/55 hover:text-foreground/78">
+          Ava detailne vaade →
+        </LinkButton>
+      </div>
+    </div>
   );
 }
 
-function FinalCtaPanel() {
+function StatChip({ label, value, hint }: { label: string; value: string; hint: string }) {
   return (
-    <PanelChrome
-      className="pointer-events-auto"
-      kicker="Kohe"
-      title="Tee täna esimene samm."
-      subtitle="Käivita simulatsioon või ava leping — kaks minutit annavad suuna. Täisvaate avad siis, kui see mõistlik tundub."
-      right={<Badge variant="cyan">Jätka</Badge>}
-    >
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <div data-reveal-stagger="" className="sm:flex-1">
-          <LinkButton
-            href="/simulatsioonid"
-            size="lg"
-            variant="gradient"
-            className="min-h-11 w-full rounded-xl px-6 text-[0.95rem] font-semibold sm:w-auto"
-          >
-            Käivita simulatsioon
-          </LinkButton>
-        </div>
-        <div data-reveal-stagger="" className="sm:flex-1">
-          <LinkButton
-            href="/leping"
-            size="lg"
-            variant="outline"
-            className="min-h-11 w-full rounded-xl px-6 text-[0.95rem] font-semibold sm:w-auto"
-          >
-            Ava lepingu labor
-          </LinkButton>
-        </div>
-      </div>
-      <p className="mt-5 text-xs text-foreground/55">
-        Täisvaade jääb sinu otsuseks — enne näed, kas joon on piisavalt konkreetne.
-      </p>
-    </PanelChrome>
+    <div className="ep-sim-stat-chip p-4">
+      <p className="text-[11px] font-medium uppercase tracking-wider text-foreground/50">{label}</p>
+      <p className="mt-2 font-mono text-xl font-semibold text-foreground/92">{value}</p>
+      <p className="mt-2 text-xs text-foreground/55">{hint}</p>
+    </div>
   );
 }
 
-
-function Bullet({ children, staggerReveal }: { children: string; staggerReveal?: boolean }) {
+function SliderRow({
+  label,
+  value,
+  min,
+  max,
+  step,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  onChange: (v: number) => void;
+}) {
   return (
-    <div className="flex items-start gap-2" {...(staggerReveal ? { "data-reveal-stagger": "" } : {})}>
-      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[oklch(0.83_0.14_205)] shadow-[0_0_18px_oklch(0.83_0.14_205_/_0.45)]" />
-      <span className="leading-relaxed">{children}</span>
+    <div className="rounded-2xl border border-[oklch(1_0_0_/_10%)] bg-[oklch(0_0_0_/_18%)] p-4 shadow-[inset_0_1px_0_0_oklch(1_0_0_/_6%)]">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs font-medium tracking-wide text-foreground/65">{label}</p>
+        <p className="font-mono text-xs text-foreground/70">{value}</p>
+      </div>
+      <input
+        className={cn("mt-3 w-full accent-[oklch(0.83_0.14_205)]")}
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+      />
     </div>
   );
 }

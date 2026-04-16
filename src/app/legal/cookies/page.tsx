@@ -18,8 +18,8 @@ export default function CookiesPage() {
           Küpsiste poliitika
         </h1>
         <p className="mt-4 text-pretty text-base leading-relaxed text-foreground/70">
-          Allolev on eelversioon. Enne lansseerimist kohandame selle vastavalt
-          kasutatavatele analüütika- ja turundustööriistadele.
+          Allolev kirjeldab avaliku test-buildi küpsiste kasutust. Enne lansseerimist täpsustame analüütika- ja
+          turundustööriistad (kui need lisanduvad) ning vastava nõusolekuvoo.
         </p>
 
         <div className="mt-8 space-y-4 rounded-2xl border border-border/60 bg-card/40 p-6 text-sm leading-relaxed text-foreground/70 backdrop-blur-md">
@@ -27,15 +27,14 @@ export default function CookiesPage() {
             <p className="font-medium text-foreground/85">1) Mis on küpsised?</p>
             <p className="mt-2">
               Küpsised on väikesed tekstifailid, mida brauser salvestab seadmesse. Neid kasutatakse näiteks
-              sisselogimise, eelistuste ja turvalisuse tagamiseks.
+              eelistuste, turvalisuse ja töökindluse tagamiseks.
             </p>
           </section>
           <section>
             <p className="font-medium text-foreground/85">2) Milleks me neid kasutame</p>
             <ul className="mt-2 list-disc space-y-2 pl-5">
-              <li>Seansi ja autentimise töökindluseks (nt Supabase sessiooniküpsised).</li>
-              <li>Kasutajakogemuse parandamiseks (eelistused, nt reduced motion).</li>
-              <li>Turvalisuse tagamiseks (kuritarvituse ennetus).</li>
+              <li>Töökindluseks ja turvalisuseks (nt kuritarvituse ennetus).</li>
+              <li>UI eelistuste hoidmiseks (nt reduced motion).</li>
             </ul>
           </section>
           <section>
@@ -43,8 +42,8 @@ export default function CookiesPage() {
             <ul className="mt-2 list-disc space-y-2 pl-5">
               <li><strong>Vajalikud</strong>: ilma nendeta teenus ei tööta.</li>
               <li><strong>Eelistused</strong>: näiteks UI valikud.</li>
-              <li><strong>Analüütika</strong>: (kui lisame) mõõdame anonüümselt kasutust.</li>
-              <li><strong>Turundus</strong>: (kui lisame) kampaaniate mõõtmine.</li>
+              <li><strong>Analüütika</strong>: kui lisame, mõõdame anonüümselt kasutust ja jõudlust.</li>
+              <li><strong>Turundus</strong>: kui lisame, kampaaniate mõõtmine (nõusolekuga).</li>
             </ul>
           </section>
           <section>
@@ -57,7 +56,8 @@ export default function CookiesPage() {
           <section>
             <p className="font-medium text-foreground/85">5) Kontakt</p>
             <p className="mt-2">
-              Küsimuste korral kirjuta: <span className="underline underline-offset-4">privacy@energiapiloot.com</span>.
+              Küsimuste korral kirjuta:{" "}
+              <span className="break-all underline underline-offset-4">privacy@energiapiloot.com</span>.
             </p>
           </section>
         </div>

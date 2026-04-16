@@ -24,8 +24,8 @@ export function CinematicFooter({ variant = "full" }: { variant?: "full" | "comp
               </div>
             </div>
             <p className="mt-6 max-w-md text-pretty text-sm leading-relaxed text-foreground/65">
-              Alusta tasuta, näe kohest tulemust, ava täisvaade ja laaditav PDF ühe ostuga — ilma kuupaketita. Lepingu,
-              tarbimise ja investeeringu tööriistad ühes voos.
+              Energiapiloot on praegu avatud testimiseks täisversioonina: simulatsioonid, lepingu- ja tarbimise labor —
+              kõik ühes voos.
             </p>
           </div>
 
@@ -51,24 +51,21 @@ export function CinematicFooter({ variant = "full" }: { variant?: "full" | "comp
               </ul>
             </div>
             <div>
-              <p className="ep-eyebrow-caps text-[0.6rem] text-foreground/45">Premium</p>
+              <p className="ep-eyebrow-caps text-[0.6rem] text-foreground/45">Info</p>
               <ul className="mt-4 space-y-3 text-sm">
                 <li>
-                  <Link
-                    className="text-foreground/75 transition hover:text-[oklch(0.88_0.1_205)]"
-                    href="/pricing#avamine"
-                  >
-                    Ava täisvaade
-                  </Link>
-                </li>
-                <li>
-                  <Link className="text-foreground/75 transition hover:text-[oklch(0.88_0.1_205)]" href="/?unlock=demo">
-                    Proovi täisvaadet (demo)
+                  <Link className="text-foreground/75 transition hover:text-[oklch(0.88_0.1_205)]" href="/pricing">
+                    Toote info
                   </Link>
                 </li>
                 <li>
                   <Link className="text-foreground/75 transition hover:text-[oklch(0.88_0.1_205)]" href="/security">
                     Turvalisus
+                  </Link>
+                </li>
+                <li>
+                  <Link className="text-foreground/75 transition hover:text-[oklch(0.88_0.1_205)]" href="/legal/privacy">
+                    Privaatsus
                   </Link>
                 </li>
               </ul>
@@ -108,10 +105,10 @@ export function CinematicFooter({ variant = "full" }: { variant?: "full" | "comp
                 size="sm"
                 className="shadow-[0_0_24px_-8px_oklch(0.83_0.14_205_/_0.55)]"
               >
-                Proovi tasuta
+                Alusta testimist
               </LinkButton>
-              <LinkButton href="/pricing#avamine" variant="outline" size="sm">
-                Ava premium
+              <LinkButton href="/pricing" variant="outline" size="sm">
+                Info
               </LinkButton>
             </div>
           </div>

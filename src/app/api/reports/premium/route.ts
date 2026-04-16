@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import type { ReportType } from "@/lib/reports/types";
+import { FULL_ACCESS_TEST_MODE } from "@/lib/feature-flags";
 import { getServerUnlockGrants, isUnlockGrantedOnServer } from "@/lib/unlock/server-snapshot";
 
 const REPORT_TYPES = new Set<ReportType>([
@@ -11,7 +12,7 @@ const REPORT_TYPES = new Set<ReportType>([
 ]);
 
 /**
- * Future: generate signed URL or stream PDF for users with `download` entitlement.
+ * Future: generate signed URL or stream PDF for export.
  * Body: { reportType: ReportType }
  */
 export async function POST(req: Request) {
@@ -25,13 +26,25 @@ export async function POST(req: Request) {
     /* empty body ok */
   }
 
+  if (FULL_ACCESS_TEST_MODE) {
+    return NextResponse.json(
+      {
+        ok: true,
+        reportType,
+        message: "Ekspordi demo on test-buildis saadaval. Täisgeneraator lisandub järgmises etapis.",
+        nextStep: "demo_export_ready",
+      },
+      { status: 200 }
+    );
+  }
+
   const grants = await getServerUnlockGrants();
   if (!isUnlockGrantedOnServer(grants, "download")) {
     return NextResponse.json(
       {
         ok: false,
         error: "download_locked",
-        message: "Laaditav PDF nõuab ostetud PDF-paketti.",
+        message: "Ekspordi ligipääs ei ole selles keskkonnas aktiveeritud.",
         reportType,
       },
       { status: 403 }
@@ -42,7 +55,7 @@ export async function POST(req: Request) {
     {
       ok: false,
       error: "pdf_not_live",
-      message: "Laaditav PDF lisandub pärast makse ja genereerija ühendust.",
+      message: "Ekspordi generaator ei ole selles keskkonnas veel sisse lülitatud.",
       reportType,
       nextStep: "enqueue_pdf_job",
     },

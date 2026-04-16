@@ -2,7 +2,6 @@
 
 import type { ReactNode } from "react";
 
-import { UnlockCheckoutButton } from "@/components/product/unlock-checkout-button";
 import { LinkButton } from "@/components/ui/link-button";
 import { UNLOCK_OFFERS, type UnlockOffer } from "@/lib/unlock/product-unlock-config";
 import { cn } from "@/lib/utils";
@@ -10,15 +9,15 @@ import { cn } from "@/lib/utils";
 const BUNDLE_ID = "ep_offer_bundle_all" as const;
 
 const BUNDLE_HIGHLIGHTS = [
-  "Täisvaade ja graafikud kõigis avalikes tööriistades",
-  "Interaktiivne kokkuvõte — loetav jutt otsustajale",
-  "PDF, mida jagada või arhiivi panna",
+  "Kõik kihid ja paneelid on nähtavad",
+  "Interaktiivne kokkuvõte (test-build)",
+  "Aruanded printimiseks / PDF-ks (brauseri kaudu)",
 ] as const;
 
 const FREE_HIGHLIGHTS = [
   "Tööriistad käivad kohe — registreerimist ei küsi",
   "Näed kohe suunda ja peamisi näitajaid",
-  "Kui joon kõnetab, avad täisvaate ühe ostuga",
+  "Kõik on praegu testimiseks avatud",
 ] as const;
 
 function CheckLine({ children }: { children: ReactNode }) {
@@ -35,9 +34,9 @@ function CheckLine({ children }: { children: ReactNode }) {
 
 function JourneyRail() {
   const steps = [
-    { k: "1", title: "Alusta tasuta", body: "Kohene ülevaade" },
-    { k: "2", title: "Hinda suunda", body: "Eelvaade enne ostu" },
-    { k: "3", title: "Ava täisvaade", body: "Üks ost, kõik kihid" },
+    { k: "1", title: "Sisesta andmed", body: "Kohene signaal" },
+    { k: "2", title: "Täpsusta", body: "Eeldused ja võrdlus" },
+    { k: "3", title: "Tee otsus", body: "Jaga või prindi kokkuvõte" },
   ];
 
   return (
@@ -77,23 +76,20 @@ function AddOnCard({ offer, className }: { offer: UnlockOffer; className?: strin
       )}
     >
       <div>
-        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[oklch(0.72_0.08_205)]">
-          Ühekordne ost
-        </p>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[oklch(0.72_0.08_205)]">Test-build</p>
         <h4 className="ep-display mt-2 text-lg font-semibold tracking-tight text-foreground/95">{offer.label}</h4>
         {offer.description ? (
           <p className="mt-2 text-sm leading-relaxed text-foreground/62">{offer.description}</p>
         ) : null}
       </div>
-      <UnlockCheckoutButton
-        offerId={offer.id}
+      <LinkButton
+        href="/pricing"
         variant="outline"
         size="sm"
-        fallbackHref="/pricing#avamine"
         className="mt-6 w-full border-[oklch(1_0_0_/_14%)] bg-[oklch(1_0_0_/_4%)] text-foreground/90 group-hover:border-[oklch(0.83_0.14_205_/_0.35)]"
       >
-        Ava see kiht
-      </UnlockCheckoutButton>
+        Toote info
+      </LinkButton>
     </div>
   );
 }
@@ -105,13 +101,13 @@ export function PricingUnlockExperience() {
   return (
     <section id="avamine" className="scroll-mt-28 space-y-10 md:space-y-14">
       <div className="text-center md:text-left">
-        <p className="ep-eyebrow-caps text-[oklch(0.78_0.1_205)]">Kuidas see käib</p>
+        <p className="ep-eyebrow-caps text-[oklch(0.78_0.1_205)]">Test-versioon</p>
         <h2 className="ep-display mt-3 max-w-2xl text-balance text-2xl font-semibold tracking-tight text-foreground/95 md:text-3xl">
-          Esmalt tasuta ülevaade — täisvaade siis, kui oled valmis.
+          Kõik kihid on praegu avatud.
         </h2>
         <p className="mt-4 max-w-2xl text-pretty text-sm leading-relaxed text-foreground/65 md:text-base">
-          Tellimust ei sunni. Näed tulemust, mõistad konteksti ja avad täisvaate ning PDF-i ühe turvalise ostuga, kui see
-          sulle mõistlik tundub.
+          Siin build’is ei ole ostuvoogu ega lukke. Eesmärk on testida loogikat, UX-i ja väljundite kvaliteeti ühe
+          järjepideva voona.
         </p>
       </div>
 
@@ -169,16 +165,15 @@ export function PricingUnlockExperience() {
               Soovitame
             </span>
                        <span className="rounded-full border border-[oklch(1_0_0_/_12%)] px-3 py-1 text-[10px] text-foreground/50">
-              Üks ost · automaatset uuendust ei tule
+              Kõik kihid avatud · test-build
             </span>
           </div>
 
           <h3 className="ep-display relative mt-5 text-2xl font-semibold tracking-tight text-foreground/95 md:text-[1.65rem]">
             {bundle.label}
           </h3>
-                   <p className="relative mt-2 max-w-xl text-sm leading-relaxed text-foreground/68 md:text-[0.95rem]">
-            {bundle.description} Hind tuleb nähtavale turvalises maksesammus. Seniks saad proovida demo-täisvaadet või valida
-            eraldi kihti allpool.
+          <p className="relative mt-2 max-w-xl text-sm leading-relaxed text-foreground/68 md:text-[0.95rem]">
+            {bundle.description} Selles build’is on kogu funktsionaalsus avatud, et saaksid rahulikult testida ja võrrelda.
           </p>
 
           <ul className="relative mt-6 space-y-3">
@@ -188,21 +183,20 @@ export function PricingUnlockExperience() {
           </ul>
 
           <div className="relative mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-            <UnlockCheckoutButton
-              offerId={bundle.id}
+            <LinkButton
+              href="/simulatsioonid"
               variant="gradient"
-              fallbackHref="/pricing#avamine"
               className="shadow-[0_0_36px_-8px_oklch(0.83_0.14_205_/_0.75)] sm:min-w-[220px]"
             >
-              Ava kogu pakett
-            </UnlockCheckoutButton>
+              Alusta testimist
+            </LinkButton>
             <LinkButton href="/?unlock=demo" variant="ghost" className="text-foreground/55 hover:text-foreground/78">
-              Proovi täisvaadet (demo)
+              Ava avaleht →
             </LinkButton>
           </div>
 
           <p className="relative mt-6 text-xs leading-relaxed text-foreground/48">
-            Makse käib Stripe’i kaudu. Me ei hoia kaardiandmeid — jääb ainult kinnitus, et täisvaade on avatud.
+            Märkus: see komponent on jäänuk tulevasest hinnastuse kihist — test-buildis ei näita ta ostuvoogu.
           </p>
         </div>
       </div>
@@ -212,7 +206,7 @@ export function PricingUnlockExperience() {
           Või ava kihid ükshaaval
         </h3>
         <p className="mx-auto mt-2 max-w-2xl text-center text-sm text-foreground/58 md:mx-0 md:text-left">
-          Kui tead täpselt, mida vajad — iga kiht on eraldi ost, ilma “paketikomboga”.
+          Kui tahad rohkem detaile, ava sobiv tööriist ja vaata kihte otse seal.
         </p>
         <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {addOns.map((offer) => (

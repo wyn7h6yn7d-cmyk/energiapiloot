@@ -1,8 +1,8 @@
 "use client";
 
-import { UnlockCheckoutButton } from "@/components/product/unlock-checkout-button";
 import { Button } from "@/components/ui/button";
 import { usePremiumReportExport } from "@/hooks/use-premium-report-export";
+import { FULL_ACCESS_TEST_MODE } from "@/lib/feature-flags";
 import { PREMIUM_REPORT_BUNDLE_ITEMS, defaultTitleForReportType } from "@/lib/reports/export/bundles";
 import type { ReportType } from "@/lib/reports/types";
 import { cn } from "@/lib/utils";
@@ -34,9 +34,9 @@ function PhaseLabel({ phase }: { phase: ReturnType<typeof usePremiumReportExport
     case "requesting":
       return <span className="text-[oklch(0.82_0.12_205)]">Koostan dokumenti…</span>;
     case "pipeline_pending":
-      return <span className="text-[oklch(0.82_0.14_145)]">PDF valmib peagi</span>;
+      return <span className="text-[oklch(0.82_0.14_145)]">Ekspordi töövoog käib</span>;
     case "forbidden":
-      return <span className="text-[oklch(0.85_0.12_85)]">Allalaadimine lukus</span>;
+      return <span className="text-[oklch(0.85_0.12_85)]">Ligipääs puudub</span>;
     case "error":
       return <span className="text-destructive">Viga</span>;
     default:
@@ -45,7 +45,7 @@ function PhaseLabel({ phase }: { phase: ReturnType<typeof usePremiumReportExport
 }
 
 /**
- * Locked-state teaser inside the premium paywall overlay (serious deliverable, not a toy).
+ * Deliverable teaser (kept for future, shown as demo in test mode).
  */
 export function PremiumReportDeliverableTease({ className }: { className?: string }) {
   return (
@@ -79,13 +79,13 @@ export function PremiumReportDeliverableTease({ className }: { className?: strin
           <div className="flex items-start gap-3">
             <DocGlyph className="shrink-0 text-[oklch(0.83_0.14_205_/_0.85)]" />
             <div>
-              <p className="ep-eyebrow-caps text-[0.58rem] text-[oklch(0.78_0.08_205)]">Tarnitav väljund</p>
+              <p className="ep-eyebrow-caps text-[0.58rem] text-[oklch(0.78_0.08_205)]">Kokkuvõte</p>
               <p className="mt-1.5 text-sm font-semibold leading-snug text-foreground/92">
                 Professionaalne kokkuvõte otsustajale
               </p>
               <p className="mt-2 text-xs leading-relaxed text-foreground/58">
-                Premium kasutajad saavad lukust lahti tõmmata ka allalaaditava paketi: KPI-d, graafikute kokkuvõtted,
-                eelduste lõik ja printimiseks sobiv paigutus — valmis jagamiseks või arhiveerimiseks.
+                Sama loogika, mida näed ekraanil — pakendatud selgeks, jagatavaks dokumendiks: KPI-d, eeldused ja
+                kokkuvõtte struktuur.
               </p>
             </div>
           </div>
@@ -98,19 +98,13 @@ export function PremiumReportDeliverableTease({ className }: { className?: strin
               ~12–18 lk (hinnang)
             </span>
             <span className="rounded-full border border-[oklch(1_0_0_/_12%)] px-2.5 py-1 text-[10px] text-foreground/55">
-              versioon 1.0 (tulekul)
+              test-build
             </span>
           </div>
 
-          <UnlockCheckoutButton
-            offerId="ep_offer_download"
-            variant="outline"
-            size="sm"
-            fallbackHref="/pricing#avamine"
-            className="mt-4 w-full border-[oklch(0.83_0.14_205_/_0.35)] sm:w-auto"
-          >
-            Ava allalaaditav pakett
-          </UnlockCheckoutButton>
+          <div className="mt-4 text-xs text-foreground/55">
+            {FULL_ACCESS_TEST_MODE ? "Kõik kihid on avatud — saad aruande printida või salvestada PDF-ina brauserist." : null}
+          </div>
         </div>
       </div>
     </div>
@@ -162,7 +156,7 @@ export function PremiumReportExportPanel({
             </div>
             <p className="mt-3 text-sm leading-relaxed text-foreground/68">
               {description ??
-                "See on sama analüüs, mida näed ekraanil — pakendatud selgeks, jagatavaks dokumendiks. Järgmine samm on serveripoolne PDF; seni näitab nupp päris olekut."}
+                "See on sama analüüs, mida näed ekraanil — pakendatud selgeks, jagatavaks dokumendiks. Test-buildis saad selle printida või salvestada PDF-ina brauserist."}
             </p>
 
             <ul className="mt-5 space-y-2.5 text-sm text-foreground/72">
@@ -179,38 +173,7 @@ export function PremiumReportExportPanel({
           </div>
 
           <div className="w-full shrink-0 rounded-2xl border border-[oklch(1_0_0_/_10%)] bg-[oklch(0_0_0_/_0.25)] p-5 lg:w-[320px]">
-            {!hasDownload ? (
-              <div className="relative overflow-hidden">
-                <div className="pointer-events-none select-none opacity-35 blur-[0.3px]">
-                  <p className="text-xs font-medium text-foreground/80">Allalaaditav PDF</p>
-                  <p className="mt-2 font-mono text-[11px] text-foreground/50">energiapiloot-summary-v1.pdf</p>
-                  <div className="mt-3 space-y-2">
-                    <div className="h-2 rounded bg-[oklch(1_0_0_/_8%)]" />
-                    <div className="h-2 rounded bg-[oklch(1_0_0_/_6%)]" />
-                    <div className="h-2 w-4/5 rounded bg-[oklch(1_0_0_/_6%)]" />
-                  </div>
-                </div>
-                <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(160deg,transparent,oklch(0.07_0.02_255_/_0.88))]" />
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-4 text-center">
-                  <span className="rounded-full border border-[oklch(0.83_0.14_205_/_0.4)] bg-[oklch(0.83_0.14_205_/_0.12)] px-3 py-1 text-[10px] font-semibold uppercase tracking-wider text-[oklch(0.88_0.08_205)]">
-                    Allalaadimine lukus
-                  </span>
-                  <p className="max-w-[14rem] text-xs leading-relaxed text-foreground/65">
-                    Lisa <strong className="text-foreground/85">PDF-pakett</strong> — saad arhiveeritava faili ja
-                    printimiskihi ilma ekraanil kopeerimata.
-                  </p>
-                  <UnlockCheckoutButton
-                    offerId="ep_offer_download"
-                    variant="gradient"
-                    size="sm"
-                    fallbackHref="/pricing#avamine"
-                    className="w-full shadow-[0_0_24px_-8px_oklch(0.83_0.14_205_/_0.55)]"
-                  >
-                    Ava PDF pakett
-                  </UnlockCheckoutButton>
-                </div>
-              </div>
-            ) : (
+            {FULL_ACCESS_TEST_MODE || hasDownload ? (
               <div className="space-y-4">
                 <div className="flex items-center justify-between gap-2 text-xs">
                   <span className="text-foreground/55">Olek</span>
@@ -222,8 +185,8 @@ export function PremiumReportExportPanel({
                 <div className="rounded-xl border border-[oklch(1_0_0_/_8%)] bg-[oklch(1_0_0_/_3%)] p-3">
                   <p className="font-mono text-[11px] text-foreground/50">energiapiloot-{reportType}-v1.pdf</p>
                   <p className="mt-2 text-[11px] leading-relaxed text-foreground/45">
-                    Eelversioon: server genereerib faili pärast Stripe + tööjärjekorra ühendust. Nupp käivitab juba
-                    päris kontrolli.
+                    Test-build: saad sama sisu printida või salvestada PDF-ina brauseri “Print” funktsiooniga. Serveripoolne
+                    generaator lisandub hiljem.
                   </p>
                 </div>
 
@@ -246,7 +209,7 @@ export function PremiumReportExportPanel({
                     disabled={phase === "requesting"}
                     onClick={() => void startExport()}
                   >
-                    {phase === "requesting" ? "Koostan…" : "Genereeri PDF (eelversioon)"}
+                    {phase === "requesting" ? "Koostan…" : "Käivita ekspordi demo"}
                   </Button>
                   {phase !== "idle" ? (
                     <Button type="button" variant="ghost" size="sm" className="text-foreground/55" onClick={reset}>
@@ -254,6 +217,13 @@ export function PremiumReportExportPanel({
                     </Button>
                   ) : null}
                 </div>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <p className="text-sm font-semibold tracking-tight text-foreground/90">Ekspordi vaade</p>
+                <p className="text-sm leading-relaxed text-foreground/65">
+                  Ekspordi ligipääs ei ole selles keskkonnas aktiveeritud.
+                </p>
               </div>
             )}
           </div>

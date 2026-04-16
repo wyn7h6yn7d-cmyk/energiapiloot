@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { Metadata } from "next";
 
 import { MarketingShell } from "@/components/layout/marketing-shell";
@@ -7,7 +6,7 @@ import { LinkButton } from "@/components/ui/link-button";
 export const metadata: Metadata = {
   title: "Turvalisus — Energiapiloot",
   description:
-    "Energiapiloot on ehitatud turvalise autentimise, RLS reeglite ja auditeeritava andmemudeliga.",
+    "Turvapõhimõtted avalikus test-buildis: minimaalne ligipääs, jälgitav loogika ja kontrollitud integratsioonid.",
 };
 
 export default function SecurityPage() {
@@ -28,27 +27,31 @@ export default function SecurityPage() {
             Usaldus vaikimisi.
           </h1>
           <p className="mt-4 text-pretty text-base leading-relaxed text-foreground/70">
-            Energiapilooti ehitame tootmiskindla arhitektuuriga: turvaline autentimine, vähimõiguse põhimõte ja
-            auditeeritavad andmevood.
+            See build on avalik testrežiim (ilma konto- ja ostuvoota). Turvapõhimõtted on samad: minimaalne ligipääs,
+            jälgitav loogika ja kontrollitud integratsioonid. Kui mingi osa on testis lihtsustatud, ütleme seda otse.
           </p>
         </div>
 
         <div className="mt-2 grid gap-4">
           <SecurityCard
-            title="Autentimine"
-            body="Supabase Auth, turvaline sessioonihaldus ja selge eraldus avalehe ning rakenduse vahel."
+            title="Minimaalne ligipääs"
+            body="Serveripoolsed adapterid ja validaatorid hoiavad integratsioonide loogika serveris. Kliendile jõuab ainult vajalik väljund."
           />
           <SecurityCard
-            title="Andmepääs"
-            body="Row-level security (RLS) reeglid kaitsevad kogu kasutajaandmestikku. Ei jagatud stsenaariume, ei juhuslikku lekkimist."
+            title="Privaatsus ja läbipaistvus"
+            body="Sa sisestad ise eeldused; me kasutame neid tulemuse arvutamiseks. Eesmärk on eemaldada “musta kasti” tunne ja hoida otsus arusaadav."
           />
           <SecurityCard
-            title="Maksed"
-            body="Stripe-valmis arvelduse struktuur webhooki verifitseerimisega ja minimaalse makseinfo talletamisega."
+            title="Töökindlus"
+            body="Välised teenused on kapseldatud adapteritesse (timeout + retry), et viga ei lõhuks kogu kasutajakogemust."
+          />
+          <SecurityCard
+            title="Logid ja jälgimine"
+            body="Kasutame minimaalseid tehnilisi logisid turvalisuse ja veaotsingu jaoks. Me ei tee avalikus test-buildis väiteid “täieliku auditi” kohta enne, kui vastavad süsteemid on päriselt kasutusel."
           />
         </div>
 
-        <div className="mt-10 flex items-center gap-3">
+        <div className="mt-10 flex flex-wrap items-center gap-3">
           <LinkButton href="/legal/privacy" variant="outline">
             Privaatsus
           </LinkButton>

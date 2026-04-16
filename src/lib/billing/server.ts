@@ -2,6 +2,7 @@
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { entitlementsForPlan, type Entitlements, type PlanId } from "@/lib/billing/plans";
+import { FULL_ACCESS_TEST_MODE } from "@/lib/feature-flags";
 
 export type SubscriptionRow = {
   id: string;
@@ -52,6 +53,9 @@ export async function getOrCreateMySubscription(): Promise<SubscriptionRow> {
 }
 
 export async function getMyEntitlements(): Promise<Entitlements> {
+  if (FULL_ACCESS_TEST_MODE) {
+    return entitlementsForPlan("pro");
+  }
   try {
     const sub = await getOrCreateMySubscription();
     const planId = (sub.plan_id ?? "free") as PlanId;

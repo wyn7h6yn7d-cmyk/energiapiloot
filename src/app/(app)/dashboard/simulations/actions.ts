@@ -47,7 +47,7 @@ export async function saveScenarioAction(input: {
 
   const ent = await getMyEntitlements();
   if (!ent.allowedSimulationTypes.includes(input.simulation_type)) {
-    throw new Error("Sinu pakett ei sisalda seda simulaatorit.");
+    throw new Error("See simulaator ei ole selles keskkonnas aktiveeritud.");
   }
   if (ent.savedScenarioLimit !== -1) {
     const { count } = await supabase

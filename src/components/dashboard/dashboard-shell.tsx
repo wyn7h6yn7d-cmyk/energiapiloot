@@ -38,7 +38,7 @@ const NAV: NavItem[] = [
     description: "Prioriseeritud järgmised sammud.",
   },
   { href: "/dashboard/reports", label: "Aruanded", description: "Kokkuvõtted ja eksport." },
-  { href: "/dashboard/settings", label: "Seaded", description: "Profiil ja pakett." },
+  { href: "/dashboard/settings", label: "Seaded", description: "Profiil ja eelistused." },
 ];
 
 function NavLink({ href, label }: { href: string; label: string }) {
@@ -162,8 +162,8 @@ export function DashboardShell({
       {/* Main */}
       <div className="md:pl-[18.5rem]">
         <header className="sticky top-0 z-30 border-b border-border/60 bg-background/60 backdrop-blur supports-[backdrop-filter]:backdrop-blur-md">
-          <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-4">
-            <div className="flex items-center gap-3">
+          <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-4">
+            <div className="flex min-w-0 items-center gap-3">
               <Button
                 type="button"
                 variant="outline"
@@ -183,9 +183,9 @@ export function DashboardShell({
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Link href="/pricing">
-                <Button variant="outline">Paketid</Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <Link href="/pricing" className="shrink-0">
+                <Button variant="outline">Toote info</Button>
               </Link>
               <Link href="/dashboard/settings">
                 <Button variant="glow">Seaded</Button>

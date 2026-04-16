@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 
+import { FULL_ACCESS_TEST_MODE } from "@/lib/feature-flags";
 import {
   ENTITLEMENTS_COOKIE_NAME,
   PREMIUM_COOKIE_FULL_VALUE,
@@ -14,6 +15,9 @@ import { parseEntitlementCsv } from "./parse-entitlements";
  * Future: verify signed session / Stripe webhook before trusting values.
  */
 export async function getServerUnlockGrants(): Promise<ReadonlySet<UnlockEntitlement>> {
+  if (FULL_ACCESS_TEST_MODE) {
+    return ALL_UNLOCK_ENTITLEMENTS;
+  }
   const store = await cookies();
   const legacy = store.get(PREMIUM_COOKIE_NAME)?.value;
   if (legacy === PREMIUM_COOKIE_FULL_VALUE) {

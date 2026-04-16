@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Panel, PanelDescription, PanelHeader, PanelTitle } from "@/components/ui/panel";
 import { LinkButton } from "@/components/ui/link-button";
 import { PremiumGate } from "@/components/product/premium-gate";
-import { PremiumReportExportPanel } from "@/components/product/premium-report-deliverable";
+import { useMounted } from "@/hooks/use-mounted";
 import {
   buildConsumptionInsights,
   type ConsumptionInsights,
@@ -215,8 +215,8 @@ export function ConsumptionInsightsModule({
         {publicExperience ? (
           <PremiumGate
             className="rounded-3xl"
-            title="Tarbimise täisvaade"
-            description="Täisvaade toob täisgraafiku, draiverid, anomaaliad ja säästuplaani — PDF lisandub samasse voogu. Makse Stripe&apos;i kaudu; seni näed eelvaadet."
+            title="Tarbimise vaade"
+            description="Täisgraafik, draiverid, anomaaliad ja säästuplaan — kõik kihid on testimiseks avatud."
           >
             <ConsumptionDeepPanels
               insights={insights}
@@ -224,11 +224,6 @@ export function ConsumptionInsightsModule({
               avgAllIn={avgAllIn}
               dayShare={dayShare}
               publicExperience
-            />
-            <PremiumReportExportPanel
-              reportType="savings_opportunity_summary"
-              className="mt-4"
-              description="Tarbimise sügavus ja säästuplaani kiht eksporditakse struktureeritud kokkuvõttena — valmis juhatuse või omaniku jaoks. Serveri PDF tuleb peagi."
             />
           </PremiumGate>
         ) : (
@@ -258,6 +253,7 @@ function ConsumptionDeepPanels({
   dayShare: number;
   publicExperience: boolean;
 }) {
+  const mounted = useMounted();
   return (
     <>
       <Panel className="overflow-hidden">
@@ -269,47 +265,51 @@ function ConsumptionDeepPanels({
           <Badge variant="cyan">{insights.kpis.peakDependencyScore}/100 tipu-sõltuvus</Badge>
         </PanelHeader>
         <div className="px-6 pb-6">
-          <div className="h-64 w-full rounded-2xl border border-border/60 bg-background/30 p-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={insights.pattern} margin={{ top: 10, right: 10, left: -22, bottom: 0 }}>
-                <CartesianGrid stroke="oklch(1 0 0 / 6%)" vertical={false} />
-                <XAxis
-                  dataKey="hour"
-                  tickLine={false}
-                  axisLine={false}
-                  interval={3}
-                  tick={{ fill: "oklch(1 0 0 / 55%)", fontSize: 11 }}
-                />
-                <YAxis tickLine={false} axisLine={false} tick={{ fill: "oklch(1 0 0 / 45%)", fontSize: 11 }} />
-                <Tooltip
-                  wrapperStyle={{ outline: "none" }}
-                  content={({ active, payload, label }) => {
-                    if (!active || !payload?.length) return null;
-                    const v = payload[0]?.value as number;
-                    return (
-                      <div className="rounded-xl border border-border/60 bg-background/80 px-3 py-2 text-xs text-foreground/85 shadow-[var(--shadow-elev-2)] backdrop-blur-md">
-                        <p className="font-medium">{label}</p>
-                        <p className="mt-1">{v.toFixed(2)} kWh</p>
-                      </div>
-                    );
-                  }}
-                />
-                <defs>
-                  <linearGradient id="epCons" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="oklch(0.82 0.16 145 / 52%)" />
-                    <stop offset="100%" stopColor="oklch(0.82 0.16 145 / 6%)" />
-                  </linearGradient>
-                </defs>
-                <Area
-                  type="monotone"
-                  dataKey="kwh"
-                  stroke="oklch(0.82 0.16 145 / 75%)"
-                  strokeWidth={2}
-                  fill="url(#epCons)"
-                  dot={false}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+          <div className="h-64 w-full min-w-0 rounded-2xl border border-border/60 bg-background/30 p-4">
+            {mounted ? (
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                <AreaChart data={insights.pattern} margin={{ top: 10, right: 10, left: -22, bottom: 0 }}>
+                  <CartesianGrid stroke="oklch(1 0 0 / 6%)" vertical={false} />
+                  <XAxis
+                    dataKey="hour"
+                    tickLine={false}
+                    axisLine={false}
+                    interval={3}
+                    tick={{ fill: "oklch(1 0 0 / 55%)", fontSize: 11 }}
+                  />
+                  <YAxis tickLine={false} axisLine={false} tick={{ fill: "oklch(1 0 0 / 45%)", fontSize: 11 }} />
+                  <Tooltip
+                    wrapperStyle={{ outline: "none" }}
+                    content={({ active, payload, label }) => {
+                      if (!active || !payload?.length) return null;
+                      const v = payload[0]?.value as number;
+                      return (
+                        <div className="rounded-xl border border-border/60 bg-background/80 px-3 py-2 text-xs text-foreground/85 shadow-[var(--shadow-elev-2)] backdrop-blur-md">
+                          <p className="font-medium">{label}</p>
+                          <p className="mt-1">{v.toFixed(2)} kWh</p>
+                        </div>
+                      );
+                    }}
+                  />
+                  <defs>
+                    <linearGradient id="epCons" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="oklch(0.82 0.16 145 / 52%)" />
+                      <stop offset="100%" stopColor="oklch(0.82 0.16 145 / 6%)" />
+                    </linearGradient>
+                  </defs>
+                  <Area
+                    type="monotone"
+                    dataKey="kwh"
+                    stroke="oklch(0.82 0.16 145 / 75%)"
+                    strokeWidth={2}
+                    fill="url(#epCons)"
+                    dot={false}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full w-full rounded-xl border border-border/40 bg-card/20" aria-hidden />
+            )}
           </div>
 
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -373,8 +373,8 @@ function ConsumptionDeepPanels({
               <PanelDescription>Anomaaliad + kiire sääst.</PanelDescription>
             </div>
             {publicExperience ? (
-              <LinkButton href="/pricing#avamine" variant="outline">
-                Täisvaade
+              <LinkButton href="/leping" variant="outline">
+                Võrdle lepingut
               </LinkButton>
             ) : (
               <Link href="/dashboard/recommendations">
@@ -441,8 +441,8 @@ function ConsumptionDeepPanels({
           <div className="mt-5 flex flex-wrap items-center gap-2">
             {publicExperience ? (
               <>
-                <LinkButton href="/pricing#avamine" variant="gradient">
-                  Ava täisvaade + PDF (tulekul)
+                <LinkButton href="/simulatsioonid" variant="gradient">
+                  Ava simulatsioon
                 </LinkButton>
                 <LinkButton href="/leping" variant="outline">
                   Võrdle lepingut

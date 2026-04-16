@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Panel, PanelDescription, PanelHeader, PanelTitle } from "@/components/ui/panel";
 import { LinkButton } from "@/components/ui/link-button";
 import { PremiumGate } from "@/components/product/premium-gate";
-import { PremiumReportExportPanel } from "@/components/product/premium-report-deliverable";
+import { useMounted } from "@/hooks/use-mounted";
 import { cn } from "@/lib/utils";
 import { analyzeContracts, type AnalysisInputs, type ContractType } from "@/lib/contracts/model";
 import type { ConsumptionProfileInputs } from "@/lib/consumption/insights";
@@ -45,9 +45,10 @@ export function ContractsAnalysisModule({
 }: {
   marketHints?: ContractMarketHints | null;
   userType?: "household" | "business";
-  /** When true, deep analysis + charts are premium-gated; CTAs point to public unlock flow. */
+  /** Public-first variant (full-access test mode keeps all panels visible). */
   publicExperience?: boolean;
 }) {
+  const mounted = useMounted();
   const [providerName, setProviderName] = useState("ElektraNord");
   const [type, setType] = useState<ContractType>("spot");
   const [monthlyKwh, setMonthlyKwh] = useState(420);
@@ -388,8 +389,8 @@ export function ContractsAnalysisModule({
           {publicExperience ? (
             <PremiumGate
               className="rounded-3xl"
-              title="Lepingu täisvaade ja riskikiht"
-              description="Täisvaade avab intelligentsuskihi, täpse võrdlusgraafiku ja eksportitava kokkuvõtte. Makse Stripe&apos;i kaudu; seniks saad demo eelvaatega tutvuda."
+              title="Lepingu vaade ja riskikiht"
+              description="Intelligentsus, võrdlus ja riskikontekst — testimiseks avatud täisversioon."
             >
               <div className="grid gap-4">
                 <Panel>
@@ -439,8 +440,9 @@ export function ContractsAnalysisModule({
                     <Badge variant="neutral">€/kuu</Badge>
                   </PanelHeader>
                   <div className="px-6 pb-6">
-                    <div className="h-64 w-full rounded-2xl border border-border/60 bg-background/30 p-4">
-                      <ResponsiveContainer width="100%" height="100%">
+                    <div className="h-64 w-full min-w-0 rounded-2xl border border-border/60 bg-background/30 p-4">
+                      {mounted ? (
+                        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                         <BarChart data={chartData} margin={{ top: 10, right: 10, left: -18, bottom: 0 }}>
                           <CartesianGrid stroke="oklch(1 0 0 / 6%)" vertical={false} />
                           <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fill: "oklch(1 0 0 / 55%)", fontSize: 11 }} />
@@ -463,7 +465,10 @@ export function ContractsAnalysisModule({
                           <Bar dataKey="est" radius={[10, 10, 6, 6]} fill="oklch(0.83 0.14 205 / 45%)" stroke="oklch(0.83 0.14 205 / 70%)" />
                           <Bar dataKey="risk" hide />
                         </BarChart>
-                      </ResponsiveContainer>
+                        </ResponsiveContainer>
+                      ) : (
+                        <div className="h-full w-full rounded-xl border border-border/40 bg-card/20" aria-hidden />
+                      )}
                     </div>
 
                     <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -501,11 +506,6 @@ export function ContractsAnalysisModule({
                   </div>
                 </Panel>
 
-                <PremiumReportExportPanel
-                  reportType="contract_risk_summary"
-                  className="mt-2"
-                  description="Lepingu intelligentsus ja võrdlus jäävad ekraanil samaks — PDF pakendab need jagatavaks mäluks: riskikontekst, võrdlused ja soovituste sõnastus."
-                />
               </div>
             </PremiumGate>
           ) : (
@@ -554,8 +554,8 @@ export function ContractsAnalysisModule({
                   <Badge variant="neutral">€/kuu</Badge>
                 </PanelHeader>
                 <div className="px-6 pb-6">
-                  <div className="h-64 w-full rounded-2xl border border-border/60 bg-background/30 p-4">
-                    <ResponsiveContainer width="100%" height="100%">
+                  <div className="h-64 w-full min-w-0 rounded-2xl border border-border/60 bg-background/30 p-4">
+                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                       <BarChart data={chartData} margin={{ top: 10, right: 10, left: -18, bottom: 0 }}>
                         <CartesianGrid stroke="oklch(1 0 0 / 6%)" vertical={false} />
                         <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fill: "oklch(1 0 0 / 55%)", fontSize: 11 }} />

@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     {
       ok: false,
       error: "checkout_not_live",
-      message: "Stripe makselink tuleb siia järgmises versioonis.",
+      message: "Checkout ei ole selles test-buildis aktiivne.",
       acceptedOfferId: offer.id,
       wouldGrant: offer.grants,
       stripePriceEnvKey: offer.stripePriceEnvKey ?? null,

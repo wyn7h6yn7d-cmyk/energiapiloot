@@ -5,17 +5,23 @@ import { z } from "zod";
  * Never import this file from client components — use only in server modules / route handlers.
  */
 const apiEnvSchema = z.object({
-  /** mock: safe dev; live: attempt real HTTP; hybrid: live with mock fallback on failure */
-  ENERGIAPILOOT_API_MODE: z.enum(["mock", "live", "hybrid"]).default("mock"),
+  /**
+   * live: call real providers (recommended)
+   * hybrid: call real providers, but allow adapters to fall back when explicitly implemented
+   * mock: demo-only (kept for local development)
+   */
+  ENERGIAPILOOT_API_MODE: z.enum(["mock", "live", "hybrid"]).default("live"),
 
   ELERING_ESTFEED_BASE_URL: z.string().optional(),
   ELERING_ESTFEED_TOKEN_URL: z.string().optional(),
   ELERING_ESTFEED_CLIENT_ID: z.string().optional(),
   ELERING_ESTFEED_CLIENT_SECRET: z.string().optional(),
 
-  NORD_POOL_BASE_URL: z
-    .string()
-    .default("https://dataportal-api.nordpoolgroup.com"),
+  /**
+   * Default price feed is Elering Dashboard NPS endpoint (public, no auth).
+   * Keep the name for backward compatibility with the domain layer.
+   */
+  NORD_POOL_BASE_URL: z.string().default("https://dashboard.elering.ee"),
   NORD_POOL_API_KEY: z.string().optional(),
   /** Default Baltic delivery area for day-ahead queries */
   NORD_POOL_DEFAULT_AREA: z.string().default("EE"),
@@ -24,12 +30,12 @@ const apiEnvSchema = z.object({
 
   OPEN_METEO_BASE_URL: z.string().default("https://api.open-meteo.com/v1"),
 
-  ADDRESS_API_PROVIDER: z.enum(["mock", "maaamet", "inads"]).default("mock"),
-  ADDRESS_API_BASE_URL: z.string().optional(),
+  ADDRESS_API_PROVIDER: z.enum(["mock", "maaamet", "inads"]).default("inads"),
+  ADDRESS_API_BASE_URL: z.string().default("https://inaadress.maaamet.ee/inaadress"),
   ADDRESS_API_KEY: z.string().optional(),
 
-  BUSINESS_REGISTRY_PROVIDER: z.enum(["mock", "rik"]).default("mock"),
-  BUSINESS_REGISTRY_BASE_URL: z.string().optional(),
+  BUSINESS_REGISTRY_PROVIDER: z.enum(["mock", "rik"]).default("rik"),
+  BUSINESS_REGISTRY_BASE_URL: z.string().default("https://ariregister.rik.ee"),
   BUSINESS_REGISTRY_API_KEY: z.string().optional(),
 
   CACHE_MARKET_TTL_SEC: z.coerce.number().int().positive().default(300),

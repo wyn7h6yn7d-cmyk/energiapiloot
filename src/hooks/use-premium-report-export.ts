@@ -2,13 +2,14 @@
 
 import { useCallback, useState } from "react";
 
+import { FULL_ACCESS_TEST_MODE } from "@/lib/feature-flags";
 import { useUnlockSnapshot } from "@/hooks/use-unlock-snapshot";
 import type { ReportType } from "@/lib/reports/types";
 
 export type PremiumExportPhase = "idle" | "requesting" | "pipeline_pending" | "forbidden" | "error";
 
 /**
- * Client orchestration for premium PDF export. Server still returns 403/501 until Stripe + generator ship.
+ * Client orchestration for report export.
  */
 export function usePremiumReportExport(reportType: ReportType) {
   const { hasDownload } = useUnlockSnapshot();
@@ -16,9 +17,9 @@ export function usePremiumReportExport(reportType: ReportType) {
   const [message, setMessage] = useState<string | null>(null);
 
   const startExport = useCallback(async () => {
-    if (!hasDownload) {
+    if (!FULL_ACCESS_TEST_MODE && !hasDownload) {
       setPhase("forbidden");
-      setMessage("Laaditav PDF kuulub eraldi oste — vali PDF-pakett hindade lehel.");
+      setMessage("Ekspordi ligipääs puudub.");
       return;
     }
 
@@ -42,7 +43,7 @@ export function usePremiumReportExport(reportType: ReportType) {
 
       if (res.status === 501) {
         setPhase("pipeline_pending");
-        setMessage(typeof data.message === "string" ? data.message : "PDF genereerimine lisandub järgmises versioonis.");
+        setMessage(typeof data.message === "string" ? data.message : "Ekspordi generaator ei ole veel saadaval.");
         return;
       }
 
@@ -53,7 +54,7 @@ export function usePremiumReportExport(reportType: ReportType) {
       }
 
       setPhase("pipeline_pending");
-      setMessage("Päring õnnestus, kuid faili link pole veel valmis (eelversioon).");
+      setMessage(typeof data.message === "string" ? data.message : "Ekspordi demo on saadaval.");
     } catch {
       setPhase("error");
       setMessage("Võrgu viga. Proovi uuesti.");

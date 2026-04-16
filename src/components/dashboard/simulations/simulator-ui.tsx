@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { PremiumGate } from "@/components/product/premium-gate";
-import { PremiumReportExportPanel } from "@/components/product/premium-report-deliverable";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +23,6 @@ import {
   toggleFavoriteScenarioAction,
 } from "@/app/(app)/dashboard/simulations/actions";
 import type { Entitlements } from "@/lib/billing/plans";
-import { PaywallCard } from "@/components/billing/paywall-card";
 import type { SolarIntegrationHints } from "@/lib/integrations/solar-hints";
 import { cn } from "@/lib/utils";
 
@@ -183,8 +181,7 @@ export function InvestmentSimulationsModule({
             Investeeringu labor: näe mõju enne allkirja.
           </h1>
           <p className="mt-4 max-w-3xl text-pretty text-base leading-relaxed text-foreground/70">
-            Avalik režiim näitab kiiret ülevaadet ja KPI-sid. Täisvaade — otsustuskiht, graafikud ja eksport — avaneb
-            ühe ostuga (makse Stripe&apos;i kaudu; PDF on teekonnas).
+            Avalik vaade näitab kohe KPI-sid ja graafikuid. Eesmärk on testida kogu töövoogu: sisendid → mõju → otsus.
           </p>
         </div>
       ) : (
@@ -273,7 +270,7 @@ export function InvestmentSimulationsModule({
                   ))}
                 </select>
                 {allowedSims.length < sims.length ? (
-                  <p className="text-xs text-foreground/55">Mõned simulaatorid on sinu paketis lukus.</p>
+                  <p className="text-xs text-foreground/55">Kõik simulaatorid ei pruugi selles vaates veel valmis olla.</p>
                 ) : null}
               </div>
 
@@ -315,9 +312,9 @@ export function InvestmentSimulationsModule({
               <div className="mt-1 flex flex-wrap items-center gap-2">
                 {isPublic ? (
                   <>
-                    <LinkButton href="/pricing#avamine" variant="gradient">
-                      Ava salvestus ning võrdlus
-                    </LinkButton>
+                    <Button variant="gradient" disabled title="Avalikus testis salvestus on ajutiselt välja lülitatud.">
+                      Salvesta (tulekul)
+                    </Button>
                     <Button
                       variant="outline"
                       onClick={() => {
@@ -327,8 +324,8 @@ export function InvestmentSimulationsModule({
                       Lähtesta
                     </Button>
                     <p className="w-full text-xs leading-relaxed text-foreground/55">
-                      Ilma täisvaadeta ei salvesta brauser su stsenaariume serverisse — privaatne eelvaade, mis näitab
-                      väärtust enne ostuotsust.
+                      Avalikus testis salvestus ja võrdlus on ajutiselt välja lülitatud. Väljundid ja graafikud on siiski
+                      täies mahus nähtavad.
                     </p>
                   </>
                 ) : (
@@ -376,7 +373,7 @@ export function InvestmentSimulationsModule({
           <div className="ep-sim-kpi-row">
             <p className="ep-eyebrow-caps text-foreground/45">Mõõdetud väljund</p>
             <p className="mt-2 max-w-2xl text-sm text-foreground/58">
-              Need KPI-d uuenevad reaalajas — täisvaade lisab domeenihinnangu, graafikud ja ekspordi.
+              Need KPI-d uuenevad reaalajas — muuda sisendeid ja vaata, kuidas signaal muutub.
             </p>
             <div className="mt-5 grid gap-4 md:grid-cols-3">
               <Kpi label="Kuutine sääst" value={`${fmtEur(result.monthlySavingsEur)}`} hint="Hinnanguline, kohene." />
@@ -388,23 +385,14 @@ export function InvestmentSimulationsModule({
           {isPublic ? (
             <PremiumGate
               className="min-h-[440px] rounded-[1.75rem]"
-              title="Investeeringu täisvaade"
-              description="Näed juba kiiret ülevaadet — täisvaade lisab domeenihinnangu, 15-aastase rahavoo, tundlikkuse ja eelduste lõike ühes kinemaatilises vaates. Kokkuvõte ja jagamine jäävad samasse voogu."
-              ctaLabel="Ava täisvaade"
-              secondaryCta={{
-                href: "/pricing#avamine",
-                label: "Ava täiskokkuvõte",
-                checkoutOfferId: "ep_offer_report",
-              }}
-              tertiaryCta={{
-                href: "/pricing#avamine",
-                label: "Laadi PDF alla",
-                checkoutOfferId: "ep_offer_download",
-              }}
+              title="Investeeringu vaade"
+              description="Domeenikiht, rahavoog, tundlikkus ja eeldused ühes vaates — täielikult testimiseks avatud."
+              ctaLabel="Ava vaade"
+              secondaryCta={undefined}
+              tertiaryCta={undefined}
               valuePoints={[
                 "Sügavam säästu- ja riskianalüüs (rahavoog + tundlikkus)",
                 "Mitme investeeringu stsenaariumi võrdlus",
-                "Laaditav kokkuvõte otsuse jaoks (PDF tulekul)",
                 "Soovituste kiht joondatud sinu profiiliga",
                 "Selgem investeerimisjuhis koos eelduste lõiguga",
               ]}
@@ -507,11 +495,6 @@ export function InvestmentSimulationsModule({
                   </Panel>
                 </div>
 
-                <PremiumReportExportPanel
-                  reportType="investment_simulation_report"
-                  className="mt-2"
-                  description="Sama stsenaarium, mida näed graafikutena — koondatud otsustaja mäluks: KPI-d, rahavoog, tundlikkus ja eelduste lõik. PDF genereerimine ühendatakse serverisse; nupp näitab juba päris olekut."
-                />
               </div>
             </PremiumGate>
           ) : (
@@ -633,12 +616,12 @@ export function InvestmentSimulationsModule({
             </PanelHeader>
             <div className="px-6 pb-6">
               {entitlements.savedScenarioLimit !== -1 && saved.length >= entitlements.savedScenarioLimit ? (
-                <div className="mb-4">
-                  <PaywallCard
-                    title="Stsenaariumide limiit on täis"
-                    description={`Sinu paketis on lubatud kuni ${entitlements.savedScenarioLimit} salvestatud stsenaarium(i). Uuenda paketti, et salvestada rohkem ja võrrelda mugavamalt.`}
-                    requiredPlan="plus"
-                  />
+                <div className="mb-4 rounded-2xl border border-border/50 bg-card/25 p-4">
+                  <p className="text-sm font-semibold text-foreground/90">Stsenaariumide limiit on täis</p>
+                  <p className="mt-2 text-sm leading-relaxed text-foreground/62">
+                    Selles test-buildis püüame hoida töövoo lihtsana. Vajadusel kustuta vanu stsenaariume või
+                    oota, kuni salvestus/haldus saab uue versiooni.
+                  </p>
                 </div>
               ) : null}
               {saved.length === 0 ? (

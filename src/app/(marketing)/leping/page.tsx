@@ -21,8 +21,8 @@ export default async function PublicContractLabPage() {
           Võrdle elektrilepinguid läbipaistvate eeldustega.
         </h1>
         <p className="mt-4 max-w-3xl text-pretty text-base leading-relaxed text-foreground/70">
-          Näed börsi, fikseeritud ja hübriidi mõju kõrvuti. Sügav intelligentsus ja täisgraafik jäävad premium taha —
-          nii jääb kogemus selge, aga konversioon tugev.
+          Näed börsi, fikseeritud ja hübriidi mõju kõrvuti sama profiiliga. Kõik kihid on testimiseks avatud — eesmärk on
+          leida “päris” otsus, mitte tekitada lukku.
         </p>
         <p className="mt-3 max-w-3xl text-pretty text-xs leading-relaxed text-foreground/55">{hints.noteEt}</p>
       </div>

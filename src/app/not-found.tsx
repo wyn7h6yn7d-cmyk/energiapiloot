@@ -20,7 +20,7 @@ export default function NotFound() {
           href="/pricing"
           className="text-sm font-medium text-foreground/70 underline-offset-4 transition hover:text-foreground hover:underline"
         >
-          Hinnad
+          Toote info
         </Link>
       </div>
     </div>

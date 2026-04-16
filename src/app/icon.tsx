@@ -31,44 +31,47 @@ export default function Icon() {
             width: 360,
             height: 360,
             borderRadius: 84,
-            background: "rgba(255,255,255,0.06)",
-            border: "1px solid rgba(255,255,255,0.14)",
+            background:
+              "radial-gradient(220px 180px at 30% 28%, rgba(38,230,255,0.20), rgba(255,255,255,0.05) 42%, rgba(0,0,0,0.22) 100%)",
+            border: "1px solid rgba(255,255,255,0.16)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            boxShadow: "0 30px 120px rgba(0,0,0,0.75)",
+            boxShadow: "0 30px 120px rgba(0,0,0,0.75), inset 0 1px 0 rgba(255,255,255,0.08)",
+            position: "relative",
           }}
         >
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              borderRadius: 84,
+              background:
+                "radial-gradient(240px 200px at 30% 30%, rgba(38,230,255,0.22), transparent 62%)",
+              opacity: 0.85,
+            }}
+          />
+
           <div
             style={{
               width: 120,
               height: 120,
               borderRadius: 999,
-              border: "2px solid rgba(38,230,255,0.55)",
-              boxShadow: "0 0 60px rgba(38,230,255,0.35)",
-              position: "relative",
+              background: "rgba(0,0,0,0.28)",
+              border: "2px solid rgba(38,230,255,0.28)",
+              boxShadow: "0 0 60px rgba(38,230,255,0.28), inset 0 1px 0 rgba(255,255,255,0.06)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
             <div
               style={{
-                position: "absolute",
-                inset: 24,
+                width: 26,
+                height: 26,
                 borderRadius: 999,
-                border: "2px solid rgba(46,242,181,0.28)",
-              }}
-            />
-            <div
-              style={{
-                position: "absolute",
-                left: 52,
-                top: 10,
-                width: 0,
-                height: 0,
-                borderLeft: "18px solid transparent",
-                borderRight: "18px solid transparent",
-                borderBottom: "44px solid rgba(245,239,196,0.9)",
-                transform: "skewX(-8deg)",
-                filter: "drop-shadow(0 0 18px rgba(245,239,196,0.35))",
+                background: "rgba(38,230,255,0.92)",
+                boxShadow: "0 0 26px rgba(38,230,255,0.55)",
               }}
             />
           </div>

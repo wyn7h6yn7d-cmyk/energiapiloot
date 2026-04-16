@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { FULL_ACCESS_TEST_MODE } from "@/lib/feature-flags";
 import { buildClientUnlockSnapshot } from "@/lib/unlock/client-snapshot";
 import { PREMIUM_STORAGE_KEY } from "@/lib/unlock/constants";
 import { ALL_UNLOCK_ENTITLEMENTS, isUnlockGranted } from "@/lib/unlock/entitlements";
@@ -12,18 +13,30 @@ const emptySnapshot: ClientUnlockSnapshot = {
   source: "none",
 };
 
+const fullAccessSnapshot: ClientUnlockSnapshot = {
+  grants: new Set(ALL_UNLOCK_ENTITLEMENTS),
+  source: "mixed",
+};
+
 /**
  * Browser unlock state: cookies (`ep_unlock`, `ep_entitlements`) + dev `localStorage`.
  * `?unlock=demo` seeds full grants in storage (same as before).
  */
 export function useUnlockSnapshot() {
-  const [snapshot, setSnapshot] = useState<ClientUnlockSnapshot>(emptySnapshot);
+  const [snapshot, setSnapshot] = useState<ClientUnlockSnapshot>(
+    FULL_ACCESS_TEST_MODE ? fullAccessSnapshot : emptySnapshot
+  );
 
   const refresh = useCallback(() => {
+    if (FULL_ACCESS_TEST_MODE) {
+      setSnapshot(fullAccessSnapshot);
+      return;
+    }
     setSnapshot(buildClientUnlockSnapshot());
   }, []);
 
   useEffect(() => {
+    if (FULL_ACCESS_TEST_MODE) return;
     const params = new URLSearchParams(window.location.search);
     if (params.get("unlock") === "demo") {
       try {
@@ -40,6 +53,7 @@ export function useUnlockSnapshot() {
   }, [refresh]);
 
   useEffect(() => {
+    if (FULL_ACCESS_TEST_MODE) return;
     const onStorage = (e: StorageEvent) => {
       if (e.key === PREMIUM_STORAGE_KEY) {
         refresh();

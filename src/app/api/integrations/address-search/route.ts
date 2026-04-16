@@ -2,19 +2,12 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { getAdapters } from "@/lib/api/adapters/registry";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const querySchema = z.object({
   q: z.string().min(2).max(120),
 });
 
 export async function GET(req: Request) {
-  const supabase = await createSupabaseServerClient();
-  const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const url = new URL(req.url);
   const parsed = querySchema.safeParse({ q: url.searchParams.get("q") ?? "" });
   if (!parsed.success) {

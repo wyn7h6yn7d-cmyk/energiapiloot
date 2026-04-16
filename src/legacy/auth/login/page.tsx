@@ -1,13 +1,10 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { loginAction } from "@/legacy/auth/login/actions";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { LinkButton } from "@/components/ui/link-button";
 
 export const metadata: Metadata = {
-  title: "Logi sisse",
-  description: "Logi sisse Energiapiloodi kontole ja jätka töölauda.",
+  title: "Sisselogimine",
+  description: "Avalikus test-buildis ei ole sisselogimine vajalik.",
   robots: { index: false, follow: false },
 };
 
@@ -17,7 +14,6 @@ export default async function LoginPage({
   searchParams: Promise<{ error?: string; next?: string }>;
 }) {
   const sp = await searchParams;
-  const next = sp.next ?? "/dashboard";
   const error = sp.error;
 
   return (
@@ -28,40 +24,30 @@ export default async function LoginPage({
           <span className="font-semibold tracking-tight">Energiapiloot</span>
         </Link>
 
-        <h1 className="mt-6 text-2xl font-semibold tracking-tight">Logi sisse</h1>
+        <h1 className="mt-6 text-2xl font-semibold tracking-tight">Sisselogimine ei ole vajalik</h1>
         <p className="mt-2 text-sm text-foreground/65">
-          Sisene oma kontoga ja jätka töölauda.
+          See build on avalik test. Põhitööriistad on kasutatavad ilma konto loomise või sisselogimiseta.
         </p>
 
-        <form action={loginAction} className="mt-8 ep-card p-6">
-          <input type="hidden" name="next" value={next} />
-          <label className="block text-xs font-medium text-foreground/70">E-post</label>
-          <div className="mt-2">
-            <Input name="email" type="email" placeholder="you@company.com" required />
-          </div>
-
-          <label className="mt-4 block text-xs font-medium text-foreground/70">Parool</label>
-          <div className="mt-2">
-            <Input name="password" type="password" required />
-          </div>
-
-          {error ? <p className="mt-3 text-sm text-destructive">{error}</p> : null}
-
-          <div className="mt-6 flex flex-col gap-3">
-            <Button size="lg" type="submit">
-              Jätka
-            </Button>
-            <LinkButton href="/register" size="lg" variant="outline">
-              Loo konto
+        <div className="mt-8 ep-card p-6">
+          {error ? <p className="text-sm text-destructive">{error}</p> : null}
+          <div className={error ? "mt-4" : ""} />
+          <LinkButton href="/" size="lg" variant="gradient" className="w-full">
+            Tagasi avalehele
+          </LinkButton>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <LinkButton href="/simulatsioonid" variant="outline" className="w-full">
+              Simulatsioonid
             </LinkButton>
-            <Link
-              href={`/forgot-password${next ? `?next=${encodeURIComponent(next)}` : ""}`}
-              className="text-sm text-foreground/70 underline underline-offset-4"
-            >
-              Unustasid parooli?
-            </Link>
+            <LinkButton href="/leping" variant="outline" className="w-full">
+              Lepingu labor
+            </LinkButton>
           </div>
-        </form>
+          <p className="mt-4 text-xs leading-relaxed text-foreground/55">
+            Kui sisselogimine on hiljem uuesti kasutusel (salvestus, objektid, rapordid), ilmub siia sama vaade
+            uuesti.
+          </p>
+        </div>
 
         <p className="mt-6 text-xs text-foreground/55">
           Jätkates nõustud{" "}
