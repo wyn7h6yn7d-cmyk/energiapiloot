@@ -56,10 +56,10 @@ export default function TwitterImage() {
           </div>
 
           <div style={{ fontSize: 54, fontWeight: 700, letterSpacing: -1.1, lineHeight: 1.05 }}>
-            Energy decisions with confidence.
+            Energiaotsused selgelt.
           </div>
           <div style={{ fontSize: 22, opacity: 0.78, maxWidth: 920, lineHeight: 1.45 }}>
-            Insights, simulations and recommendations — premium UX, clear assumptions.
+            Lepingu analüüs, tarbimine, simulatsioon ja soovitused — selge loogika, ausad eeldused.
           </div>
         </div>
       </div>

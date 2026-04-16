@@ -6,7 +6,7 @@ import { LinkButton } from "@/components/ui/link-button";
 
 export const metadata: Metadata = {
   title: "Kasutustingimused — Energiapiloot",
-  description: "Energiapiloodi kasutustingimused ja teenuse üldised reeglid (MVP struktuur).",
+  description: "Energiapiloodi kasutustingimused ja teenuse üldised reeglid (eelversioon).",
 };
 
 export default function TermsPage() {
@@ -20,7 +20,7 @@ export default function TermsPage() {
           Kasutustingimused
         </h1>
         <p className="mt-4 text-pretty text-base leading-relaxed text-foreground/70">
-          Allolev on startup-ready struktuur (MVP). Enne lansseerimist täpsustame juriidilise
+          Allolev on eelversioon, mida täiendame enne ametlikku kasutuselevõttu. Enne lansseerimist täpsustame juriidilise
           isiku, hinnastuse, vastutuse ja teenuse SLA detailid.
         </p>
 

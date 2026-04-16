@@ -218,7 +218,7 @@ function recommend(scenarios: ScenarioResult[], inputs: AnalysisInputs) {
         : bestFit === "spot"
           ? "Parim sobivus: börs (optimeerimise potentsiaal)"
           : "Parim sobivus: hübriid (tasakaal)",
-    summary: `Võrdluses on see valik ${deltaText} kui praegune (MVP mudel).`,
+    summary: `Võrdluses on see valik ${deltaText} kui praegune (lihtsustatud mudel).`,
     why,
   };
 }

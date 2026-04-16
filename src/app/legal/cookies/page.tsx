@@ -18,7 +18,7 @@ export default function CookiesPage() {
           Küpsiste poliitika
         </h1>
         <p className="mt-4 text-pretty text-base leading-relaxed text-foreground/70">
-          Allolev on startup-ready struktuur (MVP). Enne lansseerimist kohandame selle vastavalt
+          Allolev on eelversioon. Enne lansseerimist kohandame selle vastavalt
           kasutatavatele analüütika- ja turundustööriistadele.
         </p>
 

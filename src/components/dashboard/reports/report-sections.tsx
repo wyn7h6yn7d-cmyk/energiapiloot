@@ -145,7 +145,7 @@ export function RenderReportSection({ section }: { section: ReportSection }) {
         </pre>
       </div>
       <p className="mt-3 text-xs text-foreground/55 print:text-black/60">
-        MVP: graafikud lisame detailvaatesse järgmises iteratsioonis. Struktuur on juba PDF/ekspordi jaoks olemas.
+        Graafikud lisanduvad detailvaatesse järgmises versioonis; andmestruktuur on juba PDF-i jaoks sobiv.
       </p>
     </ReportSectionCard>
   );

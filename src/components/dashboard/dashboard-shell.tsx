@@ -16,24 +16,29 @@ type NavItem = {
 };
 
 const NAV: NavItem[] = [
-  { href: "/dashboard", label: "Ülevaade", description: "KPI-d ja hetkeseis." },
+  { href: "/dashboard", label: "Ülevaade", description: "Peamised näitajad ja hetkeseis." },
   {
     href: "/dashboard/contracts",
     label: "Lepinguanalüüs",
-    description: "Pakkumised, riskid, sääst.",
+    description: "Hinnad, risk, võrdlus.",
+  },
+  {
+    href: "/dashboard/consumption",
+    label: "Tarbimine",
+    description: "Muster, tiputunnid, paindlikkus.",
   },
   {
     href: "/dashboard/simulations",
     label: "Simulatsioonid",
-    description: "Stsenaariumid ja investeeringud.",
+    description: "Investeeringute stsenaariumid.",
   },
   {
     href: "/dashboard/recommendations",
     label: "Soovitused",
-    description: "Konkreetsed järgmised sammud.",
+    description: "Prioriseeritud järgmised sammud.",
   },
-  { href: "/dashboard/reports", label: "Raportid", description: "Ekspordid ja kokkuvõtted." },
-  { href: "/dashboard/settings", label: "Seaded", description: "Profiil ja arveldus." },
+  { href: "/dashboard/reports", label: "Aruanded", description: "Kokkuvõtted ja eksport." },
+  { href: "/dashboard/settings", label: "Seaded", description: "Profiil ja pakett." },
 ];
 
 function NavLink({ href, label }: { href: string; label: string }) {
@@ -43,7 +48,7 @@ function NavLink({ href, label }: { href: string; label: string }) {
     <Link
       href={href}
       className={cn(
-        "group flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-sm transition",
+        "group flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-sm transition outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ep-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         active
           ? "border-border/70 bg-card/55 shadow-[var(--shadow-elev-1)]"
           : "border-border/40 bg-card/20 hover:border-border/70 hover:bg-card/35"
@@ -73,7 +78,7 @@ export function DashboardShell({
   const siteItems: SiteSwitcherItem[] = useMemo(() => {
     const name = (siteLabel ?? "").trim() || "Minu objekt";
     return [
-      { id: "primary", name, subtitle: "MVP: üks objekt. Mitme objekti tugi lisandub." },
+      { id: "primary", name, subtitle: "Praegu üks tarbimiskoht. Mitme objekti tugi on tulemas." },
     ];
   }, [siteLabel]);
 
@@ -140,12 +145,12 @@ export function DashboardShell({
             <div className="mt-6 rounded-3xl border border-border/40 bg-card/20 p-4">
               <p className="text-xs font-medium tracking-wide text-foreground/60">Järgmine samm</p>
               <p className="mt-2 text-sm text-foreground/70">
-                Lisa esimene stsenaarium ja käivita simulatsioon, et näha säästu potentsiaali.
+                Salvesta esimene stsenaarium ja vaata, kui palju investeering või muudatus võiks tuua.
               </p>
               <div className="mt-4 flex items-center gap-2">
                 <Link href="/dashboard/simulations" className="w-full">
                   <Button className="w-full" variant="gradient">
-                    Käivita simulatsioon
+                    Ava simulatsioonid
                   </Button>
                 </Link>
               </div>

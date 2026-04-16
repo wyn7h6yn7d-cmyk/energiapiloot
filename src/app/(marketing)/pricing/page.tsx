@@ -14,22 +14,44 @@ export default function PricingPage() {
       <div className="max-w-5xl">
         <p className="text-xs font-medium tracking-wide text-foreground/60">Hinnad</p>
         <h1 className="mt-3 text-balance text-3xl font-semibold tracking-tight md:text-4xl">
-          Paketid, mis kasvavad koos sinu energiavajadusega.
+          Ava täielik Energiapiloot — ilma kontota.
         </h1>
         <p className="mt-4 max-w-3xl text-pretty text-base leading-relaxed text-foreground/70">
-          MVP paywall töötab juba plaanide järgi (Free → Plus → Pro → Business).
-          Stripe ühendame järgmises etapis; hinnastuse konfiguratsioon on selleks valmis.
+          Energiapiloot on avalik energiaotsuste stuudio: leping, tarbimine ja simulatsioonid brauseris. Osaliselt näed
+          tulemust kohe; sügav analüüs, salvestus ja PDF tulevad ühe ostu / avamisega. Stripe makse ja aruannete
+          genereerimine ühendatakse API-dega, mis on juba eraldi marsruutides ette valmistatud.
         </p>
 
-        <div className="mt-7 flex items-center gap-2">
-          <Badge variant="cyan">Kuu</Badge>
-          <Badge variant="neutral">Aasta (tulemas toggle)</Badge>
-          <span className="text-xs text-foreground/55">
-            MVP-s näitame kuu hinnastust; yearly toggle lisandub UX-ina järgmisena.
-          </span>
+        <div className="mt-7 flex flex-wrap items-center gap-2">
+          <Badge variant="cyan">Premium avamine</Badge>
+          <Badge variant="neutral">Stripe (järgmine iteratsioon)</Badge>
+          <span className="text-xs text-foreground/55">Seniks: demo avamine ja struktuurne ostu API.</span>
         </div>
 
-        <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <section id="avamine" className="mt-12 scroll-mt-28 rounded-3xl border border-[oklch(0.83_0.14_205_/_0.28)] bg-card/30 p-8 shadow-[0_0_80px_-40px_oklch(0.83_0.14_205_/_0.55)] backdrop-blur-md">
+          <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[oklch(0.83_0.14_205)]">Avamine</p>
+          <h2 className="mt-3 text-balance text-2xl font-semibold tracking-tight">Mida premium avab?</h2>
+          <ul className="mt-5 space-y-3 text-sm text-foreground/75">
+            <li>• Täielik lepingu intelligentsus ja võrdlusgraafikud</li>
+            <li>• Tarbimise draiverid, lipud ja säästuplaani täissügavus</li>
+            <li>• Investeeringu domeenikiht, cashflow ja tundlikkuse graafikud</li>
+            <li>• Tulevikus: kohene Stripe checkout + allalaaditav PDF raport</li>
+          </ul>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <LinkButton href="/?unlock=demo" variant="gradient" className="shadow-[0_0_28px_-8px_oklch(0.83_0.14_205_/_0.7)]">
+              Proovi demo avamist
+            </LinkButton>
+          </div>
+          <p className="mt-3 font-mono text-[11px] text-foreground/50">
+            POST /api/checkout/unlock · POST /api/reports/premium (stubid, 501)
+          </p>
+          <p className="mt-4 text-xs text-foreground/55">
+            Ostu API tagastab praegu 501; edasi ühendame Stripe Checkout Sessioni ja määrame{" "}
+            <code className="rounded-md bg-card/50 px-1.5 py-0.5 text-[11px]">ep_unlock</code> küpsise.
+          </p>
+        </section>
+
+        <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {PLANS.map((p) => (
             <PricingCard
               key={p.id}
@@ -39,8 +61,8 @@ export default function PricingPage() {
               description={p.tagline}
               features={p.features}
               cta={{
-                label: p.id === "free" ? "Alusta tasuta" : "Uuenda",
-                href: p.id === "free" ? "/register" : "/register",
+                label: p.id === "free" ? "Ava tööriistad" : "Vali see tase",
+                href: "/pricing#avamine",
               }}
               highlight={p.highlight}
             />
@@ -48,21 +70,12 @@ export default function PricingPage() {
         </div>
 
         <div className="mt-10 rounded-3xl border border-border/50 bg-card/20 p-6">
-          <p className="text-xs font-medium tracking-wide text-foreground/60">Võrdlus (MVP)</p>
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
-            <div className="rounded-2xl border border-border/40 bg-card/25 p-4">
-              <p className="text-sm font-semibold">Free vs Plus</p>
-              <p className="mt-2 text-sm text-foreground/65">
-                Plus avab rohkem simulaatoreid, rohkem salvestatud stsenaariume ja laiendab raportite valikut.
-              </p>
-            </div>
-            <div className="rounded-2xl border border-border/40 bg-card/25 p-4">
-              <p className="text-sm font-semibold">Pro vs Business</p>
-              <p className="mt-2 text-sm text-foreground/65">
-                Business on meeskonnale: organisatsioonid, mitme objekti tugi ja rollid (järgmised iteratsioonid).
-              </p>
-            </div>
-          </div>
+          <p className="text-xs font-medium tracking-wide text-foreground/60">Miks mitte “tasuta konto”?</p>
+          <p className="mt-3 max-w-3xl text-sm leading-relaxed text-foreground/70">
+            Kontovaba mudel vähendab hõõrdumist ja hoiab fookuse otsusel. Kui hiljem lisandub meeskonnatöö või
+            salvestatud objektid, saame need ühendada sama premium avamise kihiga — ilma et peaksid kolima teise
+            tootesse.
+          </p>
         </div>
 
         <div className="mt-10">

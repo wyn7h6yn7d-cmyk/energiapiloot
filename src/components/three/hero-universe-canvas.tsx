@@ -1,6 +1,11 @@
 "use client";
 
-import React, { forwardRef, useEffect, useMemo, useRef } from "react";
+import React, {
+  forwardRef,
+  useEffect,
+  useMemo,
+  useRef,
+} from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Environment } from "@react-three/drei";
 import * as THREE from "three";
@@ -87,16 +92,17 @@ const HeroUniverseScene = React.memo(function HeroUniverseScene({
   useFrame((state, dt) => {
     const t = state.clock.getElapsedTime();
     const p = clamp01(progress);
+    const story = remapStoryProgress(p);
 
     // Hero evolution: raw → structured.
-    const heroT = clamp01(p / Math.max(0.001, heroRangeEnd));
+    const heroT = clamp01(story / Math.max(0.001, heroRangeEnd));
     const clarity = smoothstep(heroT);
     const chaos = 1 - clarity;
 
     // Handoff: slight move into the next story beat after hero.
-    const handoff = smoothstep((p - heroRangeEnd * 0.9) / (heroRangeEnd * 0.7));
+    const handoff = smoothstep((story - heroRangeEnd * 0.9) / (heroRangeEnd * 0.7));
 
-    const { pos, lookAt, drift } = sampleHeroCamera(p, mode);
+    const { pos, lookAt, drift } = sampleHeroCamera(story, mode);
     camera.position.lerp(
       pos
         .clone()
@@ -115,12 +121,12 @@ const HeroUniverseScene = React.memo(function HeroUniverseScene({
     if (group.current) {
       group.current.rotation.y = THREE.MathUtils.lerp(
         group.current.rotation.y,
-        (p - 0.5) * 0.55,
+        (story - 0.5) * 0.55,
         1 - Math.pow(0.001, dt)
       );
       group.current.rotation.x = THREE.MathUtils.lerp(
         group.current.rotation.x,
-        -0.12 + p * 0.22,
+        -0.12 + story * 0.22,
         1 - Math.pow(0.001, dt)
       );
     }
@@ -182,7 +188,7 @@ const HeroUniverseScene = React.memo(function HeroUniverseScene({
 
     if (uiPanels.current) {
       const reveal = showPanels
-        ? smoothstep((p - heroRangeEnd * 0.35) / (heroRangeEnd * 0.9))
+        ? smoothstep((story - heroRangeEnd * 0.35) / (heroRangeEnd * 0.9))
         : 0;
       uiPanels.current.visible = reveal > 0.01;
       uiPanels.current.scale.setScalar(reveal);
@@ -274,11 +280,21 @@ const HeroUniverseScene = React.memo(function HeroUniverseScene({
       <EnergyParticles ref={particles} mode={mode} />
 
       <group ref={grid}>
-        <EnergyGrid mode={mode} progress={progress} heroRangeEnd={heroRangeEnd} />
+        <EnergyGrid
+          key={mode}
+          mode={mode}
+          progress={remapStoryProgress(clamp01(progress))}
+          heroRangeEnd={heroRangeEnd}
+        />
       </group>
 
       <group ref={core}>
-        <IntelligenceCore mode={mode} progress={progress} heroRangeEnd={heroRangeEnd} intensity={intensity} />
+        <IntelligenceCore
+          mode={mode}
+          progress={remapStoryProgress(clamp01(progress))}
+          heroRangeEnd={heroRangeEnd}
+          intensity={intensity}
+        />
       </group>
 
       <group ref={uiPanels}>{showPanels ? <DataPanels /> : null}</group>
@@ -295,12 +311,16 @@ const EnergyParticles = forwardRef<THREE.Points, { mode: HeroPerfMode }>(
       const c1 = new THREE.Color("#2BC3FF");
       const c2 = new THREE.Color("#2EF2B5");
       for (let i = 0; i < count; i++) {
-        const r = 5.2 * Math.sqrt(Math.random());
-        const a = Math.random() * Math.PI * 2;
+        const u1 = hash01(i, 11);
+        const u2 = hash01(i, 17);
+        const u3 = hash01(i, 23);
+        const u4 = hash01(i, 29);
+        const r = 5.2 * Math.sqrt(u1);
+        const a = u2 * Math.PI * 2;
         positions[i * 3 + 0] = Math.cos(a) * r;
-        positions[i * 3 + 1] = (Math.random() - 0.5) * 1.6;
+        positions[i * 3 + 1] = (u3 - 0.5) * 1.6;
         positions[i * 3 + 2] = Math.sin(a) * r;
-        const col = c1.clone().lerp(c2, Math.random());
+        const col = c1.clone().lerp(c2, u4);
         colors[i * 3 + 0] = col.r;
         colors[i * 3 + 1] = col.g;
         colors[i * 3 + 2] = col.b;
@@ -350,51 +370,6 @@ function IntelligenceCore({
   const ringGeo = useMemo(() => new THREE.TorusGeometry(0.92, 0.02, 10, 220), []);
   const glowGeo = useMemo(() => new THREE.SphereGeometry(1.15, 24, 24), []);
 
-  const outerMat = useMemo(
-    () =>
-      new THREE.MeshStandardMaterial({
-        color: new THREE.Color("#07111F"),
-        metalness: 0.65,
-        roughness: 0.22,
-        emissive: new THREE.Color("#061A22"),
-        emissiveIntensity: 1.1,
-      }),
-    []
-  );
-  const innerMat = useMemo(
-    () =>
-      new THREE.MeshStandardMaterial({
-        color: new THREE.Color("#081021"),
-        metalness: 0.2,
-        roughness: 0.18,
-        emissive: new THREE.Color("#2BC3FF"),
-        emissiveIntensity: 1.6,
-      }),
-    []
-  );
-  const ringMat = useMemo(
-    () =>
-      new THREE.MeshStandardMaterial({
-        color: new THREE.Color("#0A1526"),
-        metalness: 0.85,
-        roughness: 0.25,
-        emissive: new THREE.Color("#2EF2B5"),
-        emissiveIntensity: 0.9,
-      }),
-    []
-  );
-  const glowMat = useMemo(
-    () =>
-      new THREE.MeshBasicMaterial({
-        color: new THREE.Color("#2BC3FF"),
-        transparent: true,
-        opacity: 0.08,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-      }),
-    []
-  );
-
   useFrame((state, dt) => {
     const t = state.clock.getElapsedTime();
     const heroT = clamp01(progress / Math.max(0.001, heroRangeEnd));
@@ -432,10 +407,42 @@ function IntelligenceCore({
 
   return (
     <group>
-      <mesh ref={glow} geometry={glowGeo} material={glowMat} />
-      <mesh ref={outer} geometry={outerGeo} material={outerMat} />
-      <mesh ref={inner} geometry={innerGeo} material={innerMat} position={[0, 0, 0.02]} />
-      <mesh ref={ring} geometry={ringGeo} material={ringMat} rotation={[0.4, 0.2, 0]} />
+      <mesh ref={glow} geometry={glowGeo}>
+        <meshBasicMaterial
+          color={new THREE.Color("#2BC3FF")}
+          transparent
+          opacity={0.08}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
+      </mesh>
+      <mesh ref={outer} geometry={outerGeo}>
+        <meshStandardMaterial
+          color={new THREE.Color("#07111F")}
+          metalness={0.65}
+          roughness={0.22}
+          emissive={new THREE.Color("#061A22")}
+          emissiveIntensity={1.1}
+        />
+      </mesh>
+      <mesh ref={inner} geometry={innerGeo} position={[0, 0, 0.02]}>
+        <meshStandardMaterial
+          color={new THREE.Color("#081021")}
+          metalness={0.2}
+          roughness={0.18}
+          emissive={new THREE.Color("#2BC3FF")}
+          emissiveIntensity={1.6}
+        />
+      </mesh>
+      <mesh ref={ring} geometry={ringGeo} rotation={[0.4, 0.2, 0]}>
+        <meshStandardMaterial
+          color={new THREE.Color("#0A1526")}
+          metalness={0.85}
+          roughness={0.25}
+          emissive={new THREE.Color("#2EF2B5")}
+          emissiveIntensity={0.9}
+        />
+      </mesh>
     </group>
   );
 }
@@ -449,58 +456,61 @@ function EnergyGrid({
   progress: number;
   heroRangeEnd: number;
 }) {
-  const grid = useMemo(() => {
-    const size = 18;
-    const div = mode === "lite" ? 24 : 40;
-    const g = new THREE.GridHelper(size, div, "#2BC3FF", "#0F1E2A");
-    (g.material as THREE.Material).transparent = true;
-    (g.material as THREE.Material).opacity = mode === "lite" ? 0.2 : 0.28;
-    return g;
+  const nodesPivot = useRef<THREE.Group>(null);
+
+  const { gridDiv, nodeCount } = useMemo(() => {
+    return {
+      gridDiv: mode === "lite" ? 24 : 40,
+      nodeCount: mode === "lite" ? 26 : 72,
+    };
   }, [mode]);
 
-  const nodes = useMemo(() => {
-    const count = mode === "lite" ? 26 : 72;
+  const { grid, nodes } = useMemo(() => {
+    const size = 18;
+    const g = new THREE.GridHelper(size, gridDiv, "#2BC3FF", "#0F1E2A");
+    const gmat = g.material as THREE.Material;
+    gmat.transparent = true;
+    gmat.opacity = mode === "lite" ? 0.2 : 0.28;
+
     const geo = new THREE.SphereGeometry(0.03, 10, 10);
     const mat = new THREE.MeshBasicMaterial({
       color: new THREE.Color("#2EF2B5"),
       transparent: true,
-      opacity: 0.75,
+      opacity: mode === "lite" ? 0.55 : 0.75,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
     });
-    const inst = new THREE.InstancedMesh(geo, mat, count);
+    const inst = new THREE.InstancedMesh(geo, mat, nodeCount);
     const dummy = new THREE.Object3D();
-    for (let i = 0; i < count; i++) {
-      dummy.position.set((Math.random() - 0.5) * 12, 0, (Math.random() - 0.5) * 12);
+    for (let i = 0; i < nodeCount; i++) {
+      const x = (hash01(i, 41) - 0.5) * 12;
+      const z = (hash01(i, 47) - 0.5) * 12;
+      dummy.position.set(x, 0, z);
       dummy.updateMatrix();
       inst.setMatrixAt(i, dummy.matrix);
     }
-    return inst;
-  }, [mode]);
+    inst.instanceMatrix.needsUpdate = true;
 
-  useFrame((state, dt) => {
+    return { grid: g, nodes: inst };
+  }, [gridDiv, mode, nodeCount]);
+
+  useFrame((state) => {
     const t = state.clock.getElapsedTime();
     const heroT = clamp01(progress / Math.max(0.001, heroRangeEnd));
     const clarity = smoothstep(heroT);
-    const gmat = grid.material as THREE.Material;
-    gmat.opacity = THREE.MathUtils.lerp(
-      gmat.opacity,
-      mode === "lite" ? 0.18 : THREE.MathUtils.lerp(0.34, 0.22, clarity),
-      1 - Math.pow(0.001, dt)
-    );
-
-    const nmat = nodes.material as THREE.MeshBasicMaterial;
-    // Pulse feels "raw" at top and becomes stable.
-    const pulse = 0.55 + Math.sin(t * (mode === "lite" ? 0.9 : 1.2)) * (0.12 + (1 - clarity) * 0.08);
-    nmat.opacity = THREE.MathUtils.lerp(nmat.opacity, mode === "lite" ? 0.55 : pulse, 1 - Math.pow(0.001, dt));
-    nodes.rotation.y = Math.sin(t * 0.06) * 0.08;
-    nodes.position.y = -1.24 + Math.sin(t * 0.3) * 0.02;
+    const chaos = 1 - clarity;
+    const pivot = nodesPivot.current;
+    if (!pivot) return;
+    pivot.rotation.y = Math.sin(t * 0.06) * (0.06 + chaos * 0.05);
+    pivot.position.y = Math.sin(t * 0.3) * (0.012 + chaos * 0.018);
   });
 
   return (
     <group position={[0, -1.25, 0]} rotation={[-Math.PI / 2, 0, 0]}>
       <primitive object={grid} />
-      <primitive object={nodes} />
+      <group ref={nodesPivot}>
+        <primitive object={nodes} />
+      </group>
     </group>
   );
 }
@@ -562,6 +572,8 @@ function sampleHeroCamera(t01: number, mode: HeroPerfMode) {
     { pos: new THREE.Vector3(-0.55, 0.42, z + 0.15), lookAt: new THREE.Vector3(0.75, 0.1, 0.0), drift: 0.07 },
     { pos: new THREE.Vector3(-0.25, 0.28, z), lookAt: new THREE.Vector3(0.65, 0.08, 0.0), drift: 0.06 },
     { pos: new THREE.Vector3(-0.35, 0.46, z - 0.1), lookAt: new THREE.Vector3(0.5, 0.0, 0.0), drift: 0.05 },
+    { pos: new THREE.Vector3(-0.45, 0.38, z + 0.05), lookAt: new THREE.Vector3(0.62, 0.05, -0.08), drift: 0.045 },
+    { pos: new THREE.Vector3(-0.3, 0.34, z - 0.05), lookAt: new THREE.Vector3(0.58, 0.04, -0.05), drift: 0.04 },
   ];
 
   const n = keys.length;
@@ -590,5 +602,26 @@ function clamp01(v: number) {
 function pseudoRand(x: number) {
   const s = Math.sin(x * 12.9898) * 43758.5453;
   return s - Math.floor(s);
+}
+
+function hash01(i: number, salt: number) {
+  // Deterministic [0,1) — avoids impure RNG during render/memo.
+  const x = Math.sin(i * 12.9898 + salt * 78.233) * 43758.5453123;
+  return x - Math.floor(x);
+}
+
+function remapStoryProgress(p: number) {
+  // Make scroll progression feel like intentional “beats”, not linear time.
+  // Monotonic, mostly linear — but front-loaded so the hero evolves early,
+  // then the world keeps tightening as the story sections advance.
+  const x = clamp01(p);
+  const a = 0.12;
+  const b = 0.32;
+  const c = 0.62;
+
+  if (x <= a) return (x / a) * 0.34;
+  if (x <= b) return 0.34 + ((x - a) / (b - a)) * 0.28;
+  if (x <= c) return 0.62 + ((x - b) / (c - b)) * 0.22;
+  return 0.84 + ((x - c) / (1 - c)) * 0.16;
 }
 

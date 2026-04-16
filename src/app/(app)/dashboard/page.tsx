@@ -1,19 +1,44 @@
+import { redirect } from "next/navigation";
+
+import { listScenariosAction } from "@/app/(app)/dashboard/simulations/actions";
 import { ChartCard } from "@/components/charts/chart-card";
 import { ConsumptionInsightsModule } from "@/components/dashboard/consumption/consumption-insights";
 import {
   ContractComparison,
+  DecisionConfidenceStrip,
   EnergyAssetsSummary,
   KpiCard,
   LatestSimulations,
-  RecommendationCards,
+  ProductRecommendationCards,
   SavingsOpportunities,
   UpcomingInsights,
 } from "@/components/dashboard/overview/overview-blocks";
 import { MiniCostTrend, MiniKwhBars } from "@/components/dashboard/overview/overview-charts";
-import { buildOverviewMock } from "@/lib/dashboard/overview-mock";
+import { getDecisionEngineOutputForUser } from "@/lib/server/services/decision-engine-service";
+import { getDashboardOverviewData } from "@/lib/server/services/dashboard-overview-service";
+import { getMyProfile } from "@/lib/supabase/profile";
+import { getOrCreateMyPrimarySite } from "@/lib/supabase/site";
 
-export default function DashboardHomePage() {
-  const data = buildOverviewMock();
+export default async function DashboardHomePage() {
+  const { user, profile } = await getMyProfile();
+  if (!user) redirect("/");
+
+  const site = await getOrCreateMyPrimarySite();
+  const bundle = await getDashboardOverviewData({
+    userId: user.id,
+    profile,
+    site,
+  });
+  const { overview: data, meta } = bundle;
+
+  const scenarios = await listScenariosAction();
+  const decision = await getDecisionEngineOutputForUser({
+    userId: user.id,
+    profile,
+    site,
+    scenarios,
+    overviewBundle: bundle,
+  });
 
   return (
     <div className="grid gap-8">
@@ -24,11 +49,19 @@ export default function DashboardHomePage() {
             Hetkeseis ja järgmised parimad sammud.
           </h1>
           <p className="mt-3 max-w-3xl text-pretty text-base leading-relaxed text-foreground/70">
-            See vaade ühendab kuluhinnangu, lepingu kokkuvõtte, säästu võimalused ja
-            soovitused. Andmed on praegu realistlik mock, et UI oleks kohe valmis.
+            Ühendame turuvihjed, tarbimise eeldused, lepingu mudeli ja sinu salvestatud stsenaariumid üheks
+            prioriseeritud soovituste nimekirjaks — koos selgituste ja mõjuhinnangutega.
           </p>
+          {meta.marketNote || meta.consumptionNote ? (
+            <p className="mt-3 max-w-3xl text-pretty text-xs leading-relaxed text-foreground/55">
+              {meta.marketNote ? <span>{meta.marketNote} </span> : null}
+              {meta.consumptionNote ? <span>{meta.consumptionNote}</span> : null}
+            </p>
+          ) : null}
         </div>
       </div>
+
+      <DecisionConfidenceStrip decision={decision} />
 
       {/* KPI row */}
       <div className="grid gap-4 md:grid-cols-12">
@@ -44,7 +77,7 @@ export default function DashboardHomePage() {
           className="md:col-span-3"
           label="Säästu potentsiaal"
           value={`${data.kpis.estMonthlySavingsPotential.eur.toFixed(2)} €`}
-          hint="Summa 3 parimast võimalusest (mock)."
+          hint="Turuhinna vahest + lepingu/STS eeldused."
           trend="Võimalik"
           variant="green"
         />
@@ -58,9 +91,9 @@ export default function DashboardHomePage() {
         />
         <KpiCard
           className="md:col-span-3"
-          label="Soovitusi"
-          value={`${data.recommendations.length}`}
-          hint="Top prioriteedid on esile tõstetud."
+          label="Aktiivseid soovitusi"
+          value={`${decision.recommendations.length}`}
+          hint="Järjestatud mõju ja kindluse järgi."
           trend="Täna"
           variant="neutral"
         />
@@ -70,14 +103,14 @@ export default function DashboardHomePage() {
       <div className="grid gap-4 md:grid-cols-12">
         <ChartCard
           title="Kuukulu trend (7 päeva)"
-          description="Päevane kulu (mock) — annab kiiresti suuna."
+          description="Päevane kulu — kooskõlas tarbimise ja keskmise all-in hinnaga."
           className="md:col-span-6"
         >
           <MiniCostTrend data={data.charts.dailyCost} />
         </ChartCard>
         <ChartCard
           title="Tarbimine (7 päeva)"
-          description="kWh päevas (mock) — baasjoon enne optimeerimist."
+          description="kWh päevas (Estfeed/mock seeria)."
           className="md:col-span-6"
         >
           <MiniKwhBars data={data.charts.dailyKwh} />
@@ -94,7 +127,7 @@ export default function DashboardHomePage() {
       {/* Rec cards + simulations */}
       <div className="grid gap-4 md:grid-cols-12">
         <div className="md:col-span-7">
-          <RecommendationCards items={data.recommendations} />
+          <ProductRecommendationCards items={decision.recommendations} />
         </div>
         <div className="md:col-span-5">
           <LatestSimulations items={data.latestSimulations} />
@@ -113,17 +146,20 @@ export default function DashboardHomePage() {
 
       <div className="grid gap-4">
         <div>
-          <p className="text-xs font-medium tracking-wide text-foreground/60">
-            Tarbimise insight
-          </p>
+          <p className="text-xs font-medium tracking-wide text-foreground/60">Tarbimise ülevaade</p>
           <p className="mt-2 max-w-3xl text-sm text-foreground/65">
-            Kui sul pole veel mõõteandmeid, saad siiski eeldustega tuvastada
-            peamised kulu draiverid ja kiire säästu kohad.
+            Allpool saad profiili täpsustada. Väärtused tulevad samast kontekstist, mida kasutavad ülevaade ja
+            soovitused.
           </p>
         </div>
-        <ConsumptionInsightsModule />
+        <ConsumptionInsightsModule
+          serverBootstrap={{
+            monthlyKwh: data.kpis.estMonthlyKwh,
+            avgAllIn: data.kpis.estAvgPriceEurPerKwh,
+            footnote: `${meta.consumptionNote ?? ""} ${decision.consumption.framingNoteEt}`.trim(),
+          }}
+        />
       </div>
     </div>
   );
 }
-

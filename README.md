@@ -27,6 +27,23 @@ cp .env.example .env.local
 npm run dev
 ```
 
+## API architecture (integrations)
+
+External providers are accessed **only from the server**: adapters in `src/lib/api/adapters/`, validated env in `src/lib/api/env.ts` (`getApiEnv()` — do **not** import from client components), and TTL caching via `src/lib/api/cache/memory-cache.ts`.
+
+| Integration | Adapter | Live-ready? | Wired into product |
+| --- | --- | --- | --- |
+| Nord Pool day-ahead | `nord-pool.ts` | **Mock/hybrid yes; live parser TODO** (configure real Data Portal contract) | Dashboard overview, contract hints, reports, recommendation context |
+| Estfeed / Datahub | `estfeed.ts` | **Structure + mock/hybrid; OAuth live TODO** | Dashboard consumption series, overview copy, onboarding “data connection” |
+| PVGIS | `pvgis.ts` | **Yes** (public API; stays server-side) | Simulations page (solar hint panel), `runSolarSimulationServer` service |
+| Open-Meteo | `open-meteo.ts` | **Yes** | Solar / heat-pump oriented services (e.g. `investment-simulation-service`) |
+| Address | `address.ts` | Mock yes; **Maa-amet/In-ADS parser TODO** | `/api/integrations/address-search`, onboarding autocomplete |
+| Business registry | `business-registry.ts` | Mock yes; **RIK live TODO** | `/api/integrations/business-lookup`, onboarding |
+
+**Switching mock → live:** set `ENERGIAPILOOT_API_MODE=hybrid` (recommended) or `live`, then fill the provider-specific env vars in `.env.example`. Hybrid keeps the UI working if a live call fails.
+
+**Product-facing orchestration** lives in `src/lib/server/services/` (e.g. `dashboard-overview-service`, `contract-analysis-service`, `recommendation-context-service`, `report-context-service`, `solar-hints-service`).
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started

@@ -5,11 +5,14 @@ import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getOrCreateMyPrimarySite } from "@/lib/supabase/site";
 import { getMyEntitlements } from "@/lib/billing/server";
-import { buildOverviewMock } from "@/lib/dashboard/overview-mock";
-import { analyzeContracts } from "@/lib/contracts/model";
-import { buildConsumptionInsights } from "@/lib/consumption/insights";
+import { buildDomainReportSections } from "@/lib/domain/reports/sections";
 import { buildReportPayload } from "@/lib/reports/generate";
+import { getDecisionEngineOutputForUser } from "@/lib/server/services/decision-engine-service";
+import { buildIntegratedReportContext } from "@/lib/server/services/report-context-service";
+import { getMyProfile } from "@/lib/supabase/profile";
 import type { ReportPayload, ReportType, ReportStatus } from "@/lib/reports/types";
+import type { SimulationType } from "@/lib/simulations/types";
+import type { ScenarioDTO } from "@/app/(app)/dashboard/simulations/actions";
 
 export type ReportDTO = {
   id: string;
@@ -69,37 +72,7 @@ export async function generateReportAction(input: {
     throw new Error("Sinu pakett ei sisalda seda raportit.");
   }
 
-  // MVP report context: combine existing models. Replace with real DB reads later.
-  const overview = buildOverviewMock();
-  const contract = analyzeContracts({
-    monthlyKwh: overview.kpis.estMonthlyKwh,
-    pattern: { peakShare: 0.38, peakPriceMultiplier: 1.28 },
-    current: {
-      providerName: overview.contract.provider,
-      type: overview.contract.type,
-      baseFeeEurPerMonth: overview.contract.baseFeeEurPerMonth,
-      energyPriceEurPerKwh: overview.contract.energyPriceEurPerKwh,
-      networkFeeEurPerKwh: overview.contract.networkFeeEurPerKwh,
-      vatRate: overview.contract.vatRate,
-    },
-    assumptions: { spotVolatility: 0.55, hybridSpotShare: 0.55 },
-  });
-  const usage = buildConsumptionInsights({
-    monthlyKwh: overview.kpis.estMonthlyKwh,
-    avgAllInEurPerKwh: overview.kpis.estAvgPriceEurPerKwh,
-    dayShare: 0.58,
-    weekendShare: 0.26,
-    baseLoadW: 220,
-    devices: {
-      ev: true,
-      boiler: true,
-      heat_pump: false,
-      cooling: false,
-      commercial_refrigeration: false,
-      machinery: false,
-    },
-    peakHourDependency: 0.55,
-  });
+  const { profile } = await getMyProfile();
 
   const { data: scenarios } = await supabase
     .from("saved_scenarios")
@@ -109,20 +82,25 @@ export async function generateReportAction(input: {
     .order("updated_at", { ascending: false })
     .limit(10);
 
-  const ctx = {
+  const scenarioRows =
+    (scenarios ?? []) as {
+      id: string;
+      simulation_type: SimulationType;
+      name: string;
+      config: Record<string, unknown> | null;
+    }[];
+
+  const ctx = await buildIntegratedReportContext({
+    userId: auth.user.id,
+    profile,
     site,
-    audience: "household" as const,
-    overview,
-    contract,
-    usage,
-    scenarios:
-      (scenarios as any[])?.map((s) => ({
-        id: s.id,
-        simulation_type: s.simulation_type,
-        name: s.name,
-        config: s.config ?? {},
-      })) ?? [],
-  };
+    scenarios: scenarioRows.map((s) => ({
+      id: s.id,
+      simulation_type: s.simulation_type,
+      name: s.name,
+      config: s.config ?? {},
+    })),
+  });
 
   const title =
     input.report_type === "monthly_energy_summary"
@@ -131,9 +109,30 @@ export async function generateReportAction(input: {
         ? "Lepingu riski kokkuvõte"
         : input.report_type === "savings_opportunity_summary"
           ? "Säästu võimaluste kokkuvõte"
-          : "Investeeringu simulatsiooni raport";
+          : "Investeeringu aruanne";
 
   const payload = buildReportPayload(input.report_type, ctx);
+
+  const scenariosForEngine: ScenarioDTO[] = scenarioRows.map((s) => ({
+    id: s.id,
+    site_id: site.id,
+    simulation_type: s.simulation_type,
+    name: s.name,
+    description: null,
+    config: s.config ?? {},
+    is_favorite: false,
+    created_at: "",
+    updated_at: "",
+  }));
+
+  const decision = await getDecisionEngineOutputForUser({
+    userId: auth.user.id,
+    profile,
+    site,
+    scenarios: scenariosForEngine,
+  });
+  const domainSections = buildDomainReportSections(input.report_type, decision);
+  payload.sections = [...domainSections, ...payload.sections];
 
   const { data, error } = await supabase
     .from("reports")

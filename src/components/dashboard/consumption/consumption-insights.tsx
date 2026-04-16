@@ -16,9 +16,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Panel, PanelDescription, PanelHeader, PanelTitle } from "@/components/ui/panel";
-import { cn } from "@/lib/utils";
+import { LinkButton } from "@/components/ui/link-button";
+import { PremiumGate } from "@/components/product/premium-gate";
 import {
   buildConsumptionInsights,
+  type ConsumptionInsights,
   type ConsumptionProfileInputs,
   type MajorDeviceKey,
 } from "@/lib/consumption/insights";
@@ -34,17 +36,23 @@ function severityBadge(sev: "info" | "warn" | "high") {
 }
 
 const DEVICE_LABELS: Record<MajorDeviceKey, string> = {
-  ev: "EV",
-  boiler: "Boiler",
+  ev: "Elektriauto",
+  boiler: "Sooja vee boiler",
   heat_pump: "Soojuspump",
   cooling: "Jahutus",
-  commercial_refrigeration: "Külmutus (äri)",
-  machinery: "Masinad",
+  commercial_refrigeration: "Külma ahel (äri)",
+  machinery: "Tööpink / masinad",
 };
 
-export function ConsumptionInsightsModule() {
-  const [monthlyKwh, setMonthlyKwh] = useState(420);
-  const [avgAllIn, setAvgAllIn] = useState(0.19);
+export function ConsumptionInsightsModule({
+  serverBootstrap,
+  publicExperience = false,
+}: {
+  serverBootstrap?: { monthlyKwh: number; avgAllIn: number; footnote?: string };
+  publicExperience?: boolean;
+}) {
+  const [monthlyKwh, setMonthlyKwh] = useState(serverBootstrap?.monthlyKwh ?? 420);
+  const [avgAllIn, setAvgAllIn] = useState(serverBootstrap?.avgAllIn ?? 0.19);
   const [dayShare, setDayShare] = useState(0.58);
   const [weekendShare, setWeekendShare] = useState(0.26);
   const [baseLoadW, setBaseLoadW] = useState(220);
@@ -82,9 +90,12 @@ export function ConsumptionInsightsModule() {
             <PanelDescription>
               Seadista lihtsad eeldused. See töötab ka siis, kui sul pole veel
               täpseid mõõteandmeid.
+              {serverBootstrap?.footnote ? (
+                <span className="mt-2 block text-[11px] text-foreground/50">{serverBootstrap.footnote}</span>
+              ) : null}
             </PanelDescription>
           </div>
-          <Badge variant="neutral">MVP</Badge>
+          <Badge variant="neutral">Hinnang</Badge>
         </PanelHeader>
         <div className="px-6 pb-6">
           <div className="grid gap-4">
@@ -200,204 +211,251 @@ export function ConsumptionInsightsModule() {
       </Panel>
 
       <div className="grid gap-4 lg:col-span-7">
-        <Panel className="overflow-hidden">
+        {publicExperience ? (
+          <PremiumGate
+            className="rounded-3xl"
+            title="Täielik tarbimise sügavus"
+            description="Premium avab täisgraafiku, draiverid, anomaaliad ja säästuplaani — pluss PDF eksport tulevikus. Seni: demo avamine või osta eelvaade."
+          >
+            <ConsumptionDeepPanels
+              insights={insights}
+              monthlyKwh={monthlyKwh}
+              avgAllIn={avgAllIn}
+              dayShare={dayShare}
+              publicExperience
+            />
+          </PremiumGate>
+        ) : (
+          <ConsumptionDeepPanels
+            insights={insights}
+            monthlyKwh={monthlyKwh}
+            avgAllIn={avgAllIn}
+            dayShare={dayShare}
+            publicExperience={false}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ConsumptionDeepPanels({
+  insights,
+  monthlyKwh,
+  avgAllIn,
+  dayShare,
+  publicExperience,
+}: {
+  insights: ConsumptionInsights;
+  monthlyKwh: number;
+  avgAllIn: number;
+  dayShare: number;
+  publicExperience: boolean;
+}) {
+  return (
+    <>
+      <Panel className="overflow-hidden">
+        <PanelHeader>
+          <div>
+            <PanelTitle>Visuaalne tarbimismuster</PanelTitle>
+            <PanelDescription>Ööpäevaring — mudelitud profiil (kuni tulevad mõõdud).</PanelDescription>
+          </div>
+          <Badge variant="cyan">{insights.kpis.peakDependencyScore}/100 tipu-sõltuvus</Badge>
+        </PanelHeader>
+        <div className="px-6 pb-6">
+          <div className="h-64 w-full rounded-2xl border border-border/60 bg-background/30 p-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={insights.pattern} margin={{ top: 10, right: 10, left: -22, bottom: 0 }}>
+                <CartesianGrid stroke="oklch(1 0 0 / 6%)" vertical={false} />
+                <XAxis
+                  dataKey="hour"
+                  tickLine={false}
+                  axisLine={false}
+                  interval={3}
+                  tick={{ fill: "oklch(1 0 0 / 55%)", fontSize: 11 }}
+                />
+                <YAxis tickLine={false} axisLine={false} tick={{ fill: "oklch(1 0 0 / 45%)", fontSize: 11 }} />
+                <Tooltip
+                  wrapperStyle={{ outline: "none" }}
+                  content={({ active, payload, label }) => {
+                    if (!active || !payload?.length) return null;
+                    const v = payload[0]?.value as number;
+                    return (
+                      <div className="rounded-xl border border-border/60 bg-background/80 px-3 py-2 text-xs text-foreground/85 shadow-[var(--shadow-elev-2)] backdrop-blur-md">
+                        <p className="font-medium">{label}</p>
+                        <p className="mt-1">{v.toFixed(2)} kWh</p>
+                      </div>
+                    );
+                  }}
+                />
+                <defs>
+                  <linearGradient id="epCons" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="oklch(0.82 0.16 145 / 52%)" />
+                    <stop offset="100%" stopColor="oklch(0.82 0.16 145 / 6%)" />
+                  </linearGradient>
+                </defs>
+                <Area
+                  type="monotone"
+                  dataKey="kwh"
+                  stroke="oklch(0.82 0.16 145 / 75%)"
+                  strokeWidth={2}
+                  fill="url(#epCons)"
+                  dot={false}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl border border-border/50 bg-card/25 p-4">
+              <p className="text-xs text-foreground/55">Kuukulu (hinnang)</p>
+              <p className="mt-2 font-mono text-xl font-semibold">{fmtEur(insights.kpis.estMonthlyCostEur)}</p>
+              <p className="mt-1 text-xs text-foreground/55">
+                {monthlyKwh} kWh • {avgAllIn.toFixed(3)} €/kWh
+              </p>
+            </div>
+            <div className="rounded-2xl border border-border/50 bg-card/25 p-4">
+              <p className="text-xs text-foreground/55">Baas-koormus</p>
+              <p className="mt-2 font-mono text-xl font-semibold">~{Math.round(insights.kpis.estMonthlyBaseKwh)} kWh</p>
+              <p className="mt-1 text-xs text-foreground/55">{Math.round(insights.kpis.baseLoadShare * 100)}% kogu tarbimisest</p>
+            </div>
+            <div className="rounded-2xl border border-border/50 bg-card/25 p-4">
+              <p className="text-xs text-foreground/55">Päev vs öö</p>
+              <p className="mt-2 font-mono text-xl font-semibold">
+                {Math.round(dayShare * 100)}/{100 - Math.round(dayShare * 100)}
+              </p>
+              <p className="mt-1 text-xs text-foreground/55">%</p>
+            </div>
+          </div>
+        </div>
+      </Panel>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <Panel>
           <PanelHeader>
             <div>
-              <PanelTitle>Visuaalne tarbimismuster</PanelTitle>
-              <PanelDescription>24h profiil (MVP hinnang).</PanelDescription>
+              <PanelTitle>Kulu draiverid</PanelTitle>
+              <PanelDescription>Kust kulud tõenäoliselt tulevad.</PanelDescription>
             </div>
-            <Badge variant="cyan">{insights.kpis.peakDependencyScore}/100 tipu-sõltuvus</Badge>
           </PanelHeader>
           <div className="px-6 pb-6">
-            <div className="h-64 w-full rounded-2xl border border-border/60 bg-background/30 p-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={insights.pattern} margin={{ top: 10, right: 10, left: -22, bottom: 0 }}>
-                  <CartesianGrid stroke="oklch(1 0 0 / 6%)" vertical={false} />
-                  <XAxis
-                    dataKey="hour"
-                    tickLine={false}
-                    axisLine={false}
-                    interval={3}
-                    tick={{ fill: "oklch(1 0 0 / 55%)", fontSize: 11 }}
-                  />
-                  <YAxis tickLine={false} axisLine={false} tick={{ fill: "oklch(1 0 0 / 45%)", fontSize: 11 }} />
-                  <Tooltip
-                    wrapperStyle={{ outline: "none" }}
-                    content={({ active, payload, label }) => {
-                      if (!active || !payload?.length) return null;
-                      const v = payload[0]?.value as number;
-                      return (
-                        <div className="rounded-xl border border-border/60 bg-background/80 px-3 py-2 text-xs text-foreground/85 shadow-[var(--shadow-elev-2)] backdrop-blur-md">
-                          <p className="font-medium">{label}</p>
-                          <p className="mt-1">{v.toFixed(2)} kWh</p>
-                        </div>
-                      );
-                    }}
-                  />
-                  <defs>
-                    <linearGradient id="epCons" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="oklch(0.82 0.16 145 / 52%)" />
-                      <stop offset="100%" stopColor="oklch(0.82 0.16 145 / 6%)" />
-                    </linearGradient>
-                  </defs>
-                  <Area
-                    type="monotone"
-                    dataKey="kwh"
-                    stroke="oklch(0.82 0.16 145 / 75%)"
-                    strokeWidth={2}
-                    fill="url(#epCons)"
-                    dot={false}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+            <div className="space-y-3">
+              {insights.drivers.slice(0, 6).map((d) => (
+                <div key={d.key} className="rounded-2xl border border-border/50 bg-card/25 p-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="text-sm font-semibold tracking-tight">{d.label}</p>
+                    <Badge variant="neutral">{fmtEur(d.eurMonthly)}</Badge>
+                  </div>
+                  <p className="mt-2 text-xs text-foreground/55">
+                    ~{Math.round(d.kwhMonthly)} kWh/kuu • {d.note}
+                  </p>
+                </div>
+              ))}
             </div>
-
-            <div className="mt-4 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border border-border/50 bg-card/25 p-4">
-                <p className="text-xs text-foreground/55">Kuukulu (hinnang)</p>
-                <p className="mt-2 font-mono text-xl font-semibold">
-                  {fmtEur(insights.kpis.estMonthlyCostEur)}
-                </p>
-                <p className="mt-1 text-xs text-foreground/55">
-                  {monthlyKwh} kWh • {avgAllIn.toFixed(3)} €/kWh
-                </p>
-              </div>
-              <div className="rounded-2xl border border-border/50 bg-card/25 p-4">
-                <p className="text-xs text-foreground/55">Baas-koormus</p>
-                <p className="mt-2 font-mono text-xl font-semibold">
-                  ~{Math.round(insights.kpis.estMonthlyBaseKwh)} kWh
-                </p>
-                <p className="mt-1 text-xs text-foreground/55">
-                  {Math.round(insights.kpis.baseLoadShare * 100)}% tarbimisest
-                </p>
-              </div>
-              <div className="rounded-2xl border border-border/50 bg-card/25 p-4">
-                <p className="text-xs text-foreground/55">Päev vs öö</p>
-                <p className="mt-2 font-mono text-xl font-semibold">
-                  {Math.round(dayShare * 100)}/{100 - Math.round(dayShare * 100)}
-                </p>
-                <p className="mt-1 text-xs text-foreground/55">%</p>
-              </div>
+            <div className="mt-4 rounded-2xl border border-border/40 bg-card/20 p-4">
+              <p className="text-sm text-foreground/70">
+                Need on hinnangud. Kui ühendad päris mõõteandmed, muutuvad draiverid automaatselt täpsemaks.
+              </p>
             </div>
           </div>
         </Panel>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <Panel>
-            <PanelHeader>
-              <div>
-                <PanelTitle>Kulu draiverid</PanelTitle>
-                <PanelDescription>Kust kulud tõenäoliselt tulevad.</PanelDescription>
-              </div>
-            </PanelHeader>
-            <div className="px-6 pb-6">
-              <div className="space-y-3">
-                {insights.drivers.slice(0, 6).map((d) => (
-                  <div
-                    key={d.key}
-                    className="rounded-2xl border border-border/50 bg-card/25 p-4"
-                  >
-                    <div className="flex items-center justify-between gap-4">
-                      <p className="text-sm font-semibold tracking-tight">{d.label}</p>
-                      <Badge variant="neutral">{fmtEur(d.eurMonthly)}</Badge>
-                    </div>
-                    <p className="mt-2 text-xs text-foreground/55">
-                      ~{Math.round(d.kwhMonthly)} kWh/kuu • {d.note}
-                    </p>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-4 rounded-2xl border border-border/40 bg-card/20 p-4">
-                <p className="text-sm text-foreground/70">
-                  Need on hinnangud. Kui ühendad päris mõõteandmed, muutuvad
-                  draiverid automaatselt täpsemaks.
-                </p>
-              </div>
+        <Panel>
+          <PanelHeader>
+            <div>
+              <PanelTitle>Lipud ja võimalused</PanelTitle>
+              <PanelDescription>Anomaaliad + kiire sääst.</PanelDescription>
             </div>
-          </Panel>
-
-          <Panel>
-            <PanelHeader>
-              <div>
-                <PanelTitle>Lipud ja võimalused</PanelTitle>
-                <PanelDescription>Anomaaliad + kiire sääst.</PanelDescription>
-              </div>
+            {publicExperience ? (
+              <LinkButton href="/pricing#avamine" variant="outline">
+                Täissignaalid
+              </LinkButton>
+            ) : (
               <Link href="/dashboard/recommendations">
                 <Button variant="outline">Soovitused</Button>
               </Link>
-            </PanelHeader>
-            <div className="px-6 pb-6">
-              <div className="space-y-3">
-                {insights.anomalies.map((a, idx) => {
-                  const b = severityBadge(a.severity);
-                  return (
-                    <div key={idx} className="rounded-2xl border border-border/50 bg-card/25 p-4">
-                      <div className="flex items-center justify-between gap-4">
-                        <p className="text-sm font-semibold tracking-tight">{a.title}</p>
-                        <Badge variant={b.variant}>{b.label}</Badge>
-                      </div>
-                      <p className="mt-2 text-sm text-foreground/65">{a.description}</p>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div className="mt-4">
-                <p className="text-xs font-medium tracking-wide text-foreground/60">
-                  Säästu võimalused (top)
-                </p>
-                <div className="mt-3 space-y-2">
-                  {insights.opportunities.map((o) => (
-                    <div key={o.id} className="flex items-start justify-between gap-4 rounded-2xl border border-border/50 bg-card/25 p-4">
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold tracking-tight">{o.title}</p>
-                        <p className="mt-1 text-xs text-foreground/55">
-                          Usaldus: {o.confidence} • {o.rationale}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-mono text-lg font-semibold text-[oklch(0.92_0.06_145)]">
-                          {fmtEur(o.estMonthlyEur)}
-                        </p>
-                        <p className="text-[11px] text-foreground/55">€/kuu</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </Panel>
-        </div>
-
-        <Panel className="overflow-hidden">
-          <PanelHeader>
-            <div>
-              <PanelTitle>{insights.recommendations.title}</PanelTitle>
-              <PanelDescription>Lihtsas keeles, et saaks kohe tegutseda.</PanelDescription>
-            </div>
-            <Badge variant="green">Selge kokkuvõte</Badge>
+            )}
           </PanelHeader>
           <div className="px-6 pb-6">
-            <ul className="space-y-2 text-sm text-foreground/70">
-              {insights.recommendations.bullets.map((b, idx) => (
-                <li key={idx}>• {b}</li>
-              ))}
-            </ul>
-            <div className="mt-5 flex flex-wrap items-center gap-2">
-              <Button
-                variant="gradient"
-                onClick={() => alert("Salvestamine lisandub koos stsenaariumidega.")}
-              >
-                Salvesta profiil
-              </Button>
-              <Link href="/dashboard/contracts">
-                <Button variant="outline">Mine lepinguanalüüsi</Button>
-              </Link>
+            <div className="space-y-3">
+              {insights.anomalies.map((a, idx) => {
+                const b = severityBadge(a.severity);
+                return (
+                  <div key={idx} className="rounded-2xl border border-border/50 bg-card/25 p-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <p className="text-sm font-semibold tracking-tight">{a.title}</p>
+                      <Badge variant={b.variant}>{b.label}</Badge>
+                    </div>
+                    <p className="mt-2 text-sm text-foreground/65">{a.description}</p>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="mt-4">
+              <p className="text-xs font-medium tracking-wide text-foreground/60">Säästu võimalused (top)</p>
+              <div className="mt-3 space-y-2">
+                {insights.opportunities.map((o) => (
+                  <div
+                    key={o.id}
+                    className="flex items-start justify-between gap-4 rounded-2xl border border-border/50 bg-card/25 p-4"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold tracking-tight">{o.title}</p>
+                      <p className="mt-1 text-xs text-foreground/55">
+                        Usaldus: {o.confidence} • {o.rationale}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-mono text-lg font-semibold text-[oklch(0.92_0.06_145)]">{fmtEur(o.estMonthlyEur)}</p>
+                      <p className="text-[11px] text-foreground/55">€/kuu</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </Panel>
       </div>
-    </div>
+
+      <Panel className="overflow-hidden">
+        <PanelHeader>
+          <div>
+            <PanelTitle>{insights.recommendations.title}</PanelTitle>
+            <PanelDescription>Lihtsas keeles, et saaks kohe tegutseda.</PanelDescription>
+          </div>
+          <Badge variant="green">Selge kokkuvõte</Badge>
+        </PanelHeader>
+        <div className="px-6 pb-6">
+          <ul className="space-y-2 text-sm text-foreground/70">
+            {insights.recommendations.bullets.map((b, idx) => (
+              <li key={idx}>• {b}</li>
+            ))}
+          </ul>
+          <div className="mt-5 flex flex-wrap items-center gap-2">
+            {publicExperience ? (
+              <>
+                <LinkButton href="/pricing#avamine" variant="gradient">
+                  Ava täielik plaan + PDF (tulekul)
+                </LinkButton>
+                <LinkButton href="/leping" variant="outline">
+                  Võrdle lepingut
+                </LinkButton>
+              </>
+            ) : (
+              <>
+                <Button variant="gradient" onClick={() => alert("Salvestamine lisandub koos stsenaariumidega.")}>
+                  Salvesta profiil
+                </Button>
+                <Link href="/dashboard/contracts">
+                  <Button variant="outline">Mine lepinguanalüüsi</Button>
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
+      </Panel>
+    </>
   );
 }
 

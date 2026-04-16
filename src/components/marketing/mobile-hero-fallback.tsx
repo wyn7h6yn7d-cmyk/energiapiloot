@@ -18,9 +18,9 @@ export function MobileHeroFallback({ label }: { label?: string }) {
         </div>
 
         <div className="mt-6">
-          <p className="text-sm font-semibold tracking-tight">Lightning Intelligence Core</p>
+          <p className="text-sm font-semibold tracking-tight">Kerge, kuid tähendusrikas</p>
           <p className="mt-2 text-sm text-foreground/65">
-            Kergem renderdus, sama lugu. Tekst jääb alati loetavaks ja scroll sujuvaks.
+            Vähem visuaalset koormust, sama sõnum. Tekst püsib loetav ja kerimine sujuv ka väiksematel ekraanidel.
           </p>
         </div>
 

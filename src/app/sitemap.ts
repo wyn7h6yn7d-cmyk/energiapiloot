@@ -15,12 +15,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     [
       { path: "/", priority: 1, changeFrequency: "weekly" },
       { path: "/pricing", priority: 0.9, changeFrequency: "monthly" },
+      { path: "/leping", priority: 0.85, changeFrequency: "monthly" },
+      { path: "/tarbimine", priority: 0.85, changeFrequency: "monthly" },
+      { path: "/simulatsioonid", priority: 0.85, changeFrequency: "monthly" },
       { path: "/security", priority: 0.7, changeFrequency: "monthly" },
       { path: "/legal/privacy", priority: 0.5, changeFrequency: "yearly" },
       { path: "/legal/terms", priority: 0.5, changeFrequency: "yearly" },
       { path: "/legal/cookies", priority: 0.5, changeFrequency: "yearly" },
-      { path: "/login", priority: 0.3, changeFrequency: "yearly" },
-      { path: "/register", priority: 0.3, changeFrequency: "yearly" },
     ];
 
   return routes.map((r) => ({

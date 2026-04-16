@@ -1,37 +1,34 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { createSupabaseMiddlewareClient } from "@/lib/supabase/middleware";
+/**
+ * Public-first product: legacy account URLs redirect home (see `src/legacy/` for archived UI).
+ * Future: Stripe success may set `ep_unlock` cookie via /api/checkout/complete.
+ */
+const LEGACY_AUTH = ["/login", "/register", "/forgot-password", "/reset-password"] as const;
+const LEGACY_APP = ["/dashboard", "/onboarding"] as const;
 
-const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password"] as const;
-const PROTECTED_PREFIXES = ["/dashboard", "/onboarding"] as const;
-
-export async function middleware(req: NextRequest) {
-  const { supabase, res } = createSupabaseMiddlewareClient(req);
-  const { data } = await supabase.auth.getUser();
-  const user = data.user;
-
+export function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname;
 
-  const isAuthRoute = AUTH_ROUTES.some((p) => pathname === p);
-  const isProtected = PROTECTED_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`));
-
-  if (isProtected && !user) {
-    const url = req.nextUrl.clone();
-    url.pathname = "/login";
-    url.searchParams.set("next", pathname);
-    return NextResponse.redirect(url);
+  if (LEGACY_AUTH.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
+    return NextResponse.redirect(new URL("/", req.url));
   }
 
-  if (isAuthRoute && user) {
-    const url = req.nextUrl.clone();
-    url.pathname = "/dashboard";
-    return NextResponse.redirect(url);
+  if (LEGACY_APP.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
+    return NextResponse.redirect(new URL("/", req.url));
   }
 
-  return res;
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/onboarding", "/login", "/register", "/forgot-password", "/reset-password"],
+  matcher: [
+    "/dashboard/:path*",
+    "/onboarding",
+    "/onboarding/:path*",
+    "/login",
+    "/register",
+    "/forgot-password",
+    "/reset-password",
+  ],
 };
-

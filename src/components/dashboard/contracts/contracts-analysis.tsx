@@ -16,8 +16,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Panel, PanelDescription, PanelHeader, PanelTitle } from "@/components/ui/panel";
+import { LinkButton } from "@/components/ui/link-button";
+import { PremiumGate } from "@/components/product/premium-gate";
 import { cn } from "@/lib/utils";
 import { analyzeContracts, type AnalysisInputs, type ContractType } from "@/lib/contracts/model";
+import type { ConsumptionProfileInputs } from "@/lib/consumption/insights";
+import { buildContractIntelligence } from "@/lib/domain/contracts/intelligence";
+import { buildConsumptionIntelligence } from "@/lib/domain/consumption/intelligence";
+import { assessDataQuality } from "@/lib/domain/scoring/confidence";
+import type { ContractMarketHints } from "@/lib/integrations/contract-market-hints";
 
 function fmtEur(n: number) {
   const sign = n < 0 ? "−" : "";
@@ -30,19 +37,28 @@ function riskLabel(score: number) {
   return { label: "Kõrge", variant: "warm" as const };
 }
 
-export function ContractsAnalysisModule() {
+export function ContractsAnalysisModule({
+  marketHints,
+  userType = "household",
+  publicExperience = false,
+}: {
+  marketHints?: ContractMarketHints | null;
+  userType?: "household" | "business";
+  /** When true, deep analysis + charts are premium-gated; CTAs point to public unlock flow. */
+  publicExperience?: boolean;
+}) {
   const [providerName, setProviderName] = useState("ElektraNord");
   const [type, setType] = useState<ContractType>("spot");
   const [monthlyKwh, setMonthlyKwh] = useState(420);
   const [baseFee, setBaseFee] = useState(3.49);
-  const [energyPrice, setEnergyPrice] = useState(0.118);
+  const [energyPrice, setEnergyPrice] = useState(marketHints?.impliedSpotEnergyEurPerKwh ?? 0.118);
   const [networkFee, setNetworkFee] = useState(0.072);
   const [vatRate, setVatRate] = useState(0.22);
 
   const [peakShare, setPeakShare] = useState(0.38);
   const [peakMult, setPeakMult] = useState(1.28);
 
-  const [spotVol, setSpotVol] = useState(0.55);
+  const [spotVol, setSpotVol] = useState(marketHints?.suggestedSpotVolatility ?? 0.55);
   const [hybridSpotShare, setHybridSpotShare] = useState(0.55);
 
   const inputs: AnalysisInputs = useMemo(
@@ -84,6 +100,46 @@ export function ContractsAnalysisModule() {
   const currentRisk = riskLabel(analysis.current.riskScore);
   const best = analysis.recommendation;
 
+  const consumptionFormRaw: ConsumptionProfileInputs = useMemo(
+    () => ({
+      monthlyKwh: Math.max(0, monthlyKwh),
+      avgAllInEurPerKwh: Math.max(0.01, (energyPrice + networkFee) * (1 + vatRate)),
+      dayShare: 0.58,
+      weekendShare: 0.26,
+      baseLoadW: 220,
+      devices: {
+        ev: false,
+        boiler: true,
+        heat_pump: false,
+        cooling: false,
+        commercial_refrigeration: userType === "business",
+        machinery: false,
+      },
+      peakHourDependency: Math.min(0.9, Math.max(0.1, peakShare)),
+    }),
+    [energyPrice, monthlyKwh, networkFee, peakShare, userType, vatRate]
+  );
+
+  const dataQ = useMemo(
+    () => assessDataQuality({ hasMeteredConsumption: false, meteringPending: false, monthlyKwhModeled: true }),
+    []
+  );
+  const consIntel = useMemo(
+    () => buildConsumptionIntelligence(consumptionFormRaw, dataQ, userType === "business" ? "office" : "other"),
+    [consumptionFormRaw, dataQ, userType]
+  );
+
+  const contractIntel = useMemo(
+    () =>
+      buildContractIntelligence(inputs, {
+        peakDependency0to100: consIntel.profile.kpis.peakDependencyScore,
+        flexibility0to100: consIntel.flexibilityScore.score0to100,
+        marketVolatility01: Math.min(1, Math.max(0, spotVol)),
+        userType,
+      }),
+    [consIntel, inputs, spotVol, userType]
+  );
+
   const chartData = analysis.scenarios
     .filter((s) => s.label !== "Praegune")
     .map((s) => ({
@@ -102,10 +158,10 @@ export function ContractsAnalysisModule() {
             <div>
               <PanelTitle>Praegune leping</PanelTitle>
               <PanelDescription>
-                Sisesta kiirelt oma eeldused. Mudel on MVP ja mõeldud arusaadavaks.
+                Sisesta oma parimad teadaolevad numbrid — tulemus on hinnang, mitte pakkumine.
               </PanelDescription>
             </div>
-            <Badge variant="neutral">MVP mudel</Badge>
+            <Badge variant="neutral">Lihtsustatud mudel</Badge>
           </PanelHeader>
           <div className="px-6 pb-6">
             <div className="grid gap-4">
@@ -291,7 +347,7 @@ export function ContractsAnalysisModule() {
 
               <div className="mt-5 rounded-2xl border border-border/40 bg-card/20 p-4">
                 <p className="text-xs font-medium tracking-wide text-foreground/60">
-                  Plain-language kokkuvõte
+                  Lihtsas keeles
                 </p>
                 <p className="mt-2 text-sm text-foreground/70">
                   Sinu tarbimine on {Math.round(inputs.pattern.peakShare * 100)}% tipp-tundides.
@@ -305,87 +361,255 @@ export function ContractsAnalysisModule() {
               </div>
 
               <div className="mt-5 flex flex-wrap items-center gap-2">
-                <Link href="/dashboard/recommendations">
-                  <Button variant="outline">Lisa see soovitus nimekirja</Button>
-                </Link>
-                <Link href="/dashboard/reports">
-                  <Button variant="glow">Loo raport</Button>
-                </Link>
+                {publicExperience ? (
+                  <>
+                    <LinkButton href="/tarbimine" variant="outline">
+                      Tarbimise labor
+                    </LinkButton>
+                    <LinkButton href="/simulatsioonid" variant="glow">
+                      Investeeringu simulatsioon
+                    </LinkButton>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/dashboard/recommendations">
+                      <Button variant="outline">Vaata soovitusi</Button>
+                    </Link>
+                    <Link href="/dashboard/reports">
+                      <Button variant="glow">Loo aruanne</Button>
+                    </Link>
+                  </>
+                )}
               </div>
             </div>
           </Panel>
 
-          <Panel className="overflow-hidden">
-            <PanelHeader>
-              <div>
-                <PanelTitle>Kulude võrdlus</PanelTitle>
-                <PanelDescription>Hindame kuukulu eri lepingutüüpidega (MVP mudel).</PanelDescription>
-              </div>
-              <Badge variant="neutral">€/kuu</Badge>
-            </PanelHeader>
-            <div className="px-6 pb-6">
-              <div className="h-64 w-full rounded-2xl border border-border/60 bg-background/30 p-4">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chartData} margin={{ top: 10, right: 10, left: -18, bottom: 0 }}>
-                    <CartesianGrid stroke="oklch(1 0 0 / 6%)" vertical={false} />
-                    <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fill: "oklch(1 0 0 / 55%)", fontSize: 11 }} />
-                    <YAxis tickLine={false} axisLine={false} tick={{ fill: "oklch(1 0 0 / 45%)", fontSize: 11 }} />
-                    <Tooltip
-                      wrapperStyle={{ outline: "none" }}
-                      content={({ active, payload, label }) => {
-                        if (!active || !payload?.length) return null;
-                        const est = payload.find((p) => p.dataKey === "est")?.value as number;
-                        const risk = payload.find((p) => p.dataKey === "risk")?.payload?.risk as number;
-                        return (
-                          <div className="rounded-xl border border-border/60 bg-background/80 px-3 py-2 text-xs text-foreground/85 shadow-[var(--shadow-elev-2)] backdrop-blur-md">
-                            <p className="font-medium">{label}</p>
-                            <p className="mt-1">{fmtEur(est)} / kuu</p>
-                            <p className="mt-1 text-foreground/60">Risk: {risk}/100</p>
-                          </div>
-                        );
-                      }}
-                    />
-                    <Bar dataKey="est" radius={[10, 10, 6, 6]} fill="oklch(0.83 0.14 205 / 45%)" stroke="oklch(0.83 0.14 205 / 70%)" />
-                    {/* Invisible bar used for tooltip payload */}
-                    <Bar dataKey="risk" hide />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-2xl border border-border/50 bg-card/25 p-4">
-                  <p className="text-xs font-medium tracking-wide text-foreground/60">Riskiskoor (mida see tähendab)</p>
-                  <p className="mt-2 text-sm text-foreground/70">
-                    0–25: stabiilne • 26–55: mõõdukas kõikumine • 56–100: tugev kõikumine ja eelarverisk.
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-border/50 bg-card/25 p-4">
-                  <p className="text-xs font-medium tracking-wide text-foreground/60">Parim sobivus sinu profiilile</p>
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <Badge
-                      variant={best.bestFit === "fixed" ? "green" : "neutral"}
-                      className={cn(best.bestFit !== "fixed" && "opacity-70")}
-                    >
-                      Fikseeritud
-                    </Badge>
-                    <Badge
-                      variant={best.bestFit === "spot" ? "cyan" : "neutral"}
-                      className={cn(best.bestFit !== "spot" && "opacity-70")}
-                    >
-                      Börs
-                    </Badge>
-                    <Badge
-                      variant={best.bestFit === "hybrid" ? "warm" : "neutral"}
-                      className={cn(best.bestFit !== "hybrid" && "opacity-70")}
-                    >
-                      Hübriid
-                    </Badge>
+          {publicExperience ? (
+            <PremiumGate
+              className="rounded-3xl"
+              title="Täielik lepingu võrdlus ja riskikiht"
+              description="Premium avab intelligentsuskihi, täpse võrdlusgraafiku ja eksportitava kokkuvõtte. Makse tuleb Stripe’iga; seniks saad demo avamisega eelvaate."
+            >
+              <div className="grid gap-4">
+                <Panel>
+                  <PanelHeader>
+                    <div>
+                      <PanelTitle>Lepingu intelligentsus (domeenikiht)</PanelTitle>
+                      <PanelDescription>
+                        Sobivus ja volatiilsuse eksponeeritus lähtuvad sinu vormi eeldustest — sama loogika mis
+                        otsustusmootoris.
+                      </PanelDescription>
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                      <Badge variant="cyan">Sobivus {contractIntel.contractFitScore.score0to100}/100</Badge>
+                      <Badge variant="warm">Volatiilsus {contractIntel.volatilityExposure.score0to100}/100</Badge>
+                    </div>
+                  </PanelHeader>
+                  <div className="px-6 pb-6">
+                    <p className="text-sm text-foreground/75">{contractIntel.summaryEt}</p>
+                    <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                      <div className="rounded-2xl border border-border/50 bg-card/25 p-4">
+                        <p className="text-xs text-foreground/55">Hinnanguline võit (parim vs praegune)</p>
+                        <p className="mt-2 font-mono text-lg font-semibold">
+                          {contractIntel.savingsOpportunityEurPerMonth.toFixed(1)} € / kuu
+                        </p>
+                        {contractIntel.isMarginalDifference ? (
+                          <p className="mt-2 text-xs text-foreground/60">
+                            Vahe on väike — ära jäta riski ja mugavust tähele panemata.
+                          </p>
+                        ) : null}
+                      </div>
+                      <div className="rounded-2xl border border-border/50 bg-card/25 p-4 sm:col-span-2">
+                        <p className="text-xs font-medium tracking-wide text-foreground/60">Paindlikkus (tarbimise kiht)</p>
+                        <p className="mt-2 text-sm text-foreground/70">{consIntel.flexibilityScore.rationaleEt}</p>
+                        <p className="mt-2 text-xs text-foreground/55">{contractIntel.contractFitScore.rationaleEt}</p>
+                      </div>
+                    </div>
+                    <p className="mt-4 text-xs text-foreground/55">{contractIntel.volatilityExposure.rationaleEt}</p>
                   </div>
-                  <p className="mt-3 text-sm text-foreground/70">{best.summary}</p>
-                </div>
+                </Panel>
+
+                <Panel className="overflow-hidden">
+                  <PanelHeader>
+                    <div>
+                      <PanelTitle>Kulude võrdlus</PanelTitle>
+                      <PanelDescription>Hinnanguline kuukulu eri lepingutüüpidega (sama lihtsustatud mudel).</PanelDescription>
+                    </div>
+                    <Badge variant="neutral">€/kuu</Badge>
+                  </PanelHeader>
+                  <div className="px-6 pb-6">
+                    <div className="h-64 w-full rounded-2xl border border-border/60 bg-background/30 p-4">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={chartData} margin={{ top: 10, right: 10, left: -18, bottom: 0 }}>
+                          <CartesianGrid stroke="oklch(1 0 0 / 6%)" vertical={false} />
+                          <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fill: "oklch(1 0 0 / 55%)", fontSize: 11 }} />
+                          <YAxis tickLine={false} axisLine={false} tick={{ fill: "oklch(1 0 0 / 45%)", fontSize: 11 }} />
+                          <Tooltip
+                            wrapperStyle={{ outline: "none" }}
+                            content={({ active, payload, label }) => {
+                              if (!active || !payload?.length) return null;
+                              const est = payload.find((p) => p.dataKey === "est")?.value as number;
+                              const risk = payload.find((p) => p.dataKey === "risk")?.payload?.risk as number;
+                              return (
+                                <div className="rounded-xl border border-border/60 bg-background/80 px-3 py-2 text-xs text-foreground/85 shadow-[var(--shadow-elev-2)] backdrop-blur-md">
+                                  <p className="font-medium">{label}</p>
+                                  <p className="mt-1">{fmtEur(est)} / kuu</p>
+                                  <p className="mt-1 text-foreground/60">Risk: {risk}/100</p>
+                                </div>
+                              );
+                            }}
+                          />
+                          <Bar dataKey="est" radius={[10, 10, 6, 6]} fill="oklch(0.83 0.14 205 / 45%)" stroke="oklch(0.83 0.14 205 / 70%)" />
+                          <Bar dataKey="risk" hide />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      <div className="rounded-2xl border border-border/50 bg-card/25 p-4">
+                        <p className="text-xs font-medium tracking-wide text-foreground/60">Riskiskoor (mida see tähendab)</p>
+                        <p className="mt-2 text-sm text-foreground/70">
+                          0–25: stabiilne • 26–55: mõõdukas kõikumine • 56–100: tugev kõikumine ja eelarverisk.
+                        </p>
+                      </div>
+                      <div className="rounded-2xl border border-border/50 bg-card/25 p-4">
+                        <p className="text-xs font-medium tracking-wide text-foreground/60">Parim sobivus sinu profiilile</p>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <Badge
+                            variant={best.bestFit === "fixed" ? "green" : "neutral"}
+                            className={cn(best.bestFit !== "fixed" && "opacity-70")}
+                          >
+                            Fikseeritud
+                          </Badge>
+                          <Badge
+                            variant={best.bestFit === "spot" ? "cyan" : "neutral"}
+                            className={cn(best.bestFit !== "spot" && "opacity-70")}
+                          >
+                            Börs
+                          </Badge>
+                          <Badge
+                            variant={best.bestFit === "hybrid" ? "warm" : "neutral"}
+                            className={cn(best.bestFit !== "hybrid" && "opacity-70")}
+                          >
+                            Hübriid
+                          </Badge>
+                        </div>
+                        <p className="mt-3 text-sm text-foreground/70">{best.summary}</p>
+                      </div>
+                    </div>
+                  </div>
+                </Panel>
               </div>
-            </div>
-          </Panel>
+            </PremiumGate>
+          ) : (
+            <>
+              <Panel>
+                <PanelHeader>
+                  <div>
+                    <PanelTitle>Lepingu intelligentsus (domeenikiht)</PanelTitle>
+                    <PanelDescription>
+                      Sobivus ja volatiilsuse eksponeeritus lähtuvad sinu vormi eeldustest — sama loogika mis otsustusmootoris.
+                    </PanelDescription>
+                  </div>
+                  <div className="flex flex-col items-end gap-2">
+                    <Badge variant="cyan">Sobivus {contractIntel.contractFitScore.score0to100}/100</Badge>
+                    <Badge variant="warm">Volatiilsus {contractIntel.volatilityExposure.score0to100}/100</Badge>
+                  </div>
+                </PanelHeader>
+                <div className="px-6 pb-6">
+                  <p className="text-sm text-foreground/75">{contractIntel.summaryEt}</p>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                    <div className="rounded-2xl border border-border/50 bg-card/25 p-4">
+                      <p className="text-xs text-foreground/55">Hinnanguline võit (parim vs praegune)</p>
+                      <p className="mt-2 font-mono text-lg font-semibold">
+                        {contractIntel.savingsOpportunityEurPerMonth.toFixed(1)} € / kuu
+                      </p>
+                      {contractIntel.isMarginalDifference ? (
+                        <p className="mt-2 text-xs text-foreground/60">Vahe on väike — ära jäta riski ja mugavust tähele panemata.</p>
+                      ) : null}
+                    </div>
+                    <div className="rounded-2xl border border-border/50 bg-card/25 p-4 sm:col-span-2">
+                      <p className="text-xs font-medium tracking-wide text-foreground/60">Paindlikkus (tarbimise kiht)</p>
+                      <p className="mt-2 text-sm text-foreground/70">{consIntel.flexibilityScore.rationaleEt}</p>
+                      <p className="mt-2 text-xs text-foreground/55">{contractIntel.contractFitScore.rationaleEt}</p>
+                    </div>
+                  </div>
+                  <p className="mt-4 text-xs text-foreground/55">{contractIntel.volatilityExposure.rationaleEt}</p>
+                </div>
+              </Panel>
+
+              <Panel className="overflow-hidden">
+                <PanelHeader>
+                  <div>
+                    <PanelTitle>Kulude võrdlus</PanelTitle>
+                    <PanelDescription>Hinnanguline kuukulu eri lepingutüüpidega (sama lihtsustatud mudel).</PanelDescription>
+                  </div>
+                  <Badge variant="neutral">€/kuu</Badge>
+                </PanelHeader>
+                <div className="px-6 pb-6">
+                  <div className="h-64 w-full rounded-2xl border border-border/60 bg-background/30 p-4">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={chartData} margin={{ top: 10, right: 10, left: -18, bottom: 0 }}>
+                        <CartesianGrid stroke="oklch(1 0 0 / 6%)" vertical={false} />
+                        <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fill: "oklch(1 0 0 / 55%)", fontSize: 11 }} />
+                        <YAxis tickLine={false} axisLine={false} tick={{ fill: "oklch(1 0 0 / 45%)", fontSize: 11 }} />
+                        <Tooltip
+                          wrapperStyle={{ outline: "none" }}
+                          content={({ active, payload, label }) => {
+                            if (!active || !payload?.length) return null;
+                            const est = payload.find((p) => p.dataKey === "est")?.value as number;
+                            const risk = payload.find((p) => p.dataKey === "risk")?.payload?.risk as number;
+                            return (
+                              <div className="rounded-xl border border-border/60 bg-background/80 px-3 py-2 text-xs text-foreground/85 shadow-[var(--shadow-elev-2)] backdrop-blur-md">
+                                <p className="font-medium">{label}</p>
+                                <p className="mt-1">{fmtEur(est)} / kuu</p>
+                                <p className="mt-1 text-foreground/60">Risk: {risk}/100</p>
+                              </div>
+                            );
+                          }}
+                        />
+                        <Bar dataKey="est" radius={[10, 10, 6, 6]} fill="oklch(0.83 0.14 205 / 45%)" stroke="oklch(0.83 0.14 205 / 70%)" />
+                        <Bar dataKey="risk" hide />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-2xl border border-border/50 bg-card/25 p-4">
+                      <p className="text-xs font-medium tracking-wide text-foreground/60">Riskiskoor (mida see tähendab)</p>
+                      <p className="mt-2 text-sm text-foreground/70">
+                        0–25: stabiilne • 26–55: mõõdukas kõikumine • 56–100: tugev kõikumine ja eelarverisk.
+                      </p>
+                    </div>
+                    <div className="rounded-2xl border border-border/50 bg-card/25 p-4">
+                      <p className="text-xs font-medium tracking-wide text-foreground/60">Parim sobivus sinu profiilile</p>
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        <Badge
+                          variant={best.bestFit === "fixed" ? "green" : "neutral"}
+                          className={cn(best.bestFit !== "fixed" && "opacity-70")}
+                        >
+                          Fikseeritud
+                        </Badge>
+                        <Badge
+                          variant={best.bestFit === "spot" ? "cyan" : "neutral"}
+                          className={cn(best.bestFit !== "spot" && "opacity-70")}
+                        >
+                          Börs
+                        </Badge>
+                        <Badge
+                          variant={best.bestFit === "hybrid" ? "warm" : "neutral"}
+                          className={cn(best.bestFit !== "hybrid" && "opacity-70")}
+                        >
+                          Hübriid
+                        </Badge>
+                      </div>
+                      <p className="mt-3 text-sm text-foreground/70">{best.summary}</p>
+                    </div>
+                  </div>
+                </div>
+              </Panel>
+            </>
+          )}
         </div>
       </div>
 
@@ -394,8 +618,8 @@ export function ContractsAnalysisModule() {
           Tehniline märkus
         </p>
         <p className="mt-2 text-sm text-foreground/70">
-          See moodul on modulaarne: praegu kasutame lihtsat MVP mudelit (sisendhind + volatiilsuse eeldus).
-          Järgmises etapis ühendame päris turuandmed (Nord Pool / pakkumised) ja sinu tegeliku tarbimise profiili.
+          Arvutused põhinevad sinu sisenditel ja serveripoolsetel turuvihjetel (keskmine ja volatiilsuse
+          eeldus). Otse Nord Pooli reaalajas andmete täielik import sõltub eraldi andmelepingust.
         </p>
       </div>
     </div>

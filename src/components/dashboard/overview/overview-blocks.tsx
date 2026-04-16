@@ -13,6 +13,7 @@ import type {
   SavingsOpportunity,
   SimulationSnippet,
 } from "@/lib/dashboard/overview-mock";
+import type { DecisionEngineOutput, ProductRecommendation } from "@/lib/domain/recommendations/types";
 
 function fmtEur(n: number) {
   const sign = n < 0 ? "−" : "";
@@ -71,7 +72,7 @@ export function ContractComparison({
       <PanelHeader>
         <div>
           <PanelTitle>Praegune leping</PanelTitle>
-          <PanelDescription>Kiirülevaade ja võrdlus (mock-andmed).</PanelDescription>
+          <PanelDescription>Kiirülevaade ja lihtsustatud võrdlus (näidisandmed).</PanelDescription>
         </div>
         <Link href="/dashboard/contracts">
           <Button variant="outline">Ava analüüs</Button>
@@ -102,15 +103,15 @@ export function ContractComparison({
             <p className={cn("mt-2 font-mono text-lg font-semibold", delta > 0 ? "text-[oklch(0.92_0.06_145)]" : "text-foreground/90")}>
               {delta > 0 ? `+${fmtEur(delta)}` : fmtEur(delta)}
             </p>
-            <p className="mt-1 text-xs text-foreground/55">Mock: +8% all-in hind</p>
+            <p className="mt-1 text-xs text-foreground/55">Näidis: fikseeritud +8% kõik-hinda</p>
           </div>
         </div>
 
         <div className="mt-5 rounded-2xl border border-border/40 bg-card/20 p-4">
           <p className="text-xs font-medium tracking-wide text-foreground/60">Hinnanguline kuukulu</p>
           <p className="mt-2 font-mono text-2xl font-semibold">{fmtEur(estEnergyCost)}</p>
-          <p className="mt-2 text-sm text-foreground/60">
-            Arvutus põhineb \( {estMonthlyKwh} kWh/kuu \) ja eeldatud keskmisel hinnal.
+            <p className="mt-2 text-sm text-foreground/60">
+            Arvutus põhineb {estMonthlyKwh} kWh/kuu ja eeldatud keskmisel hinnal.
           </p>
         </div>
       </div>
@@ -124,7 +125,7 @@ export function SavingsOpportunities({ items }: { items: SavingsOpportunity[] })
       <PanelHeader>
         <div>
           <PanelTitle>Säästu võimalused</PanelTitle>
-          <PanelDescription>Kus on kõige lihtsam võit (mock).</PanelDescription>
+          <PanelDescription>Kus on kõige lihtsam võit (näidis).</PanelDescription>
         </div>
       </PanelHeader>
       <div className="px-6 pb-6">
@@ -133,7 +134,7 @@ export function SavingsOpportunities({ items }: { items: SavingsOpportunity[] })
             <div key={s.id} className="flex items-center justify-between gap-4 rounded-2xl border border-border/50 bg-card/25 p-4">
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold tracking-tight">{s.label}</p>
-                <p className="mt-1 text-xs text-foreground/55">Usaldus: {s.confidence}</p>
+                <p className="mt-1 text-xs text-foreground/55">Kindlus: {s.confidence}</p>
               </div>
               <div className="text-right">
                 <p className="font-mono text-lg font-semibold text-[oklch(0.92_0.06_145)]">
@@ -155,7 +156,7 @@ export function RecommendationCards({ items }: { items: RecommendationItem[] }) 
       <PanelHeader>
         <div>
           <PanelTitle>Top soovitused</PanelTitle>
-          <PanelDescription>Konkreetsed järgmised sammud (mock).</PanelDescription>
+          <PanelDescription>Konkreetsed järgmised sammud (näidis).</PanelDescription>
         </div>
         <Link href="/dashboard/recommendations">
           <Button variant="outline">Kõik soovitused</Button>
@@ -175,7 +176,7 @@ export function RecommendationCards({ items }: { items: RecommendationItem[] }) 
                         ? "Ajastus"
                         : r.kind === "investment"
                           ? "Investeering"
-                          : "Monitooring"}
+                          : "Jälgimine"}
                   </Badge>
                   <Badge variant="cyan">{r.effort}</Badge>
                 </div>
@@ -201,7 +202,7 @@ export function LatestSimulations({ items }: { items: SimulationSnippet[] }) {
       <PanelHeader>
         <div>
           <PanelTitle>Viimased simulatsioonid</PanelTitle>
-          <PanelDescription>Stsenaariumid ja tulemused (mock).</PanelDescription>
+          <PanelDescription>Stsenaariumid ja tulemused (näidis).</PanelDescription>
         </div>
         <Link href="/dashboard/simulations">
           <Button variant="outline">Kõik simulatsioonid</Button>
@@ -245,7 +246,7 @@ export function EnergyAssetsSummary({ assets }: { assets: EnergyAssetSummary }) 
       <PanelHeader>
         <div>
           <PanelTitle>Energiavarad</PanelTitle>
-          <PanelDescription>Mis sul on juba olemas (mock).</PanelDescription>
+          <PanelDescription>Mis sul on juba olemas (profiilist).</PanelDescription>
         </div>
         <Button
           variant="outline"
@@ -272,6 +273,126 @@ export function EnergyAssetsSummary({ assets }: { assets: EnergyAssetSummary }) 
   );
 }
 
+function categoryEt(c: ProductRecommendation["category"]) {
+  const m: Record<ProductRecommendation["category"], string> = {
+    contract: "Leping",
+    behavior: "Käitumine",
+    investigation: "Uurimine",
+    automation: "Automaatika",
+    solar: "Päike",
+    battery: "Aku",
+    ev: "EV",
+    heating: "Küte",
+    monitoring: "Andmete jälgimine",
+  };
+  return m[c];
+}
+
+export function DecisionConfidenceStrip({ decision }: { decision: DecisionEngineOutput }) {
+  return (
+    <Panel className="border-[color:oklch(0.83_0.14_205_/_0.35)]">
+      <PanelHeader>
+        <div>
+          <PanelTitle>Soovituste taust</PanelTitle>
+          <PanelDescription>{decision.dataQuality.summaryEt}</PanelDescription>
+        </div>
+        <Badge variant={decision.dataQuality.strength === "metered" ? "green" : "neutral"}>
+          Andmed: {decision.dataQuality.completeness0to100}/100
+        </Badge>
+      </PanelHeader>
+      <div className="px-6 pb-6">
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="rounded-2xl border border-border/50 bg-card/25 p-4">
+            <p className="text-xs text-foreground/55">Lepingu sobivus</p>
+            <p className="mt-2 font-mono text-lg font-semibold">
+              {decision.contract.contractFitScore.score0to100}/100
+            </p>
+            <p className="mt-1 text-xs text-foreground/55">{decision.contract.contractFitScore.band}</p>
+          </div>
+          <div className="rounded-2xl border border-border/50 bg-card/25 p-4">
+            <p className="text-xs text-foreground/55">Paindlikkus</p>
+            <p className="mt-2 font-mono text-lg font-semibold">
+              {decision.consumption.flexibilityScore.score0to100}/100
+            </p>
+            <p className="mt-1 text-xs text-foreground/55">{decision.consumption.flexibilityScore.band}</p>
+          </div>
+          <div className="rounded-2xl border border-border/50 bg-card/25 p-4">
+            <p className="text-xs text-foreground/55">Tugevaim sääst (mudel)</p>
+            <p className="mt-2 font-mono text-lg font-semibold">
+              {decision.strongestSavings
+                ? `${decision.strongestSavings.eurPerMonth.toFixed(1)} €`
+                : "—"}
+            </p>
+            <p className="mt-1 text-xs text-foreground/55">
+              {decision.strongestSavings?.title ?? "Selget säästu ei hinnatud"}
+            </p>
+          </div>
+        </div>
+        {decision.notEnoughData ? (
+          <p className="mt-4 text-sm text-foreground/70">
+            Hetkel on prioriteet andmete täiendamine — suured soovitused tulevad pärast mõõte või täpsemat
+            profiili.
+          </p>
+        ) : null}
+      </div>
+    </Panel>
+  );
+}
+
+export function ProductRecommendationCards({ items }: { items: ProductRecommendation[] }) {
+  return (
+    <Panel>
+      <PanelHeader>
+        <div>
+          <PanelTitle>Top soovitused</PanelTitle>
+          <PanelDescription>Eelistatud sammud lähtuvalt reeglitest, profiilist ja turu- ning tarbimisvihjetest.</PanelDescription>
+        </div>
+        <Link href="/dashboard/recommendations">
+          <Button variant="outline">Kõik soovitused</Button>
+        </Link>
+      </PanelHeader>
+      <div className="px-6 pb-6">
+        <div className="grid gap-3">
+          {items.slice(0, 3).map((r) => (
+            <div key={r.id} className="rounded-2xl border border-border/50 bg-card/25 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="font-mono text-xs text-foreground/50">#{r.rank}</span>
+                  <p className="truncate text-sm font-semibold tracking-tight">{r.title}</p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="cyan">{categoryEt(r.category)}</Badge>
+                  <Badge variant="neutral">{r.confidence}</Badge>
+                  <Badge variant="green">{r.effort}</Badge>
+                </div>
+              </div>
+              <p className="mt-2 text-sm text-foreground/65">{r.summary}</p>
+              <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
+                <p className="text-xs text-foreground/55">
+                  {r.confidenceNote ? <span>{r.confidenceNote} </span> : null}
+                  {r.timeHorizonEt}
+                </p>
+                <p className="font-mono text-lg font-semibold text-[oklch(0.92_0.06_145)]">
+                  {r.estimatedImpactEurPerMonth > 0.01 ? `${fmtEur(r.estimatedImpactEurPerMonth)} / kuu` : "—"}
+                </p>
+              </div>
+              {r.nextStepHref ? (
+                <div className="mt-3">
+                  <Link href={r.nextStepHref}>
+                    <Button size="sm" variant="gradient">
+                      {r.nextStepLabel}
+                    </Button>
+                  </Link>
+                </div>
+              ) : null}
+            </div>
+          ))}
+        </div>
+      </div>
+    </Panel>
+  );
+}
+
 export function UpcomingInsights({
   items,
 }: {
@@ -281,8 +402,8 @@ export function UpcomingInsights({
     <Panel>
       <PanelHeader>
         <div>
-          <PanelTitle>Tulemas / Insights</PanelTitle>
-          <PanelDescription>Automaatne analüüs, kui andmed täienevad.</PanelDescription>
+          <PanelTitle>Tulekul</PanelTitle>
+          <PanelDescription>Automaatne analüüs täieneb, kui ühendad mõõteandmed.</PanelDescription>
         </div>
       </PanelHeader>
       <div className="px-6 pb-6">

@@ -75,8 +75,8 @@ function monthlyEnergySummary(ctx: ReportContext): ReportPayload {
     kind: "kpis",
     title: "Ülevaade",
     items: [
-      { label: "Hinnanguline kuukulu", value: eur(estCost), hint: "Põhineb eeldustel (MVP)." },
-      { label: "Hinnanguline tarbimine", value: `${ctx.overview.kpis.estMonthlyKwh} kWh`, hint: "MVP (asendub mõõteandmetega)." },
+      { label: "Hinnanguline kuukulu", value: eur(estCost), hint: "Põhineb eeldustel kuni tulevad mõõdud." },
+      { label: "Hinnanguline tarbimine", value: `${ctx.overview.kpis.estMonthlyKwh} kWh`, hint: "Asendub täpsemalt mõõteandmetega." },
       { label: "Baas-koormus", value: `${Math.round(baseShare * 100)}%`, hint: "~24/7 tarbimise osakaal." },
       { label: "Tipu-sõltuvus", value: `${peak}/100`, hint: "Kui kõrge, siis ajastus aitab." },
     ],
@@ -136,7 +136,7 @@ function contractRiskSummary(ctx: ReportContext): ReportPayload {
         `${s.riskScore}/100`,
         `${eur(s.bestCaseEur)} – ${eur(s.worstCaseEur)}`,
       ]),
-    note: "MVP mudel: kasutab sisendhindasid + volatiilsuse eeldust + tipp-tundide osakaalu.",
+    note: "Lihtsustatud mudel: sisendhinnad, volatiilsuse eeldus ja tipp-tundide osakaal.",
   });
 
   p.sections.push({
@@ -158,7 +158,7 @@ function savingsOpportunitySummary(ctx: ReportContext): ReportPayload {
     kind: "kpis",
     title: "Top säästu kohad",
     items: [
-      { label: "Top võimaluste summa", value: eurPerMonth(estTop), hint: "Hinnang (MVP)." },
+      { label: "Top võimaluste summa", value: eurPerMonth(estTop), hint: "Hinnanguline kokkuvõte." },
       { label: "Baas-koormuse osakaal", value: `${Math.round(ctx.usage.kpis.baseLoadShare * 100)}%` },
       { label: "Tipu-sõltuvus", value: `${ctx.usage.kpis.peakDependencyScore}/100` },
       { label: "Soovitusi", value: `${opps.length}`, hint: "Kuvame top 4." },
@@ -186,16 +186,16 @@ function savingsOpportunitySummary(ctx: ReportContext): ReportPayload {
 }
 
 function investmentSimulationReport(ctx: ReportContext): ReportPayload {
-  const p = basePayload("investment_simulation_report", "Investeeringu simulatsiooni raport", ctx);
+  const p = basePayload("investment_simulation_report", "Investeeringu aruanne", ctx);
 
   const scenario = ctx.scenarios[0];
   if (!scenario) {
     p.sections.push({
       kind: "bullets",
-      title: "Pole simulatsiooni",
+      title: "Pole salvestatud stsenaariumi",
       items: [
-        "Selle raporti jaoks on vaja vähemalt üht salvestatud stsenaariumi.",
-        "Mine Simulatsioonid → salvesta stsenaarium → loo raport uuesti.",
+        "Selle aruande jaoks on vaja vähemalt üht salvestatud stsenaariumi.",
+        "Ava Simulatsioonid, salvesta stsenaarium ja loo aruanne uuesti.",
       ],
     });
     return p;
@@ -222,7 +222,7 @@ function investmentSimulationReport(ctx: ReportContext): ReportPayload {
     title: "Tulemused",
     items: [
       { label: "Kuutine sääst", value: eurPerMonth(res.monthlySavingsEur) },
-      { label: "Aastane sääst", value: eur(res.annualSavingsEur), hint: "MVP (lihtne mudel)." },
+      { label: "Aastane sääst", value: eur(res.annualSavingsEur), hint: "Lihtsustatud arvutus." },
       { label: "Tasuvus", value: years(res.paybackYears), hint: "Upfront / aastane sääst." },
       { label: "Sensitiivsus", value: "±30%", hint: "Säästu variatsioon." },
     ],

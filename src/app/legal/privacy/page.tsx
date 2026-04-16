@@ -20,7 +20,7 @@ export default function PrivacyPage() {
           Privaatsuspoliitika
         </h1>
         <p className="mt-4 text-pretty text-base leading-relaxed text-foreground/70">
-          Allolev on startup-ready struktuur (MVP). Enne lansseerimist täpsustame andmekategooriad,
+          Allolev on eelversioon. Enne lansseerimist täpsustame andmekategooriad,
           alatöötlejad ja kontaktandmed vastavalt reaalsele tooteseadistusele.
         </p>
 

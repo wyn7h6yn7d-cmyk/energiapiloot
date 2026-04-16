@@ -6,8 +6,8 @@ import { getMyProfile } from "@/lib/supabase/profile";
 
 export default async function DashboardLayout({ children }: PropsWithChildren) {
   const { user, profile } = await getMyProfile();
-  if (!user) redirect("/login?next=/dashboard");
-  if (!profile?.onboarded) redirect("/onboarding");
+  if (!user) redirect("/");
+  if (!profile?.onboarded) redirect("/");
 
   return (
     <AppShell userLabel={user.email ?? null} siteLabel={profile.object_name ?? null}>

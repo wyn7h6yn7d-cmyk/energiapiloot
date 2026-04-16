@@ -26,8 +26,8 @@ const REPORT_TEMPLATES: { type: ReportType; title: string; description: string }
   },
   {
     type: "investment_simulation_report",
-    title: "Investeeringu raport",
-    description: "Valitud (või viimane) stsenaarium, cashflow ja eeldused.",
+    title: "Investeeringu aruanne",
+    description: "Valitud või viimane stsenaarium: rahavoog, tasuvus ja eeldused.",
   },
 ];
 
@@ -45,13 +45,13 @@ export default async function ReportsPage() {
   return (
     <div className="grid gap-6">
       <div>
-        <p className="text-xs font-medium tracking-wide text-foreground/60">Raportid</p>
+        <p className="text-xs font-medium tracking-wide text-foreground/60">Aruanded</p>
         <h1 className="mt-3 text-balance text-3xl font-semibold tracking-tight">
-          Ülevaated, mida saad jagada.
+          Kokkuvõtted, mida võid julgelt edasi saata.
         </h1>
         <p className="mt-3 max-w-3xl text-pretty text-base leading-relaxed text-foreground/70">
-          Raportid on export-ready: PDF-sõbralik layout, korduvkasutatavad sektsioonid ja
-          selge “generated date” + staatus.
+          Struktuur on mõeldud printimiseks ja PDF-ks: selged jaotised, loomise kuupäev ja staatus ühes
+          vaates.
         </p>
       </div>
 
@@ -75,11 +75,11 @@ export default async function ReportsPage() {
                 }}
               >
                 <Button variant="gradient" type="submit" disabled={!ent.reports.allowedTypes.includes(t.type)}>
-                  Genereeri raport
+                  Loo aruanne
                 </Button>
               </form>
               <p className="mt-3 text-xs text-foreground/55">
-                Raport luuakse objektile. Äris toetab sama struktuur mitut objekti ja kasutajat.
+                Aruanne luuakse valitud tarbimiskohale. Äripaketis toetab sama struktuur peagi mitut objekti.
               </p>
             </div>
           </Panel>
@@ -88,8 +88,8 @@ export default async function ReportsPage() {
 
       {!ent.reports.allowedTypes.includes("contract_risk_summary") ? (
         <PaywallCard
-          title="Raportid on paketipõhised"
-          description="Free paketis saad luua ainult kuu energia kokkuvõtte. Uuenda Plus/Pro peale, et saada lepingu risk, säästu kokkuvõte ja investeeringu raport."
+          title="Aruanded sõltuvad paketist"
+          description="Tasuta paketiga saad koostada kuu energia kokkuvõtte. Plus ja Pro paketiga lisanduvad lepingu riski ülevaade, säästu võimaluste kokkuvõte ja investeeringu aruanne."
           requiredPlan="plus"
         />
       ) : null}
@@ -97,17 +97,17 @@ export default async function ReportsPage() {
       <Panel>
         <PanelHeader>
           <div>
-            <PanelTitle>Sinu raportid</PanelTitle>
-            <PanelDescription>Valmis detailvaated ja print/PDF.</PanelDescription>
+            <PanelTitle>Sinu aruanded</PanelTitle>
+            <PanelDescription>Detailvaade ja printimine või PDF.</PanelDescription>
           </div>
           <Badge variant="neutral">{reports.length}</Badge>
         </PanelHeader>
         <div className="px-6 pb-6">
           {reports.length === 0 ? (
             <div className="rounded-2xl border border-border/50 bg-card/25 p-4">
-              <p className="text-sm font-semibold">Ühtegi raportit pole veel</p>
+              <p className="text-sm font-semibold">Ühtegi aruannet pole veel</p>
               <p className="mt-2 text-sm text-foreground/65">
-                Genereeri üks ülal olevatest raportitest — detailvaates saad kohe printida PDF-iks.
+                Alusta mõne malliga ülalt — ava seejärel detailvaates ja prindi või salvesta PDF-ina.
               </p>
             </div>
           ) : (
@@ -153,9 +153,9 @@ export default async function ReportsPage() {
       </Panel>
 
       <div className="rounded-3xl border border-border/40 bg-card/20 p-6">
-        <p className="text-xs font-medium tracking-wide text-foreground/60">PDF-nipp</p>
+        <p className="text-xs font-medium tracking-wide text-foreground/60">PDF-i jaoks</p>
         <p className="mt-2 text-sm text-foreground/70">
-          Ava raport → “Prindi / PDF”. Print layout eemaldab taustad ja seab teksti kontrasti nii, et PDF jääks puhas.
+          Ava aruanne ja kasuta brauseri printimist (salvesta PDF-ina). Paigutus eemaldab taustad, et dokument jääks selge.
         </p>
       </div>
     </div>

@@ -55,7 +55,7 @@ export type ContractDTO = {
 export async function getSettingsDataAction() {
   const supabase = await createSupabaseServerClient();
   const { data: auth } = await supabase.auth.getUser();
-  if (!auth.user) redirect("/login?next=/dashboard/settings");
+  if (!auth.user) redirect("/");
 
   // ensure at least one site exists
   await getOrCreateMyPrimarySite();
@@ -259,6 +259,6 @@ export async function deleteContractAction(input: { id: string }) {
 export async function signOutAction() {
   const supabase = await createSupabaseServerClient();
   await supabase.auth.signOut();
-  redirect("/login");
+  redirect("/");
 }
 

@@ -3,205 +3,107 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
+import { PaywallCard } from "@/components/billing/paywall-card";
+import { getMyEntitlementsAction } from "@/app/(app)/billing/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Panel, PanelDescription, PanelHeader, PanelTitle } from "@/components/ui/panel";
-import { buildConsumptionInsights } from "@/lib/consumption/insights";
-import { analyzeContracts } from "@/lib/contracts/model";
-import { buildOverviewMock } from "@/lib/dashboard/overview-mock";
-import { generateRecommendations } from "@/lib/recommendations/engine";
-import type { Recommendation, RecommendationContext } from "@/lib/recommendations/types";
-import { listScenariosAction } from "@/app/(app)/dashboard/simulations/actions";
-import { SIM_DEFINITIONS } from "@/lib/simulations/definitions";
-import { getMyEntitlementsAction } from "@/app/(app)/billing/actions";
+import type { DecisionEngineOutput, ProductRecommendation } from "@/lib/domain/recommendations/types";
 import type { Entitlements } from "@/lib/billing/plans";
-import { PaywallCard } from "@/components/billing/paywall-card";
 
 function fmtEur(n: number) {
   if (n <= 0.01) return "—";
   return `${n.toFixed(2)} € / kuu`;
 }
 
-function confBadge(c: Recommendation["confidence"]) {
+function confBadge(c: ProductRecommendation["confidence"]) {
   if (c === "kõrge") return { label: "Kõrge", variant: "green" as const };
   if (c === "madal") return { label: "Madal", variant: "warm" as const };
   return { label: "Keskmine", variant: "neutral" as const };
 }
 
-function kindLabel(k: Recommendation["kind"]) {
-  switch (k) {
-    case "contract_switch":
-      return "Leping";
-    case "load_shift":
-      return "Ajastus";
-    case "base_load_investigate":
-      return "Baas";
-    case "investment_delay":
-      return "Investeering";
-    case "investment_prioritize":
-      return "Prioriteet";
-    case "heat_pump_evaluate":
-      return "Soojuspump";
-    case "ev_schedule":
-      return "EV";
-    default:
-      return "Soovitus";
-  }
+function categoryEt(c: ProductRecommendation["category"]) {
+  const m: Record<ProductRecommendation["category"], string> = {
+    contract: "Leping",
+    behavior: "Käitumine",
+    investigation: "Uurimine",
+    automation: "Automaatika",
+    solar: "Päike",
+    battery: "Aku",
+    ev: "EV",
+    heating: "Küte",
+    monitoring: "Jälgimine",
+  };
+  return m[c];
 }
 
-function nextStepHref(k: Recommendation["kind"]) {
-  switch (k) {
-    case "contract_switch":
-      return "/dashboard/contracts";
-    case "investment_prioritize":
-    case "investment_delay":
-    case "heat_pump_evaluate":
-      return "/dashboard/simulations";
-    case "base_load_investigate":
-    case "load_shift":
-    case "ev_schedule":
-      return "/dashboard";
-    default:
-      return "/dashboard";
-  }
+function investmentVerdictEt(v: "do_now" | "evaluate_further" | "wait") {
+  if (v === "do_now") return "Tugev signaal";
+  if (v === "wait") return "Nõrk signaal";
+  return "Hinda edasi";
 }
 
-export function RecommendationsBoard() {
-  const [scenarios, setScenarios] = useState<
-    { type: any; name: string; monthlySavingsEur: number; paybackYears: number | null }[]
-  >([]);
+const ADVANCED_CATEGORIES = new Set<ProductRecommendation["category"]>(["solar", "battery", "heating"]);
+
+export function RecommendationsBoard({ decision }: { decision: DecisionEngineOutput }) {
   const [ent, setEnt] = useState<Entitlements | null>(null);
 
   useEffect(() => {
     getMyEntitlementsAction().then(setEnt);
-    listScenariosAction().then((saved) => {
-      setScenarios(
-        saved.map((s) => ({
-          type: s.simulation_type,
-          name: s.name,
-          monthlySavingsEur:
-            SIM_DEFINITIONS[s.simulation_type].calculate((s.config ?? {}) as any).monthlySavingsEur,
-          paybackYears:
-            SIM_DEFINITIONS[s.simulation_type].calculate((s.config ?? {}) as any).paybackYears,
-        }))
-      );
-    });
   }, []);
 
-  const ctx: RecommendationContext = useMemo(() => {
-    // MVP: build a coherent context from our existing mock data + default insights assumptions.
-    const overview = buildOverviewMock();
-
-    const usage = buildConsumptionInsights({
-      monthlyKwh: overview.kpis.estMonthlyKwh,
-      avgAllInEurPerKwh: overview.kpis.estAvgPriceEurPerKwh,
-      dayShare: 0.58,
-      weekendShare: 0.26,
-      baseLoadW: 220,
-      devices: {
-        ev: true,
-        boiler: true,
-        heat_pump: false,
-        cooling: false,
-        commercial_refrigeration: false,
-        machinery: false,
-      },
-      peakHourDependency: 0.55,
-    });
-
-    const contractAnalysis = analyzeContracts({
-      monthlyKwh: overview.kpis.estMonthlyKwh,
-      pattern: { peakShare: 0.38, peakPriceMultiplier: 1.28 },
-      current: {
-        providerName: overview.contract.provider,
-        type: overview.contract.type,
-        baseFeeEurPerMonth: overview.contract.baseFeeEurPerMonth,
-        energyPriceEurPerKwh: overview.contract.energyPriceEurPerKwh,
-        networkFeeEurPerKwh: overview.contract.networkFeeEurPerKwh,
-        vatRate: overview.contract.vatRate,
-      },
-      assumptions: { spotVolatility: 0.55, hybridSpotShare: 0.55 },
-    });
-
-    return {
-      profile: { userType: "household" },
-      contract: {
-        type: contractAnalysis.current.type,
-        riskScore: contractAnalysis.current.riskScore,
-        bestFit: contractAnalysis.recommendation.bestFit,
-        estMonthlyCostEur: contractAnalysis.current.estMonthlyCostEur,
-      },
-      usage: {
-        estMonthlyCostEur: usage.kpis.estMonthlyCostEur,
-        baseLoadShare: usage.kpis.baseLoadShare,
-        peakDependencyScore: usage.kpis.peakDependencyScore,
-        opportunities: usage.opportunities.map((o) => ({
-          title: o.title,
-          estMonthlyEur: o.estMonthlyEur,
-          confidence: o.confidence,
-        })),
-        devices: {
-          ev: true,
-          boiler: true,
-          heatPump: false,
-        },
-      },
-      simulations: {
-        scenarios,
-      },
-    };
-  }, [scenarios]);
-
-  const recs = useMemo(() => generateRecommendations(ctx), [ctx]);
   const visible = useMemo(() => {
+    const recs = decision.recommendations;
     if (!ent) return recs;
     if (ent.advancedRecommendations) return recs;
-    // Free: hide investment-related recs; keep top practical ones.
-    return recs.filter((r) => !["investment_delay", "investment_prioritize", "heat_pump_evaluate"].includes(r.kind)).slice(0, 4);
-  }, [ent, recs]);
+    return recs.filter((r) => !ADVANCED_CATEGORIES.has(r.category)).slice(0, 8);
+  }, [ent, decision.recommendations]);
 
   return (
     <div className="grid gap-6">
       {ent && !ent.advancedRecommendations ? (
         <PaywallCard
-          title="Täiustatud soovitused on lukus"
-          description="Free paketis näitame ainult põhisoovitusi. Uuenda Plus/Pro peale, et saada investeeringu prioriteedid, “delay battery” ja detailsemad järgmised sammud."
+          title="Investeeringute detailsoovitused on lukus"
+          description="Tasuta paketis kuvame põhisoovitusi: leping, käitumine ja andmete jälgimine. Plus ja Pro paketiga avanevad ka päikese, aku ja kütte prioriteedid."
           requiredPlan="plus"
         />
       ) : null}
+
       <div className="grid gap-4 md:grid-cols-12">
         <Panel className="md:col-span-7">
           <PanelHeader>
             <div>
-              <PanelTitle>Soovituste mootor</PanelTitle>
+              <PanelTitle>Soovituste kooste</PanelTitle>
               <PanelDescription>
-                MVP: reeglitel põhinev. Iga soovitus sisaldab põhjendust ja hinnangulist mõju.
+                Järjestus sõltub mõjust, andmete kindlusest ja reeglistikust. Pärast stsenaariumi salvestamist
+                värskenda lehte, et näha uut järjekorda.
               </PanelDescription>
             </div>
-            <Badge variant="neutral">Rules v1</Badge>
+            <Badge variant="neutral">Reeglid + profiil</Badge>
           </PanelHeader>
           <div className="px-6 pb-6">
             <div className="grid gap-3 sm:grid-cols-3">
-              <MiniKpi label="Soovitusi" value={`${recs.length}`} />
+              <MiniKpi label="Soovitusi" value={`${decision.recommendations.length}`} />
+              <MiniKpi label="Andmekvaliteet" value={`${decision.dataQuality.completeness0to100}/100`} />
               <MiniKpi
-                label="Top mõju"
+                label="Tugevaim sääst"
                 value={
-                  recs[0]?.estimatedImpactEurPerMonth
-                    ? `${recs[0].estimatedImpactEurPerMonth.toFixed(0)} € / kuu`
+                  decision.strongestSavings
+                    ? `${decision.strongestSavings.eurPerMonth.toFixed(0)} €`
                     : "—"
                 }
               />
-              <MiniKpi
-                label="Simulatsioone"
-                value={`${ctx.simulations?.scenarios?.length ?? 0}`}
-              />
             </div>
+            <p className="mt-4 text-sm text-foreground/65">{decision.dataQuality.summaryEt}</p>
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <Link href="/dashboard/contracts">
-                <Button variant="outline">Täpsusta lepingut</Button>
+                <Button variant="outline">Leping</Button>
+              </Link>
+              <Link href="/dashboard/consumption">
+                <Button variant="outline">Tarbimine</Button>
               </Link>
               <Link href="/dashboard/simulations">
-                <Button variant="gradient">Käivita simulatsioon</Button>
+                <Button variant="gradient">Simulatsioonid</Button>
               </Link>
             </div>
           </div>
@@ -210,23 +112,39 @@ export function RecommendationsBoard() {
         <Panel className="md:col-span-5">
           <PanelHeader>
             <div>
-              <PanelTitle>Kontekst (praegu mock)</PanelTitle>
-              <PanelDescription>Hiljem Supabase tabelid: `contracts`, `sites`, `saved_scenarios`.</PanelDescription>
+              <PanelTitle>Investeeringute hinnang</PanelTitle>
+              <PanelDescription>Salvestatud stsenaariumid: sobivus, valmidus ja soovituslik samm.</PanelDescription>
             </div>
           </PanelHeader>
           <div className="px-6 pb-6">
             <div className="space-y-2">
-              <Row label="Leping" value={ctx.contract?.type ?? "—"} />
-              <Row label="Risk" value={ctx.contract?.riskScore ? `${ctx.contract.riskScore}/100` : "—"} />
-              <Row label="Baas" value={ctx.usage?.baseLoadShare ? `${Math.round(ctx.usage.baseLoadShare * 100)}%` : "—"} />
-              <Row label="Tipud" value={ctx.usage?.peakDependencyScore ? `${ctx.usage.peakDependencyScore}/100` : "—"} />
+              {decision.investments.length ? (
+                decision.investments.slice(0, 5).map((i) => (
+                  <div
+                    key={`${i.type}-${i.name}`}
+                    className="flex items-center justify-between gap-4 rounded-xl border border-border/40 bg-card/20 px-3 py-2"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-xs font-medium">{i.name}</p>
+                      <p className="line-clamp-2 text-[11px] text-foreground/55">{i.summaryEt}</p>
+                    </div>
+                    <Badge
+                      variant={i.verdict === "wait" ? "warm" : i.verdict === "do_now" ? "green" : "neutral"}
+                    >
+                      {investmentVerdictEt(i.verdict)}
+                    </Badge>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-foreground/60">Pole salvestatud stsenaariume.</p>
+              )}
             </div>
           </div>
         </Panel>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        {visible.slice(0, 8).map((r) => (
+        {visible.map((r) => (
           <RecommendationCard key={r.id} r={r} />
         ))}
       </div>
@@ -234,7 +152,7 @@ export function RecommendationsBoard() {
   );
 }
 
-function RecommendationCard({ r }: { r: Recommendation }) {
+function RecommendationCard({ r }: { r: ProductRecommendation }) {
   const c = confBadge(r.confidence);
   return (
     <Panel className="relative overflow-hidden">
@@ -245,41 +163,58 @@ function RecommendationCard({ r }: { r: Recommendation }) {
       <div className="relative">
         <PanelHeader>
           <div>
-            <PanelTitle>{r.title}</PanelTitle>
-            <PanelDescription>{r.whyItMatters}</PanelDescription>
+            <PanelTitle>
+              <span className="mr-2 font-mono text-xs text-foreground/45">#{r.rank}</span>
+              {r.title}
+            </PanelTitle>
+            <PanelDescription>{r.summary}</PanelDescription>
           </div>
           <div className="flex flex-col items-end gap-2">
-            <Badge variant="cyan">{kindLabel(r.kind)}</Badge>
+            <Badge variant="cyan">{categoryEt(r.category)}</Badge>
             <Badge variant={c.variant}>{c.label}</Badge>
           </div>
         </PanelHeader>
         <div className="px-6 pb-6">
-          <div className="grid gap-3 sm:grid-cols-3">
+          <p className="text-sm text-foreground/70">{r.explanation}</p>
+          <p className="mt-3 text-sm font-medium text-foreground/85">{r.whyItMatters}</p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
             <MiniKpi label="Hinnanguline mõju" value={fmtEur(r.estimatedImpactEurPerMonth)} />
-            <MiniKpi label="Prioriteet" value={`${r.priorityScore}/100`} />
-            <MiniKpi label="Järgmine samm" value="Vaata" />
+            <MiniKpi label="Pingutus" value={r.effort} />
+            <MiniKpi label="Ajakava" value={r.timeHorizonEt} />
           </div>
 
           <div className="mt-4 rounded-2xl border border-border/50 bg-card/25 p-4">
-            <p className="text-xs font-medium tracking-wide text-foreground/60">Next step</p>
-            <p className="mt-2 text-sm text-foreground/75">{r.nextStep}</p>
+            <p className="text-xs font-medium tracking-wide text-foreground/60">{r.nextStepLabel}</p>
+            {r.whyNowVsLaterEt ? (
+              <p className="mt-2 text-sm text-foreground/70">{r.whyNowVsLaterEt}</p>
+            ) : null}
+            {r.confidenceNote ? (
+              <p className="mt-2 text-xs text-foreground/55">{r.confidenceNote}</p>
+            ) : null}
             <div className="mt-4 flex flex-wrap items-center gap-2">
-              <Link href={nextStepHref(r.kind)}>
-                <Button variant="gradient">Ava</Button>
-              </Link>
+              {r.nextStepHref ? (
+                <Link href={r.nextStepHref}>
+                  <Button variant="gradient">Ava</Button>
+                </Link>
+              ) : null}
               <Button
                 variant="outline"
-                onClick={() => alert("Salvestamine DB-sse lisandub koos Supabase `recommendations` tabeliga.")}
+                               onClick={() =>
+                  alert("Soovituste salvestamine tuleb järgmises versioonis — hetkel saad neid töölaual jälgida.")
+                }
               >
                 Salvesta
               </Button>
             </div>
           </div>
 
-          {r.evidence.length ? (
+          {r.signals.length ? (
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
-              {r.evidence.slice(0, 4).map((e) => (
-                <div key={e.label} className="flex items-center justify-between gap-4 rounded-xl border border-border/40 bg-card/20 px-3 py-2">
+              {r.signals.slice(0, 6).map((e) => (
+                <div
+                  key={e.label}
+                  className="flex items-center justify-between gap-4 rounded-xl border border-border/40 bg-card/20 px-3 py-2"
+                >
                   <p className="text-xs text-foreground/60">{e.label}</p>
                   <p className="text-xs font-medium text-foreground/80">{e.value}</p>
                 </div>
@@ -300,13 +235,3 @@ function MiniKpi({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
-
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between gap-4 rounded-xl border border-border/40 bg-card/20 px-3 py-2">
-      <p className="text-xs text-foreground/60">{label}</p>
-      <p className="text-xs font-medium text-foreground/80">{value}</p>
-    </div>
-  );
-}
-

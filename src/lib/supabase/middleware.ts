@@ -4,7 +4,7 @@ import { createServerClient } from "@supabase/ssr";
 import { requiredEnv } from "@/lib/supabase/env";
 
 export function createSupabaseMiddlewareClient(req: NextRequest) {
-  let res = NextResponse.next({ request: { headers: req.headers } });
+  const res = NextResponse.next({ request: { headers: req.headers } });
 
   const supabase = createServerClient(
     requiredEnv("NEXT_PUBLIC_SUPABASE_URL"),

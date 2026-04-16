@@ -68,13 +68,13 @@ export default function OpenGraphImage() {
           </div>
 
           <div style={{ fontSize: 56, fontWeight: 700, letterSpacing: -1.2, lineHeight: 1.05 }}>
-            Baltic energy decisions,
-            <span style={{ display: "block", opacity: 0.72 }}>simplified.</span>
+            Energiaotsused,
+            <span style={{ display: "block", opacity: 0.72 }}>selgelt ja läbipaistvalt.</span>
           </div>
 
           <div style={{ fontSize: 22, opacity: 0.78, maxWidth: 900, lineHeight: 1.45 }}>
-            Contract analysis, consumption insights, investment simulations and actionable recommendations — premium,
-            auditable and readable.
+            Lepingu analüüs, tarbimise ülevaade, investeeringute simulatsioon ja prioriseeritud soovitused — loogiline,
+            kontrollitav ja loetav.
           </div>
         </div>
 

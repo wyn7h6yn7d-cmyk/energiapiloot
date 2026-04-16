@@ -1,13 +1,13 @@
 import type { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
-  // Allow indexing for marketing pages; app area is protected by auth anyway.
+  // Legacy account app URLs redirect home; disallow avoids stale index entries.
   return {
     rules: [
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/dashboard", "/onboarding"],
+        disallow: ["/dashboard", "/onboarding", "/login", "/register"],
       },
     ],
     sitemap: "/sitemap.xml",

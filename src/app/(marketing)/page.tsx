@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Energiapiloot — Energiaotsused, selgelt",
     description:
-      "Lepinguanalüüs, tarbimise insight, investeeringute simulatsioonid ja soovitused — premium UX, selged eeldused.",
+      "Lepingu analüüs, tarbimise ülevaade, investeeringute simulatsioon ja soovitused — selge loogika, ausad eeldused.",
     url: "/",
   },
   twitter: {

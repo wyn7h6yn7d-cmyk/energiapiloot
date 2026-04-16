@@ -36,16 +36,16 @@ export type Entitlements = {
 export const PLANS: Plan[] = [
   {
     id: "free",
-    name: "Free",
-    tagline: "Selge baas. Kiire võit.",
+    name: "Tasuta",
+    tagline: "Selge stardipunkt, ilma kohustuseta.",
     pricing: { monthlyEur: 0, yearlyEur: 0 },
     stripe: {},
     features: [
-      "Dashboardi baasülevaade",
-      "Põhilised insight’id",
+      "Töölaua põhiülevaade",
+      "Põhilised tarbimise ja lepingu hinnangud",
       "Kuni 1 salvestatud stsenaarium",
-      "Üks simulaator (Päike)",
-      "Raportid: piiratud",
+      "Üks simulaator: päikeseelektrijaam",
+      "Aruanded: kuu kokkuvõte",
     ],
   },
   {
@@ -55,11 +55,11 @@ export const PLANS: Plan[] = [
     pricing: { monthlyEur: 9, yearlyEur: 90 },
     stripe: {},
     features: [
-      "Kõik Free-st",
-      "Täiustatud soovitused (osa)",
-      "Rohkem simulaatoreid (Päike + EV + Peak shaving)",
+      "Kõik, mis Tasuta paketis",
+      "Laiendatud soovitused (sh investeeringud)",
+      "Rohkem simulaatoreid: päike, elektriauto, tipu tasakaalustamine",
       "Kuni 5 salvestatud stsenaariumi",
-      "Raportid: kokkuvõtted",
+      "Aruanded: leping, säästud ja kuu kokkuvõte",
     ],
   },
   {
@@ -67,15 +67,15 @@ export const PLANS: Plan[] = [
     name: "Pro",
     tagline: "Täielik tööriistakast otsusteks.",
     highlight: true,
-    badge: "Soovitus",
+    badge: "Populaarne",
     pricing: { monthlyEur: 19, yearlyEur: 190 },
     stripe: {},
     features: [
-      "Kõik Plus-st",
-      "Täiustatud soovitused",
-      "Kõik MVP simulaatorid",
-      "Piiramatu stsenaarium",
-      "Raportid + print/PDF",
+      "Kõik, mis Plus paketis",
+      "Täielik soovituste komplekt",
+      "Kõik simulaatorid (päike, aku, EV, soojuspump, tipu tasakaalustamine)",
+      "Piiramatu arv stsenaariume",
+      "Aruanded printimiseks ja PDF-ks",
     ],
   },
   {
@@ -145,6 +145,9 @@ export function entitlementsForPlan(planId: PlanId): Entitlements {
     reports: { allowed: true, allowedTypes: ["monthly_energy_summary"] },
   };
 }
+
+/** Full tool access for anonymous / marketing simulator routes (no account). */
+export const PUBLIC_TOOL_ENTITLEMENTS: Entitlements = entitlementsForPlan("pro");
 
 export function formatPrice(planId: PlanId, interval: BillingInterval) {
   const plan = PLANS.find((p) => p.id === planId);

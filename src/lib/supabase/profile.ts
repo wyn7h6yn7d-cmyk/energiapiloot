@@ -11,6 +11,8 @@ export type Goal =
   | "monitor_usage"
   | "understand_risks";
 
+export type DataConnectionState = "none" | "estfeed_pending" | "estfeed_connected";
+
 export type Profile = {
   user_id: string;
   onboarded: boolean;
@@ -24,6 +26,9 @@ export type Profile = {
   contract_type: ContractType | null;
   assets: EnergyAsset[] | null;
   goal: Goal | null;
+  site_address?: unknown | null;
+  business_registry_code?: string | null;
+  data_connection?: DataConnectionState | null;
 };
 
 export async function getMyProfile() {
@@ -34,7 +39,7 @@ export async function getMyProfile() {
   const { data: profile } = await supabase
     .from("profiles")
     .select(
-      "user_id,onboarded,user_type,display_name,company_name,notification_prefs,primary_site_id,object_name,object_type,contract_type,assets,goal"
+      "user_id,onboarded,user_type,display_name,company_name,notification_prefs,primary_site_id,object_name,object_type,contract_type,assets,goal,site_address,business_registry_code,data_connection"
     )
     .eq("user_id", auth.user.id)
     .maybeSingle();

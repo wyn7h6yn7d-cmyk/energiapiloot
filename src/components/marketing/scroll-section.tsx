@@ -3,7 +3,6 @@
 import { ReactNode } from "react";
 
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 export function ScrollSection({
@@ -35,10 +34,23 @@ export function ScrollSection({
         className
       )}
     >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-80 [mask-image:linear-gradient(180deg,black,transparent)]"
+      >
+        <div className="ep-signal-grid absolute inset-0" />
+        <div className="absolute inset-y-0 left-0 w-px bg-gradient-to-b from-transparent via-[oklch(0.83_0.14_205_/35%)] to-transparent" />
+        <div className="absolute inset-y-0 right-0 w-px bg-gradient-to-b from-transparent via-[oklch(0.82_0.16_145_/22%)] to-transparent" />
+      </div>
+
       <div className="ep-container relative z-10">
         <div className="grid items-start gap-10 md:grid-cols-12">
           <div className="md:col-span-6" data-reveal="left">
-            <div className="max-w-xl">
+            <div className="relative max-w-xl">
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -inset-6 -z-10 rounded-[2rem] bg-[radial-gradient(700px_420px_at_20%_20%,oklch(0.12_0.01_255_/78%),transparent_62%)] blur-[2px]"
+              />
               <p className="text-xs font-medium tracking-wide text-foreground/60">
                 {eyebrow}
               </p>
@@ -63,7 +75,7 @@ export function ScrollSection({
             {right ? (
               right
             ) : (
-              <Card variant="panel" hover="lift" className="min-h-[220px]" />
+              <div className="ep-signal-frame min-h-[220px] rounded-[1.75rem]" />
             )}
           </div>
         </div>

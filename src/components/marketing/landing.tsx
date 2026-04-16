@@ -4,14 +4,14 @@ import { LinkButton } from "@/components/ui/link-button";
 import { MarketingNav } from "@/components/marketing/marketing-nav";
 import { ScrollSection } from "@/components/marketing/scroll-section";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useDeviceProfile, useScrollStory } from "@/lib/motion/use-scroll-story";
 import { useScrollChoreography } from "@/lib/motion/use-scroll-choreography";
-import { useRef } from "react";
+import { type ReactNode, useRef } from "react";
 import { MobileHeroFallback } from "@/components/marketing/mobile-hero-fallback";
 import { HeroSceneLazy } from "@/components/marketing/hero-scene-lazy";
+import { cn } from "@/lib/utils";
 
 export function Landing() {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -34,6 +34,13 @@ export function Landing() {
         />
       ) : null}
 
+      {!device.preferMobileFallback ? (
+        <>
+          <div className="pointer-events-none fixed inset-0 z-[1] ep-readability-scrim" />
+          <div className="pointer-events-none fixed inset-0 z-[2] ep-hero-vignette" />
+        </>
+      ) : null}
+
       <div className="relative z-10">
         <MarketingNav />
 
@@ -43,13 +50,17 @@ export function Landing() {
             <div className="ep-container">
               <div className="grid items-start gap-10 md:grid-cols-12">
                 <div className="md:col-span-7">
-                  <div className="max-w-2xl" data-hero-pin>
+                  <div className="relative max-w-2xl" data-hero-pin>
+                    <div
+                      aria-hidden
+                      className="pointer-events-none absolute -inset-6 -z-10 rounded-[2rem] bg-[radial-gradient(900px_520px_at_18%_35%,oklch(0.12_0.01_255_/84%),transparent_65%)]"
+                    />
                     <div className="flex items-center gap-2" data-reveal>
                       <Badge variant="cyan">Energiaotsused, selgelt</Badge>
                       {mode === "lite" ? <Badge variant="warm">Kergem režiim</Badge> : null}
                     </div>
                     <p className="mt-6 text-sm font-medium tracking-wide text-foreground/70" data-reveal>
-                      Energiapiloot — premium energiaintellekti platvorm kodudele ja väikestele ettevõtetele
+                      Energiapiloot — energiaotsuste platvorm kodudele ja väikeettevõtetele
                     </p>
                     <h1 className="mt-4 text-balance text-4xl font-semibold leading-[1.05] tracking-tight md:text-6xl" data-reveal>
                       Mõista oma energiat. Tee targemaid otsuseid.
@@ -63,21 +74,18 @@ export function Landing() {
                     </p>
 
                     <div className="pointer-events-auto mt-9 flex flex-col gap-3 sm:flex-row sm:items-center" data-reveal>
-                      <LinkButton href="/register" size="lg" variant="gradient">
-                        Proovi tasuta
+                      <LinkButton href="/leping" size="lg" variant="gradient">
+                        Ava lepingu labor
                       </LinkButton>
-                      <LinkButton href="/pricing" size="lg" variant="outline">
-                        Vaata pakette
-                      </LinkButton>
-                      <LinkButton href="/dashboard" size="lg" variant="glow" className="sm:ml-1">
-                        Vaata töölauda
+                      <LinkButton href="/pricing#avamine" size="lg" variant="outline">
+                        Ava täielik analüüs
                       </LinkButton>
                     </div>
 
                     <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3" data-reveal>
                       <Kpi label="Fookus" value="EE · LV · LT" hint="Baltikumi energia reaalsus." />
                       <Kpi label="Stsenaariumid" value="kõrvuti" hint="Võrdle otsuseid ühe vaatega." />
-                      <Kpi label="Soovitused" value="põhjendusega" hint="Näed miks, mitte ainult mida." />
+                      <Kpi label="Soovitused" value="põhjendusega" hint="Näed ka „miks“, mitte ainult „mida“." />
                     </div>
                   </div>
                 </div>
@@ -85,7 +93,9 @@ export function Landing() {
                 <div className="md:col-span-5">
                   <div data-reveal>
                     {device.preferMobileFallback ? (
-                      <MobileHeroFallback label={device.reducedMotion ? "Reduced motion" : "Lite"} />
+                      <MobileHeroFallback
+                        label={device.reducedMotion ? "Vaikne animatsioon" : "Kerge vaade"}
+                      />
                     ) : (
                       <HeroPreview />
                     )}
@@ -101,7 +111,7 @@ export function Landing() {
             eyebrow="01 — Probleem"
             title="Elektriotsused on liiga sageli “umbes”."
             body="Hinnad kõiguvad, lepingud on raskesti võrreldavad ja investeeringud tunduvad loteriina. Tarbimise mustrid jäävad peitu — kuni arve saabub."
-            badge={{ label: "Tulem: kulud, mis oleks saanud väiksemad olla.", variant: "warm" }}
+            badge={{ label: "Tulemus: kulud, mida oleks saanud vähendada.", variant: "warm" }}
             right={<ProblemPanel />}
           />
 
@@ -116,7 +126,7 @@ export function Landing() {
 
           <ScrollSection
             id="contracts"
-            eyebrow="03 — Lepinguintellekt"
+            eyebrow="03 — Lepingu analüüs"
             title="Lepingud: võrdle mõju, mitte lubadusi."
             body="Fikseeritud vs börs ei ole ideoloogia. Me näitame hinnariski, tiputundide mõju ja päris säästu samas vaates."
             badge={{ label: "Lepingud", variant: "cyan" }}
@@ -163,10 +173,10 @@ export function Landing() {
 
           <ScrollSection
             id="reports"
-            eyebrow="07 — Raportid ja stsenaariumid"
-            title="Raportid, mida saad päriselt kasutada."
-            body="Hoia stsenaariumid kõrvuti, jaga kokkuvõtteid ja tee otsus, mis on lihtne selgitada ka teisele poolele lauda."
-            badge={{ label: "Raportid", variant: "warm" }}
+            eyebrow="07 — Aruanded ja stsenaariumid"
+            title="Aruanded, mida julged edasi anda."
+            body="Hoia stsenaariumid kõrvuti, jaga kokkuvõtteid ja tee otsus, mida on lihtne selgitada ka teisele poole laua taga."
+            badge={{ label: "Aruanded", variant: "warm" }}
             right={<ReportsPanel />}
           />
 
@@ -174,7 +184,7 @@ export function Landing() {
             id="household"
             eyebrow="08 — Kodule"
             title="Kodule: vähem stressi, rohkem kontrolli."
-            body="Leia, millal sul tekivad tipud, mis leping sobib sinu rutiiniga ja millal investeering päriselt tasub — ilma arvamise ja without Exceli kurnatuseta."
+            body="Leia, millal tekivad tipud, milline elektripakett sobib sinu rutiiniga ja millal investeering päriselt tasub — ilma pimesikku arvamise ja Exceli väsimuseta."
             badge={{ label: "Kodu", variant: "green" }}
             right={<HouseholdPanel />}
           />
@@ -192,7 +202,7 @@ export function Landing() {
             id="trust"
             eyebrow="10 — Usaldus"
             title="Ehitatud usalduseks, mitte trikkideks."
-            body="Selge loogika, minimaalne andmekogumine ja turvaline arhitektuur. Siia lisanduvad peagi logod, kliendilood ja mõõdikud."
+            body="Selge loogika, mõistlik andmekogumine ja turvaline tehniline alus. Lähitulevikus lisanduvad partnerid ja tulemused — kuni nendeni on fookus ausal tootel."
             right={<TrustPanel />}
           />
 
@@ -200,7 +210,7 @@ export function Landing() {
             id="pricing-teaser"
             eyebrow="11 — Paketid"
             title="Alusta tasuta. Uuenda, kui vajad sügavust."
-            body="Tasuta annab kiire ülevaate. Pro lisab piiramatu stsenaariumi, raportid ja täpsemad simulatsioonid."
+            body="Tasuta paketiga saad kiire ülevaate. Pro paketiga tulevad piiramatu arv stsenaariume, aruanded ja kõik simulaatorid."
             badge={{ label: "Hinnad", variant: "neutral" }}
             right={<PricingTeaserPanel />}
           />
@@ -219,7 +229,7 @@ export function Landing() {
               <div>
                 <p className="text-sm font-medium">Energiapiloot</p>
                 <p className="mt-1 text-sm text-foreground/60">
-                  Premium energiaintellekti platvorm, mis aitab vähendada kulusid ja teha põhjendatud energiaotsuseid.
+                  Platvorm kodudele ja väikeettevõtetele: vähem äraarvamisi, rohkem selgeid energiaotsuseid.
                 </p>
               </div>
               <div className="pointer-events-auto flex items-center gap-3">
@@ -261,280 +271,343 @@ function Kpi({
 
 function HeroPreview() {
   return (
-    <Card variant="panel" className="pointer-events-auto">
-      <CardHeader>
+    <div className="ep-signal-frame pointer-events-auto rounded-[1.75rem] p-6">
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <CardTitle>Kiirülevaade</CardTitle>
-          <CardDescription>
-            Alusta lihtsast sisendist. Me näitame, kus on suurim mõju ja mis on järgmine samm.
-          </CardDescription>
+          <p className="text-[11px] font-medium tracking-[0.22em] text-foreground/55">
+            SIGNAAL · ÜLEVAADE
+          </p>
+          <p className="mt-2 text-lg font-semibold tracking-tight">Kiirülevaade</p>
+          <p className="mt-2 text-sm leading-relaxed text-foreground/70">
+            Alusta väikesest sisendist. Näitame, kus on suurim mõju — ja mis on järgmine samm.
+          </p>
         </div>
-        <Badge variant="green">Demo</Badge>
-      </CardHeader>
+        <div className="hidden sm:block">
+          <div className="rounded-full border border-border/60 bg-background/25 px-3 py-1 text-[11px] text-foreground/65">
+            Reaalajas · mudel
+          </div>
+        </div>
+      </div>
 
-      <div className="mt-5 grid gap-3">
+      <div className="mt-6 grid gap-3">
         <MiniStat label="Kuutarbimine" value="420 kWh" />
         <MiniStat label="Hinnanguline sääst" value="18–43 € / kuu" />
         <MiniStat label="Järgmine samm" value="Võrdle lepingut + nihuta tippe" />
       </div>
 
-      <div className="mt-7 flex items-center justify-between">
-        <p className="text-xs text-foreground/55">Loetav ka pimedas. Disainitud usalduseks.</p>
-        <LinkButton href="/login" size="sm" variant="secondary">
-          Logi sisse
+      <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-xs text-foreground/55">
+          Tekst jääb loetavaks: me hoiame kontrasti ja rütmi kontrolli all.
+        </p>
+        <LinkButton href="/pricing#avamine" size="sm" variant="secondary">
+          Ava sügavus
         </LinkButton>
       </div>
-    </Card>
+    </div>
   );
 }
 
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-xl border border-border/60 bg-background/30 px-4 py-3">
+    <div className="rounded-xl border border-border/60 bg-background/25 px-4 py-3">
       <p className="text-xs text-foreground/60">{label}</p>
       <p className="mt-1 text-sm text-foreground/85">{value}</p>
     </div>
   );
 }
 
+function PanelChrome({
+  kicker,
+  title,
+  subtitle,
+  right,
+  children,
+  className,
+}: {
+  kicker: string;
+  title: string;
+  subtitle?: string;
+  right?: ReactNode;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn("ep-signal-frame rounded-[1.75rem] p-6", className)}>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-[11px] font-medium tracking-[0.22em] text-foreground/55">{kicker}</p>
+          <p className="mt-2 text-lg font-semibold tracking-tight">{title}</p>
+          {subtitle ? (
+            <p className="mt-2 text-sm leading-relaxed text-foreground/70">{subtitle}</p>
+          ) : null}
+        </div>
+        {right ? <div className="shrink-0">{right}</div> : null}
+      </div>
+      <div className="mt-6">{children}</div>
+    </div>
+  );
+}
+
+function Sparkline({ values }: { values: number[] }) {
+  const max = Math.max(...values, 1);
+  return (
+    <div className="flex h-10 items-end gap-1">
+      {values.map((v, idx) => (
+        <div
+          key={`${idx}-${v}`}
+          className="w-1.5 rounded-full bg-[oklch(0.83_0.14_205_/0.55)]"
+          style={{ height: `${Math.max(10, (v / max) * 100)}%` }}
+        />
+      ))}
+    </div>
+  );
+}
+
 function ProblemPanel() {
   return (
-    <Card variant="panel" hover="lift" className="pointer-events-auto">
-      <CardHeader>
-        <div>
-          <CardTitle>Miks see on keeruline?</CardTitle>
-          <CardDescription>Õiged otsused nõuavad seoseid, mitte tabeleid.</CardDescription>
+    <PanelChrome
+      className="pointer-events-auto"
+      kicker="PROBLEEM · ÜLEVAADE"
+      title="Miks see on keeruline?"
+      subtitle="Õiged otsused nõuavad seoseid — mitte tabeleid, mis elavad oma elu."
+      right={<Badge variant="warm">Valu</Badge>}
+    >
+      <div className="grid gap-4 md:grid-cols-5">
+        <div className="md:col-span-2">
+          <Sparkline values={[12, 18, 16, 22, 31, 27, 35, 29, 33, 41, 38, 44]} />
+          <p className="mt-3 text-xs text-foreground/55">
+            Hinnad ja tipud liiguvad — inimese töömälu mitte.
+          </p>
         </div>
-        <Badge variant="warm">Valu</Badge>
-      </CardHeader>
-      <div className="mt-6 space-y-2 text-sm text-foreground/70">
-        <Bullet>Hinnariski on raske hinnata</Bullet>
-        <Bullet>Lepingud ei ole “õun õunaga”</Bullet>
-        <Bullet>Investeeringu tasuvus on ebaselge</Bullet>
-        <Bullet>Tarbimise tipud jäävad varju</Bullet>
+        <div className="md:col-span-3 space-y-2 text-sm text-foreground/70">
+          <Bullet>Hinnariski on raske hinnata</Bullet>
+          <Bullet>Lepingud ei ole “õun õunaga”</Bullet>
+          <Bullet>Investeeringu tasuvus on ebaselge</Bullet>
+          <Bullet>Tarbimise tipud jäävad varju</Bullet>
+        </div>
       </div>
-    </Card>
+    </PanelChrome>
   );
 }
 
 function SolutionPanel() {
   return (
-    <Card variant="panel" hover="lift" className="pointer-events-auto">
-      <CardHeader>
-        <div>
-          <CardTitle>Üks mudel</CardTitle>
-          <CardDescription>Üks vaade. Üks stsenaarium. Üks põhjendatud otsus.</CardDescription>
-        </div>
-        <Badge variant="cyan">Lahendus</Badge>
-      </CardHeader>
-
-      <Tabs defaultValue="contracts" className="mt-6">
+    <PanelChrome
+      className="pointer-events-auto"
+      kicker="MUDEL · KONTROLL"
+      title="Üks mudel. Üks narratiiv."
+      subtitle="Leping + tarbimine + investeering → üks selge otsus, mida saab korrata."
+      right={<Badge variant="cyan">Lahendus</Badge>}
+    >
+      <Tabs defaultValue="contracts">
         <TabsList>
           <TabsTrigger value="contracts">Lepingud</TabsTrigger>
           <TabsTrigger value="sim">Simulatsioon</TabsTrigger>
-          <TabsTrigger value="rec">Soovitus</TabsTrigger>
+          <TabsTrigger value="rec">Soovitused</TabsTrigger>
         </TabsList>
         <TabsContent value="contracts">
-          <MiniStat label="Võrdlus" value="börs vs fikseeritud" />
+          <MiniStat label="Võrdlus" value="börs vs fikseeritud (mõju, mitte slogan)" />
         </TabsContent>
         <TabsContent value="sim">
-          <MiniStat label="Mõju" value="enne/pärast" />
+          <MiniStat label="Mõju" value="enne/pärast — samade eeldustega" />
         </TabsContent>
         <TabsContent value="rec">
-          <MiniStat label="Järgmine samm" value="põhjendusega" />
+          <MiniStat label="Järgmine samm" value="põhjendusega, mitte “proovi õnne”" />
         </TabsContent>
       </Tabs>
-    </Card>
+    </PanelChrome>
   );
 }
 
 function FeaturePanel({ title, lines }: { title: string; lines: string[] }) {
   return (
-    <Card variant="panel" hover="lift" className="pointer-events-auto">
-      <CardHeader>
-        <div>
-          <CardTitle>{title}</CardTitle>
-          <CardDescription>Loetav. Praktiline. Põhjendatav.</CardDescription>
+    <PanelChrome
+      className="pointer-events-auto"
+      kicker="MOODUL"
+      title={title}
+      subtitle="Tööriist, mis näitab seoseid — mitte “feature boxi” teksti."
+      right={
+        <div className="rounded-full border border-border/60 bg-background/25 px-3 py-1 text-[11px] text-foreground/65">
+          SIGNAAL
         </div>
-        <Badge variant="neutral">Funktsioon</Badge>
-      </CardHeader>
-      <div className="mt-6 space-y-2 text-sm text-foreground/70">
+      }
+    >
+      <div className="space-y-2 text-sm text-foreground/70">
         {lines.map((l) => (
           <Bullet key={l}>{l}</Bullet>
         ))}
       </div>
-    </Card>
+    </PanelChrome>
   );
 }
 
 function SimulationPanel() {
   return (
-    <Card variant="panel" hover="lift" className="pointer-events-auto">
-      <CardHeader>
-        <div>
-          <CardTitle>Investeeringu stsenaarium</CardTitle>
-          <CardDescription>Simuleeri, salvesta ja võrdle otsuseid.</CardDescription>
+    <PanelChrome
+      className="pointer-events-auto"
+      kicker="SIM · OTSUS"
+      title="Investeering pole enam pime usk."
+      subtitle="Vaata tasuvust, tundlikkust ja “mis siis, kui” — enne kui allkirjastad."
+      right={<Badge variant="cyan">Simulatsioon</Badge>}
+    >
+      <div className="grid gap-4 md:grid-cols-5">
+        <div className="md:col-span-2">
+          <Sparkline values={[8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]} />
+          <p className="mt-3 text-xs text-foreground/55">Näidisrida: sääst kasvab aeglaselt, aga stabiilselt.</p>
         </div>
-        <Badge variant="cyan">Sim</Badge>
-      </CardHeader>
-      <div className="mt-6 grid gap-3">
-        <MiniStat label="Tasuvus (näide)" value="6–9 aastat" />
-        <MiniStat label="Risk" value="keskmine" />
+        <div className="md:col-span-3 grid gap-3">
+          <MiniStat label="Tasuvus (näide)" value="6–9 aastat" />
+          <MiniStat label="Risk" value="keskmine (hinnanguline)" />
+        </div>
       </div>
       <div className="mt-7">
-        <LinkButton href="/dashboard/simulations" variant="outline">
+        <LinkButton href="/simulatsioonid" variant="outline">
           Ava simulatsioonid
         </LinkButton>
       </div>
-    </Card>
+    </PanelChrome>
   );
 }
 
 function RecommendationsPanel() {
   return (
-    <Card variant="panel" hover="lift" className="pointer-events-auto">
-      <CardHeader>
-        <div>
-          <CardTitle>Soovitus</CardTitle>
-          <CardDescription>“Mida teha järgmisena?” — koos mõju ja põhjendusega.</CardDescription>
-        </div>
-        <Badge variant="green">Nõuanne</Badge>
-      </CardHeader>
-      <div className="mt-6 space-y-3">
+    <PanelChrome
+      className="pointer-events-auto"
+      kicker="JÄRGMINE · SAMM"
+      title="Soovitus, mis ei aja udu"
+      subtitle="Konkreetne tegevus + põhjus + hinnanguline mõju."
+      right={<Badge variant="green">Nõuanne</Badge>}
+    >
+      <div className="space-y-3">
         <MiniStat label="Tegevus" value="Nihuta koormust 18–21" />
         <MiniStat label="Miks" value="Suurim mõju tipuhinnal" />
         <MiniStat label="Mõju" value="−8% / kuu (hinnang)" />
       </div>
-    </Card>
+    </PanelChrome>
   );
 }
 
 function ReportsPanel() {
   return (
-    <Card variant="panel" hover="lift" className="pointer-events-auto">
-      <CardHeader>
-        <div>
-          <CardTitle>Stsenaariumid ja raportid</CardTitle>
-          <CardDescription>Üks kokkuvõte, mida on lihtne jagada.</CardDescription>
-        </div>
-        <Badge variant="warm">Raport</Badge>
-      </CardHeader>
-      <div className="mt-6 space-y-2 text-sm text-foreground/70">
+    <PanelChrome
+      className="pointer-events-auto"
+      kicker="VÄLJUND · JAGAMINE"
+      title="Raport, mis kõlbab päriselt edasi anda."
+      subtitle="Üks kokkuvõte, mis seletab otsuse loogika — mitte ekraanipilt Excelist."
+      right={<Badge variant="warm">Aruanne</Badge>}
+    >
+      <div className="space-y-2 text-sm text-foreground/70">
         <Bullet>Võrdlus enne/pärast</Bullet>
         <Bullet>Kokkuvõte otsuse põhjenduseks</Bullet>
         <Bullet>Salvestus ja ajalugu</Bullet>
       </div>
-    </Card>
+    </PanelChrome>
   );
 }
 
 function HouseholdPanel() {
   return (
-    <Card variant="panel" hover="lift" className="pointer-events-auto">
-      <CardHeader>
-        <div>
-          <CardTitle>Kodu</CardTitle>
-          <CardDescription>Vähem üllatusi. Rohkem kontrolli.</CardDescription>
-        </div>
-        <Badge variant="green">Kodu</Badge>
-      </CardHeader>
-      <div className="mt-6 space-y-2 text-sm text-foreground/70">
+    <PanelChrome
+      className="pointer-events-auto"
+      kicker="KODU · RÜTM"
+      title="Kodus on energia sageli harjumuste küsimus."
+      subtitle="Näe tippe ja rutiine nii, et muudatused on mõistlikud — mitte fanatism."
+      right={<Badge variant="green">Kodu</Badge>}
+    >
+      <div className="space-y-2 text-sm text-foreground/70">
         <Bullet>Tiputunnid ja rutiinid nähtavaks</Bullet>
         <Bullet>Lepingu valik päris mõju järgi</Bullet>
         <Bullet>Investeeringu tasuvus selgeks</Bullet>
       </div>
-    </Card>
+    </PanelChrome>
   );
 }
 
 function BusinessPanel() {
   return (
-    <Card variant="panel" hover="lift" className="pointer-events-auto">
-      <CardHeader>
-        <div>
-          <CardTitle>Väikeettevõte</CardTitle>
-          <CardDescription>Otsus, mida saab põhjendada ja korrata.</CardDescription>
-        </div>
-        <Badge variant="cyan">Äri</Badge>
-      </CardHeader>
-      <div className="mt-6 space-y-2 text-sm text-foreground/70">
+    <PanelChrome
+      className="pointer-events-auto"
+      kicker="ÄRI · PROGNOOS"
+      title="Väikeettevõte vajab otsust, mida saab korrata."
+      subtitle="Numbrid, stsenaariumid ja raportid — ilma “powerpointi müstikata”."
+      right={<Badge variant="cyan">Äri</Badge>}
+    >
+      <div className="space-y-2 text-sm text-foreground/70">
         <Bullet>Prognoositavam kulu</Bullet>
         <Bullet>Stsenaariumid ja raportid juhatusele/partnerile</Bullet>
         <Bullet>Soovitused, mis sobituvad tööpäevaga</Bullet>
       </div>
-    </Card>
+    </PanelChrome>
   );
 }
 
 function TrustPanel() {
   return (
-    <Card variant="panel" hover="lift" className="pointer-events-auto">
-      <CardHeader>
-        <div>
-          <CardTitle>Usaldusruum</CardTitle>
-          <CardDescription>Logod, metrikad ja kliendilood lisame siia peagi.</CardDescription>
-        </div>
-        <Badge variant="warm">Varsti</Badge>
-      </CardHeader>
-      <div className="mt-6 grid grid-cols-3 gap-3">
-        <div className="h-14 rounded-xl border border-border/60 bg-background/25" />
-        <div className="h-14 rounded-xl border border-border/60 bg-background/25" />
-        <div className="h-14 rounded-xl border border-border/60 bg-background/25" />
+    <PanelChrome
+      className="pointer-events-auto"
+      kicker="USALDUS · SÜSTEEM"
+      title="Usaldus ei ole turunduslause — see on arhitektuur."
+      subtitle="Läbipaistev loogika, minimaalne andmekogumine ja turvaline alus."
+      right={<Badge variant="warm">Varsti</Badge>}
+    >
+      <div className="grid grid-cols-3 gap-3">
+        <div className="h-14 rounded-xl border border-border/60 bg-background/20" />
+        <div className="h-14 rounded-xl border border-border/60 bg-background/20" />
+        <div className="h-14 rounded-xl border border-border/60 bg-background/20" />
       </div>
       <p className="mt-5 text-sm text-foreground/65">
-        Turvalisus ja läbipaistvus ei ole lisa — see on toote osa.
+        Partnerite ja mõõdikute plokk täieneb; toode on mõeldud juba praegu pärisotsuste jaoks, mitte ainult demoks.
       </p>
-    </Card>
+    </PanelChrome>
   );
 }
 
 function PricingTeaserPanel() {
   return (
-    <Card variant="panel" hover="lift" className="pointer-events-auto">
-      <CardHeader>
-        <div>
-          <CardTitle>Paketid</CardTitle>
-          <CardDescription>Vali, kui sügavale tahad minna.</CardDescription>
-        </div>
-        <Badge variant="neutral">Hinnad</Badge>
-      </CardHeader>
-      <div className="mt-6 space-y-2 text-sm text-foreground/70">
-        <Bullet>Tasuta: kiire ülevaade</Bullet>
-        <Bullet>Pro: piiramatu stsenaarium + raportid</Bullet>
+    <PanelChrome
+      className="pointer-events-auto"
+      kicker="PAKETT · SÜGAVUS"
+      title="Alusta väikselt. Kasva, kui vajad sügavust."
+      subtitle="Tasuta annab suuna. Tasulised paketid annavad töövoogu."
+      right={<Badge variant="neutral">Hinnad</Badge>}
+    >
+      <div className="space-y-2 text-sm text-foreground/70">
+        <Bullet>Avalik: interaktiivsed tööriistad kohe brauseris</Bullet>
+        <Bullet>Premium: täissügavus, salvestus ja PDF (Stripe voog tulekul)</Bullet>
       </div>
       <div className="mt-7">
         <LinkButton href="/pricing" variant="outline">
           Vaata pakette
         </LinkButton>
       </div>
-    </Card>
+    </PanelChrome>
   );
 }
 
 function FinalCtaPanel() {
   return (
-    <Card variant="panel" className="pointer-events-auto">
-      <CardHeader>
-        <div>
-          <CardTitle>Alusta nüüd</CardTitle>
-          <CardDescription>Loo baasjoon ja salvesta esimene otsusevariant.</CardDescription>
-        </div>
-        <Badge variant="cyan">CTA</Badge>
-      </CardHeader>
-      <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-        <LinkButton href="/register" size="lg" variant="gradient">
-          Proovi tasuta
+    <PanelChrome
+      className="pointer-events-auto"
+      kicker="ALUSTA · KOHE"
+      title="Tee esimene otsus täna."
+      subtitle="Salvesta esimene stsenaarium. Kui see on selge, on kogu energia jutt kergem."
+      right={<Badge variant="cyan">Alusta</Badge>}
+    >
+      <div className="flex flex-col gap-3 sm:flex-row">
+        <LinkButton href="/simulatsioonid" size="lg" variant="gradient">
+          Käivita simulatsioon
         </LinkButton>
-        <LinkButton href="/pricing" size="lg" variant="outline">
-          Vaata pakette
+        <LinkButton href="/pricing#avamine" size="lg" variant="outline">
+          Ava premium
         </LinkButton>
       </div>
       <p className="mt-5 text-xs text-foreground/55">
-        Mobiilis kasutame kergemat 3D režiimi, et tekst ja scroll oleksid alati sujuvad.
+        Mobiilis hoitakse 3D kontrolli all — et scroll ja tekst jääksid “premium”, mitte “demo”.
       </p>
-    </Card>
+    </PanelChrome>
   );
 }
+
 
 function Bullet({ children }: { children: string }) {
   return (

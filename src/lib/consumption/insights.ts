@@ -174,7 +174,7 @@ export function buildConsumptionInsights(raw: ConsumptionProfileInputs): Consump
                     : "Masinad",
         kwhMonthly: DEVICE_KWH_MONTH[k],
         eurMonthly: round2(DEVICE_KWH_MONTH[k] * avgAllIn),
-        note: "Hinnanguline panus (MVP).",
+        note: "Hinnanguline panus mudelis.",
       })),
     {
       key: "rest",

@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://energiapiloot.com"),
   title: {
-    default: "Energiapiloot — Baltic energy decisions, simplified",
+    default: "Energiapiloot — energiaotsused selgelt",
     template: "%s — Energiapiloot",
   },
   description:
@@ -28,9 +28,9 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "Energiapiloot",
-    title: "Energiapiloot — Baltic energy decisions, simplified",
+    title: "Energiapiloot — energiaotsused selgelt",
     description:
-      "Lepinguanalüüs, tarbimise insight, investeeringute simulatsioonid ja soovitused — premium UX, selged eeldused.",
+      "Lepingu võrdlus, tarbimise ülevaade, investeeringute simulatsioon ja prioriseeritud soovitused — selge loogika, ausad eeldused.",
     locale: "et_EE",
     url: "/",
   },
@@ -52,10 +52,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}
-    >
+    <html lang="et" className={`${geistSans.variable} ${geistMono.variable} dark h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <Providers>{children}</Providers>
       </body>

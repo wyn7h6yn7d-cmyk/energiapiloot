@@ -39,7 +39,7 @@ export type SolarInputs = {
 const solar: SimulationDefinition<SolarInputs> = {
   type: "solar",
   title: "Päike",
-  subtitle: "Tootmine, oma-tarbimine ja tasuvus (MVP).",
+  subtitle: "Tootmine, oma-tarbimine ja tasuvus.",
   defaultInputs: {
     upfrontEur: 6900,
     systemKw: 6,
@@ -68,7 +68,7 @@ const solar: SimulationDefinition<SolarInputs> = {
         bullets: [
           `Hinnanguline tootmine: ~${Math.round(annualProduction)} kWh/a.`,
           `Oma-tarbimine (eeldus): ${Math.round(self * 100)}%.`,
-          "MVP-s arvestame ainult oma-tarbimist (müük võrku lisandub hiljem).",
+          "Praegu arvestame ainult oma-tarbimist; müügi tulu võrku lisandub hiljem.",
         ],
       },
       assumptions: [
@@ -92,7 +92,7 @@ export type BatteryInputs = {
 const battery: SimulationDefinition<BatteryInputs> = {
   type: "battery",
   title: "Aku",
-  subtitle: "Ajastamine + tipukoormuse vähendus (MVP).",
+  subtitle: "Ajastamine ja tipukoormuse vähendus.",
   defaultInputs: {
     upfrontEur: 5200,
     capacityKwh: 7,
@@ -119,7 +119,7 @@ const battery: SimulationDefinition<BatteryInputs> = {
         bullets: [
           `Eeldus: ${cap} kWh aku • ${cycles.toFixed(1)} tsüklit/päev • η=${Math.round(eff * 100)}%.`,
           `Hinna vahe (eeldus): ${value.toFixed(2)} €/kWh.`,
-          "MVP-s käsitleme akut kui “kWh nihutamise” tööriista.",
+          "Akut käsitleme kui vahendit, mis nihutab kWh odavamatesse tundidesse.",
         ],
       },
       assumptions: [
@@ -142,7 +142,7 @@ export type EvChargerInputs = {
 const evCharger: SimulationDefinition<EvChargerInputs> = {
   type: "ev_charger",
   title: "EV laadija",
-  subtitle: "Nutika ajastamise sääst (MVP).",
+  subtitle: "Nutika laadimisajastuse sääst.",
   defaultInputs: {
     upfrontEur: 950,
     monthlyKwhCharged: 180,
@@ -191,7 +191,7 @@ export type HeatPumpInputs = {
 const heatPump: SimulationDefinition<HeatPumpInputs> = {
   type: "heat_pump",
   title: "Soojuspump",
-  subtitle: "Elektrikulu vähenemine läbi COP (MVP).",
+  subtitle: "Elektrikulu vähenemine läbi soojusfaktori (COP).",
   defaultInputs: {
     upfrontEur: 7800,
     monthlyHeatKwh: 850,
@@ -243,7 +243,7 @@ export type PeakShavingInputs = {
 const peakShaving: SimulationDefinition<PeakShavingInputs> = {
   type: "peak_shaving",
   title: "Peak shaving",
-  subtitle: "Tipukoormuse vähendus võrgutasu loogikaga (MVP).",
+  subtitle: "Tipukoormuse vähendus võrgutasu mõjus.",
   defaultInputs: {
     upfrontEur: 2200,
     peakKwReduced: 3,
@@ -266,7 +266,7 @@ const peakShaving: SimulationDefinition<PeakShavingInputs> = {
         bullets: [
           `Tipu vähenemine: ${kw.toFixed(1)} kW.`,
           `Võrgutasu: ${fee.toFixed(2)} €/kW/kuu • ${months} kuud/a.`,
-          "MVP-s arvestame ainult võrgutasu säästu.",
+          "Praegu arvestame ainult võrgutasu säästu.",
         ],
       },
       assumptions: [

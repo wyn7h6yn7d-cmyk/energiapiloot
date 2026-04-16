@@ -2,14 +2,18 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { PremiumGate } from "@/components/product/premium-gate";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Panel, PanelDescription, PanelHeader, PanelTitle } from "@/components/ui/panel";
+import { LinkButton } from "@/components/ui/link-button";
 import { SIM_DEFINITIONS, listSimulators } from "@/lib/simulations/definitions";
 import type { SimulationResult, SimulationType } from "@/lib/simulations/types";
 import { CashflowChart, SensitivityChart } from "@/components/dashboard/simulations/simulation-charts";
 import type { ScenarioDTO } from "@/app/(app)/dashboard/simulations/actions";
+import { evaluateInvestmentScenario } from "@/lib/domain/investments/intelligence";
+import type { SimulationInvestmentContext } from "@/lib/product/simulation-investment-context";
 import {
   deleteScenarioAction,
   duplicateScenarioAction,
@@ -20,6 +24,7 @@ import {
 } from "@/app/(app)/dashboard/simulations/actions";
 import type { Entitlements } from "@/lib/billing/plans";
 import { PaywallCard } from "@/components/billing/paywall-card";
+import type { SolarIntegrationHints } from "@/lib/integrations/solar-hints";
 
 function fmtEur(n: number) {
   const sign = n < 0 ? "−" : "";
@@ -48,12 +53,24 @@ function isNumberField(key: string, v: unknown) {
   return typeof v === "number" && Number.isFinite(v);
 }
 
+function verdictEt(v: "do_now" | "evaluate_further" | "wait") {
+  if (v === "do_now") return "Tugev signaal";
+  if (v === "wait") return "Nõrk signaal";
+  return "Hinda edasi";
+}
+
 export function InvestmentSimulationsModule({
   initialScenarios,
   entitlements,
+  solarHints,
+  simulationContext,
+  variant = "dashboard",
 }: {
   initialScenarios: ScenarioDTO[];
   entitlements: Entitlements;
+  solarHints?: SolarIntegrationHints | null;
+  simulationContext: SimulationInvestmentContext;
+  variant?: "dashboard" | "public";
 }) {
   const sims = useMemo(() => listSimulators(), []);
   const [type, setType] = useState<SimulationType>("solar");
@@ -63,6 +80,31 @@ export function InvestmentSimulationsModule({
   const [inputs, setInputs] = useState<Record<string, unknown>>({ ...def.defaultInputs });
 
   const result: SimulationResult = useMemo(() => def.calculate(inputs as any), [def, inputs]);
+
+  const domainEval = useMemo(
+    () =>
+      evaluateInvestmentScenario({
+        type,
+        name: name.trim() || typeLabel(type),
+        monthlySavingsEur: result.monthlySavingsEur,
+        annualSavingsEur: result.annualSavingsEur,
+        paybackYears: result.paybackYears,
+        config: inputs as Record<string, unknown>,
+        context: {
+          userType: simulationContext.userType,
+          peakDependency0to100: simulationContext.peakDependency0to100,
+          dayShare: simulationContext.dayShare,
+          spotVolatility01: simulationContext.spotVolatility01,
+          hasSolarAsset: simulationContext.hasSolarAsset,
+          hasHeatPumpAsset: simulationContext.hasHeatPumpAsset,
+          hasEvAsset: simulationContext.hasEvAsset,
+          machinery: simulationContext.machinery,
+          dataStrength: simulationContext.dataStrength,
+          hasSiteCoords: simulationContext.hasSiteCoords,
+        },
+      }),
+    [inputs, name, result.annualSavingsEur, result.monthlySavingsEur, result.paybackYears, simulationContext, type]
+  );
 
   const [saved, setSaved] = useState<ScenarioDTO[]>(initialScenarios);
   const [compareIds, setCompareIds] = useState<string[]>([]);
@@ -94,20 +136,49 @@ export function InvestmentSimulationsModule({
     }
   }, [entitlements.allowedSimulationTypes, type]);
 
+  const isPublic = variant === "public";
+
   return (
     <div className="grid gap-6">
       <div className="flex flex-col items-start justify-between gap-4 lg:flex-row">
         <div>
           <p className="text-xs font-medium tracking-wide text-foreground/60">Simulatsioonid</p>
           <h1 className="mt-3 text-balance text-3xl font-semibold tracking-tight">
-            Investeeringu mõju, selgelt ja võrreldavalt.
+            {isPublic
+              ? "Investeeringu labor: näe mõju enne allkirja."
+              : "Investeeringu mõju, selgelt ja võrreldavalt."}
           </h1>
           <p className="mt-3 max-w-3xl text-pretty text-base leading-relaxed text-foreground/70">
-            MVP-s kasutame lihtsaid, arusaadavaid valemeid. Hiljem ühendame päris tarbimise,
-            turuhinnad ja seadmete profiilid, ilma UI ümber kirjutamata.
+            {isPublic
+              ? "Avalik režiim näitab kiiret ülevaadet ja KPI-sid. Täielik otsustuskiht, graafikud ja eksport tulevad premium avamisega (Stripe + PDF on struktuuris valmis)."
+              : "Simulaatorid kasutavad selgeid, kontrollitavaid valemeid. Täpne tarbimine ja turuhinnad ühenduvad hiljem sama liidese alla — ilma töövoogu ümber tegemata."}
           </p>
         </div>
       </div>
+
+      {!isPublic && solarHints ? (
+        <Panel>
+          <PanelHeader>
+            <div>
+              <PanelTitle>Päikese eelhinnang (PVGIS, server-only)</PanelTitle>
+              <PanelDescription>
+                Kiire kontekst sinu onboarding aadressi / vaikimisi Tallinna koordinaatide järgi. Ei käivita
+                brauseris väliseid päringuid.
+              </PanelDescription>
+            </div>
+            <Badge variant="cyan">{solarHints.source}</Badge>
+          </PanelHeader>
+          <div className="px-6 pb-6">
+            <p className="text-sm text-foreground/75">
+              ~<span className="font-mono font-semibold">{Math.round(solarHints.annualProductionKwh)}</span> kWh/a
+              @ <span className="font-mono font-semibold">{solarHints.demoPeakPowerKwp}</span> kWp •{" "}
+              <span className="font-mono text-foreground/70">
+                {solarHints.lat.toFixed(3)}, {solarHints.lng.toFixed(3)}
+              </span>
+            </p>
+          </div>
+        </Panel>
+      ) : null}
 
       <div className="grid gap-4 lg:grid-cols-12">
         <Panel className="lg:col-span-4">
@@ -116,7 +187,7 @@ export function InvestmentSimulationsModule({
               <PanelTitle>Simulaator</PanelTitle>
               <PanelDescription>Vali tüüp ja seadista sisendid.</PanelDescription>
             </div>
-            <Badge variant="neutral">MVP</Badge>
+            <Badge variant="neutral">Esialgne</Badge>
           </PanelHeader>
           <div className="px-6 pb-6">
             <div className="grid gap-3">
@@ -166,32 +237,54 @@ export function InvestmentSimulationsModule({
               </div>
 
               <div className="mt-2 flex flex-wrap items-center gap-2">
-                <Button
-                  variant="gradient"
-                  onClick={async () => {
-                    try {
-                      await saveScenarioAction({
-                        simulation_type: type,
-                        name: name.trim() || `${typeLabel(type)} • stsenaarium`,
-                        config: inputs,
-                      });
-                      const next = await listScenariosAction();
-                      setSaved(next);
-                    } catch (e: any) {
-                      alert(e?.message ?? "Salvestamine ebaõnnestus.");
-                    }
-                  }}
-                >
-                  Salvesta stsenaarium
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setInputs({ ...def.defaultInputs });
-                  }}
-                >
-                  Lähtesta
-                </Button>
+                {isPublic ? (
+                  <>
+                    <LinkButton href="/pricing#avamine" variant="gradient">
+                      Ava salvestus ja võrdlus
+                    </LinkButton>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setInputs({ ...def.defaultInputs });
+                      }}
+                    >
+                      Lähtesta
+                    </Button>
+                    <p className="w-full text-xs text-foreground/55">
+                      Ilma premium avamiseta ei salvesta brauser su stsenaariume serverisse — see on teadlikult lihtne
+                      ja privaatne avalik kogemus.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      variant="gradient"
+                      onClick={async () => {
+                        try {
+                          await saveScenarioAction({
+                            simulation_type: type,
+                            name: name.trim() || `${typeLabel(type)} • stsenaarium`,
+                            config: inputs,
+                          });
+                          const next = await listScenariosAction();
+                          setSaved(next);
+                        } catch (e: any) {
+                          alert(e?.message ?? "Salvestamine ebaõnnestus.");
+                        }
+                      }}
+                    >
+                      Salvesta stsenaarium
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setInputs({ ...def.defaultInputs });
+                      }}
+                    >
+                      Lähtesta
+                    </Button>
+                  </>
+                )}
               </div>
 
               <div className="mt-3 rounded-2xl border border-border/40 bg-card/20 p-4">
@@ -205,10 +298,152 @@ export function InvestmentSimulationsModule({
 
         <div className="grid gap-4 lg:col-span-8">
           <div className="grid gap-4 md:grid-cols-3">
-            <Kpi label="Kuutine sääst" value={`${fmtEur(result.monthlySavingsEur)}`} hint="Hinnang (MVP)." />
-            <Kpi label="Aastane sääst" value={`${fmtEur(result.annualSavingsEur)}`} hint="12× kuus (MVP)." />
+            <Kpi label="Kuutine sääst" value={`${fmtEur(result.monthlySavingsEur)}`} hint="Hinnanguline." />
+            <Kpi label="Aastane sääst" value={`${fmtEur(result.annualSavingsEur)}`} hint="12 × kuine sääst." />
             <Kpi label="Tasuvus" value={fmtYears(result.paybackYears)} hint="Upfront / aastane sääst." />
           </div>
+
+          {isPublic ? (
+            <PremiumGate
+              className="min-h-[360px] rounded-3xl"
+              title="Täielik investeeringu signaal"
+              description="Ava premium, et näha domeenihinnangut, 15-aastast rahavoogu, tundlikkust ja täielikku eelduste lõiku. Allalaaditav raport tuleb samasse voogu."
+            >
+              <div className="grid gap-4">
+                <Panel>
+                  <PanelHeader>
+                    <div>
+                      <PanelTitle>Otsustustugi (domeenikiht)</PanelTitle>
+                      <PanelDescription>
+                        Strateegiline sobivus, valmidus ja eelduste tundlikkus — sõltub sinu profiilist ja mõõdulisusest, mitte ainult ühest numbrist.
+                      </PanelDescription>
+                    </div>
+                    <Badge
+                      variant={
+                        domainEval.verdict === "wait" ? "warm" : domainEval.verdict === "do_now" ? "green" : "neutral"
+                      }
+                    >
+                      {verdictEt(domainEval.verdict)}
+                    </Badge>
+                  </PanelHeader>
+                  <div className="px-6 pb-6">
+                    <p className="text-sm text-foreground/75">{domainEval.summaryEt}</p>
+                    {domainEval.cautionEt ? (
+                      <p className="mt-3 rounded-2xl border border-border/50 bg-card/25 p-3 text-sm text-foreground/70">
+                        {domainEval.cautionEt}
+                      </p>
+                    ) : null}
+                    <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                      <MiniStat label="Strateegiline sobivus" value={`${domainEval.strategicFit.score0to100}/100`} />
+                      <MiniStat label="Valmidus" value={`${domainEval.readiness.score0to100}/100`} />
+                      <MiniStat
+                        label="Eelduste tundlikkus"
+                        value={`${domainEval.assumptionDependency.score0to100}/100`}
+                      />
+                    </div>
+                    <p className="mt-4 text-xs text-foreground/55">
+                      Kuusäästu vahemik (±): {fmtEur(domainEval.monthlySavingsLowHigh.low)} –{" "}
+                      {fmtEur(domainEval.monthlySavingsLowHigh.high)}
+                    </p>
+                  </div>
+                </Panel>
+
+                <Panel className="overflow-hidden">
+                  <PanelHeader>
+                    <div>
+                      <PanelTitle>Cash flow</PanelTitle>
+                      <PanelDescription>Kumulatiivne sääst ajas (15 a).</PanelDescription>
+                    </div>
+                    <Badge variant="cyan">€</Badge>
+                  </PanelHeader>
+                  <div className="px-6 pb-6">
+                    <CashflowChart data={result.cashflow} />
+                  </div>
+                </Panel>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Panel className="overflow-hidden">
+                    <PanelHeader>
+                      <div>
+                        <PanelTitle>Sensitivity</PanelTitle>
+                        <PanelDescription>Säästu kõikumine ±30% (näidis).</PanelDescription>
+                      </div>
+                    </PanelHeader>
+                    <div className="px-6 pb-6">
+                      <SensitivityChart data={result.sensitivity} />
+                    </div>
+                  </Panel>
+
+                  <Panel>
+                    <PanelHeader>
+                      <div>
+                        <PanelTitle>Eeldused</PanelTitle>
+                        <PanelDescription>Mida see arvutus eeldab.</PanelDescription>
+                      </div>
+                    </PanelHeader>
+                    <div className="px-6 pb-6">
+                      <div className="space-y-2">
+                        {result.assumptions.map((a) => (
+                          <div key={a.label} className="flex items-center justify-between gap-4 rounded-xl border border-border/40 bg-card/20 px-3 py-2">
+                            <p className="text-xs text-foreground/60">{a.label}</p>
+                            <p className="text-xs font-medium text-foreground/80">{a.value}</p>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="mt-4 rounded-2xl border border-border/40 bg-card/20 p-4">
+                        <p className="text-xs font-medium tracking-wide text-foreground/60">Selgitus</p>
+                        <ul className="mt-3 space-y-2 text-sm text-foreground/70">
+                          {result.summary.bullets.map((b, idx) => (
+                            <li key={idx}>• {b}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </Panel>
+                </div>
+
+              </div>
+            </PremiumGate>
+          ) : (
+            <>
+          <Panel>
+            <PanelHeader>
+              <div>
+                <PanelTitle>Otsustustugi (domeenikiht)</PanelTitle>
+                <PanelDescription>
+                  Strateegiline sobivus, valmidus ja eelduste tundlikkus — sõltub sinu profiilist ja mõõdulisusest, mitte ainult ühest numbrist.
+                </PanelDescription>
+              </div>
+              <Badge
+                variant={
+                  domainEval.verdict === "wait" ? "warm" : domainEval.verdict === "do_now" ? "green" : "neutral"
+                }
+              >
+                {verdictEt(domainEval.verdict)}
+              </Badge>
+            </PanelHeader>
+            <div className="px-6 pb-6">
+              <p className="text-sm text-foreground/75">{domainEval.summaryEt}</p>
+              {domainEval.cautionEt ? (
+                <p className="mt-3 rounded-2xl border border-border/50 bg-card/25 p-3 text-sm text-foreground/70">
+                  {domainEval.cautionEt}
+                </p>
+              ) : null}
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                <MiniStat label="Strateegiline sobivus" value={`${domainEval.strategicFit.score0to100}/100`} />
+                <MiniStat label="Valmidus" value={`${domainEval.readiness.score0to100}/100`} />
+                <MiniStat
+                  label="Eelduste tundlikkus"
+                  value={`${domainEval.assumptionDependency.score0to100}/100`}
+                />
+              </div>
+              <p className="mt-4 text-xs text-foreground/55">
+                Kuusäästu vahemik (±): {fmtEur(domainEval.monthlySavingsLowHigh.low)} –{" "}
+                {fmtEur(domainEval.monthlySavingsLowHigh.high)}
+              </p>
+            </div>
+          </Panel>
 
           <Panel className="overflow-hidden">
             <PanelHeader>
@@ -228,7 +463,7 @@ export function InvestmentSimulationsModule({
               <PanelHeader>
                 <div>
                   <PanelTitle>Sensitivity</PanelTitle>
-                  <PanelDescription>Sääst ±30% (MVP).</PanelDescription>
+                  <PanelDescription>Säästu kõikumine ±30% (näidis).</PanelDescription>
                 </div>
               </PanelHeader>
               <div className="px-6 pb-6">
@@ -434,6 +669,8 @@ export function InvestmentSimulationsModule({
               ) : null}
             </div>
           </Panel>
+            </>
+          )}
         </div>
       </div>
     </div>

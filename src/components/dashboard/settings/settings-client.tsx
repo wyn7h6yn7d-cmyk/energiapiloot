@@ -387,7 +387,7 @@ export function SettingsClient({
                 <PanelTitle>Teavitused</PanelTitle>
                 <PanelDescription>Vali, milliseid signaale ja kokkuvõtteid soovid.</PanelDescription>
               </div>
-              <Badge variant="neutral">MVP</Badge>
+              <Badge variant="neutral">Tulekul</Badge>
             </PanelHeader>
             <div className="px-6 pb-6">
               <div className="grid gap-3">
@@ -454,7 +454,8 @@ export function SettingsClient({
               </PanelHeader>
               <div className="px-6 pb-6">
                 <p className="text-sm text-foreground/70">
-                  Ärikasutajatel: organisatsioonid, rollid ja mitme objekti haldus. MVP-s on struktuur olemas (`organizations`, `sites`).
+                  Ärikasutajatel lisanduvad organisatsioonid, rollid ja mitme tarbimiskoha haldus — andmemudel on
+                  juba ette valmistatud.
                 </p>
               </div>
             </Panel>
@@ -479,8 +480,8 @@ export function SettingsClient({
 
             <Panel className="border-[oklch(0.704_0.191_22.216_/40%)]">
               <PanelHeader>
-                <PanelTitle>Danger zone</PanelTitle>
-                <PanelDescription>Hävitavad toimingud (MVP placeholder).</PanelDescription>
+                <PanelTitle>Ohtlik tsoon</PanelTitle>
+                <PanelDescription>Toimingud, mida ei saa tagasi võtta (tulekul).</PanelDescription>
               </PanelHeader>
               <div className="px-6 pb-6">
                 <p className="text-sm text-foreground/70">
