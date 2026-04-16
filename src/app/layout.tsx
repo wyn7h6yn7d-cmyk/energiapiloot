@@ -14,9 +14,36 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Energiapiloot — Baltic energy decisions, simplified",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://energiapiloot.com"),
+  title: {
+    default: "Energiapiloot — Baltic energy decisions, simplified",
+    template: "%s — Energiapiloot",
+  },
   description:
-    "Energiapiloot helps households and small businesses understand consumption, compare electricity contracts, simulate savings, and plan investments with confidence.",
+    "Energiapiloot aitab kodudel ja väikeettevõtetel mõista tarbimist, võrrelda elektrilepinguid, simuleerida säästu ja teha investeeringuotsuseid kindlalt.",
+  applicationName: "Energiapiloot",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    siteName: "Energiapiloot",
+    title: "Energiapiloot — Baltic energy decisions, simplified",
+    description:
+      "Lepinguanalüüs, tarbimise insight, investeeringute simulatsioonid ja soovitused — premium UX, selged eeldused.",
+    locale: "et_EE",
+    url: "/",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Energiapiloot",
+    description:
+      "Energiaotsused, selgelt ja auditeeritavalt — lepingud, tarbimine ja investeeringud ühes mudelis.",
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({

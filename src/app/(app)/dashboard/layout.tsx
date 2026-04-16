@@ -9,5 +9,9 @@ export default async function DashboardLayout({ children }: PropsWithChildren) {
   if (!user) redirect("/login?next=/dashboard");
   if (!profile?.onboarded) redirect("/onboarding");
 
-  return <AppShell>{children}</AppShell>;
+  return (
+    <AppShell userLabel={user.email ?? null} siteLabel={profile.object_name ?? null}>
+      {children}
+    </AppShell>
+  );
 }

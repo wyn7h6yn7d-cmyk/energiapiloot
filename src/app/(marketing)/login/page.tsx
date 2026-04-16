@@ -1,8 +1,15 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { loginAction } from "@/app/(marketing)/login/actions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { LinkButton } from "@/components/ui/link-button";
+
+export const metadata: Metadata = {
+  title: "Logi sisse",
+  description: "Logi sisse Energiapiloodi kontole ja jätka töölauda.",
+  robots: { index: false, follow: false },
+};
 
 export default async function LoginPage({
   searchParams,

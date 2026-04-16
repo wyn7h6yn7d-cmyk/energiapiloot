@@ -1,8 +1,15 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { registerAction } from "@/app/(marketing)/register/actions";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { LinkButton } from "@/components/ui/link-button";
+
+export const metadata: Metadata = {
+  title: "Loo konto",
+  description: "Loo Energiapiloodi konto ja alusta tasuta stsenaariumiga.",
+  robots: { index: false, follow: false },
+};
 
 export default async function RegisterPage({
   searchParams,

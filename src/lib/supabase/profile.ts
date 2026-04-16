@@ -15,6 +15,10 @@ export type Profile = {
   user_id: string;
   onboarded: boolean;
   user_type: UserType | null;
+  display_name?: string | null;
+  company_name?: string | null;
+  notification_prefs?: Record<string, unknown> | null;
+  primary_site_id?: string | null;
   object_name: string | null;
   object_type: ObjectType | null;
   contract_type: ContractType | null;
@@ -29,7 +33,9 @@ export async function getMyProfile() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("user_id,onboarded,user_type,object_name,object_type,contract_type,assets,goal")
+    .select(
+      "user_id,onboarded,user_type,display_name,company_name,notification_prefs,primary_site_id,object_name,object_type,contract_type,assets,goal"
+    )
     .eq("user_id", auth.user.id)
     .maybeSingle();
 

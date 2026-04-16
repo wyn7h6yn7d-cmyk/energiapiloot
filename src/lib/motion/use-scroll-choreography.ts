@@ -16,7 +16,16 @@ export function useScrollChoreography({
     if (!root) return;
 
     // Accessibility + perf: keep choreography minimal in lite mode.
-    if (mode === "lite") return;
+    if (mode === "lite") {
+      // Ensure content is visible (no stuck opacity/transform)
+      const els = Array.from(root.querySelectorAll<HTMLElement>("[data-reveal]"));
+      for (const el of els) {
+        el.style.opacity = "1";
+        el.style.transform = "none";
+        (el.style as any).filter = "none";
+      }
+      return;
+    }
 
     const { gsap, ScrollTrigger } = ensureGsap();
     const ctx = gsap.context(() => {

@@ -2,46 +2,67 @@ import Link from "next/link";
 
 import { MarketingShell } from "@/components/layout/marketing-shell";
 import { LinkButton } from "@/components/ui/link-button";
+import { Badge } from "@/components/ui/badge";
 import { PricingCard } from "@/components/ui/pricing-card";
+import { PLANS, formatPrice, type BillingInterval } from "@/lib/billing/plans";
 
 export default function PricingPage() {
+  const interval: BillingInterval = "monthly";
+
   return (
     <MarketingShell>
-      <div className="max-w-2xl">
+      <div className="max-w-5xl">
         <p className="text-xs font-medium tracking-wide text-foreground/60">Hinnad</p>
         <h1 className="mt-3 text-balance text-3xl font-semibold tracking-tight md:text-4xl">
-          Lihtsad paketid kodust kuni väikeettevõtteni.
+          Paketid, mis kasvavad koos sinu energiavajadusega.
         </h1>
-        <p className="mt-4 text-pretty text-base leading-relaxed text-foreground/70">
-          Stripe-valmis arvelduse lisame järgmisena. See leht defineerib paketid, mille
-          külge tasuline ligipääs kinnitub.
+        <p className="mt-4 max-w-3xl text-pretty text-base leading-relaxed text-foreground/70">
+          MVP paywall töötab juba plaanide järgi (Free → Plus → Pro → Business).
+          Stripe ühendame järgmises etapis; hinnastuse konfiguratsioon on selleks valmis.
         </p>
 
-        <div className="mt-8 grid gap-4 md:grid-cols-2">
-          <PricingCard
-            name="Tasuta"
-            price="0 €"
-            description="Kiire baasanalüüs ja lihtsad otsused."
-            features={[
-              "Baasjoon ja kiire ülevaade",
-              "1 salvestatud stsenaarium",
-              "Põhilised soovitused",
-            ]}
-            cta={{ label: "Alusta tasuta", href: "/register" }}
-          />
-          <PricingCard
-            name="Pro"
-            price="12 € / kuu"
-            badge="Soovitus"
-            description="Täielik tööriistakast investeeringute ja lepingute jaoks."
-            features={[
-              "Piiramatu stsenaarium",
-              "Täiendatud simulaatorid",
-              "Raportid ja eksport",
-            ]}
-            cta={{ label: "Liitu ootenimekirjaga", href: "/register" }}
-            highlight
-          />
+        <div className="mt-7 flex items-center gap-2">
+          <Badge variant="cyan">Kuu</Badge>
+          <Badge variant="neutral">Aasta (tulemas toggle)</Badge>
+          <span className="text-xs text-foreground/55">
+            MVP-s näitame kuu hinnastust; yearly toggle lisandub UX-ina järgmisena.
+          </span>
+        </div>
+
+        <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {PLANS.map((p) => (
+            <PricingCard
+              key={p.id}
+              name={p.name}
+              price={formatPrice(p.id, interval)}
+              badge={p.badge}
+              description={p.tagline}
+              features={p.features}
+              cta={{
+                label: p.id === "free" ? "Alusta tasuta" : "Uuenda",
+                href: p.id === "free" ? "/register" : "/register",
+              }}
+              highlight={p.highlight}
+            />
+          ))}
+        </div>
+
+        <div className="mt-10 rounded-3xl border border-border/50 bg-card/20 p-6">
+          <p className="text-xs font-medium tracking-wide text-foreground/60">Võrdlus (MVP)</p>
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            <div className="rounded-2xl border border-border/40 bg-card/25 p-4">
+              <p className="text-sm font-semibold">Free vs Plus</p>
+              <p className="mt-2 text-sm text-foreground/65">
+                Plus avab rohkem simulaatoreid, rohkem salvestatud stsenaariume ja laiendab raportite valikut.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-border/40 bg-card/25 p-4">
+              <p className="text-sm font-semibold">Pro vs Business</p>
+              <p className="mt-2 text-sm text-foreground/65">
+                Business on meeskonnale: organisatsioonid, mitme objekti tugi ja rollid (järgmised iteratsioonid).
+              </p>
+            </div>
+          </div>
         </div>
 
         <div className="mt-10">

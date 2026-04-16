@@ -1,8 +1,14 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 
 import { MarketingShell } from "@/components/layout/marketing-shell";
-import { Button } from "@/components/ui/button";
 import { LinkButton } from "@/components/ui/link-button";
+
+export const metadata: Metadata = {
+  title: "Turvalisus — Energiapiloot",
+  description:
+    "Energiapiloot on ehitatud turvalise autentimise, RLS reeglite ja auditeeritava andmemudeliga.",
+};
 
 export default function SecurityPage() {
   return (

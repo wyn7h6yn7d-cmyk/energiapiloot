@@ -32,8 +32,13 @@ export function HeroUniverseCanvas({
   return (
     <div className="pointer-events-none fixed inset-0 -z-10">
       <Canvas
-        dpr={mode === "lite" ? [1, 1.2] : [1, 1.6]}
-        gl={{ antialias: true, powerPreference: "high-performance" }}
+        dpr={mode === "lite" ? [1, 1.1] : [1, 1.6]}
+        frameloop="demand"
+        gl={{
+          antialias: mode !== "lite",
+          powerPreference: mode === "lite" ? "default" : "high-performance",
+          alpha: false,
+        }}
         camera={{ fov: 42, position: [0, 0.32, 6.1] }}
       >
         <color attach="background" args={["#070A12"]} />
@@ -44,14 +49,14 @@ export function HeroUniverseCanvas({
           showPanels={showPanels}
           intensity={intensity}
         />
-        <Environment preset="city" />
+        {mode !== "lite" ? <Environment preset="city" /> : null}
       </Canvas>
       <div className="absolute inset-0 bg-gradient-to-b from-background/0 via-background/0 to-background/80" />
     </div>
   );
 }
 
-function HeroUniverseScene({
+const HeroUniverseScene = React.memo(function HeroUniverseScene({
   progress,
   mode,
   heroRangeEnd,
@@ -279,7 +284,7 @@ function HeroUniverseScene({
       <group ref={uiPanels}>{showPanels ? <DataPanels /> : null}</group>
     </group>
   );
-}
+});
 
 const EnergyParticles = forwardRef<THREE.Points, { mode: HeroPerfMode }>(
   ({ mode }, ref) => {

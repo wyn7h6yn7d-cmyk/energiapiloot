@@ -2,30 +2,37 @@
 
 import { LinkButton } from "@/components/ui/link-button";
 import { MarketingNav } from "@/components/marketing/marketing-nav";
-import { HeroUniverseCanvas } from "@/components/three/hero-universe-canvas";
-import { ThreeOverlay } from "@/components/three/three-overlay";
 import { ScrollSection } from "@/components/marketing/scroll-section";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { usePerfMode, useScrollStory } from "@/lib/motion/use-scroll-story";
+import { useDeviceProfile, useScrollStory } from "@/lib/motion/use-scroll-story";
 import { useScrollChoreography } from "@/lib/motion/use-scroll-choreography";
 import { useRef } from "react";
+import { MobileHeroFallback } from "@/components/marketing/mobile-hero-fallback";
+import { HeroSceneLazy } from "@/components/marketing/hero-scene-lazy";
 
 export function Landing() {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const mode = usePerfMode();
+  const device = useDeviceProfile();
+  const mode = device.mode;
   const sections = 12;
-  const { progress, activeIndex } = useScrollStory({ container: containerRef, sectionCount: sections });
+  const { progress } = useScrollStory({ container: containerRef, sectionCount: sections, mode });
 
   useScrollChoreography({ container: containerRef, mode });
 
   return (
     <div ref={containerRef} className="relative w-full">
-      <HeroUniverseCanvas progress={progress} mode={mode} heroRangeEnd={0.22} panels intensity={1} />
-
-      <ThreeOverlay />
+      {!device.preferMobileFallback ? (
+        <HeroSceneLazy
+          progress={progress}
+          mode={mode}
+          heroRangeEnd={0.22}
+          panels={!device.isMobile}
+          intensity={device.lowEnd ? 0.75 : 1}
+        />
+      ) : null}
 
       <div className="relative z-10">
         <MarketingNav />
@@ -77,7 +84,11 @@ export function Landing() {
 
                 <div className="md:col-span-5">
                   <div data-reveal>
-                    <HeroPreview />
+                    {device.preferMobileFallback ? (
+                      <MobileHeroFallback label={device.reducedMotion ? "Reduced motion" : "Lite"} />
+                    ) : (
+                      <HeroPreview />
+                    )}
                   </div>
                 </div>
               </div>

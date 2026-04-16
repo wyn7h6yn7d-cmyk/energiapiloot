@@ -6,20 +6,61 @@ import { ensureGsap } from "@/lib/motion/gsap";
 
 export type PerfMode = "full" | "lite";
 
-export function usePerfMode(): PerfMode {
-  const [mode, setMode] = useState<PerfMode>("full");
+export type DeviceProfile = {
+  mode: PerfMode;
+  isMobile: boolean;
+  isTouch: boolean;
+  reducedMotion: boolean;
+  lowEnd: boolean;
+  /** If true, prefer non-3D hero fallback on mobile */
+  preferMobileFallback: boolean;
+};
+
+function getConnection() {
+  return (navigator as any).connection as
+    | { effectiveType?: string; saveData?: boolean }
+    | undefined;
+}
+
+export function useDeviceProfile(): DeviceProfile {
+  const [profile, setProfile] = useState<DeviceProfile>({
+    mode: "full",
+    isMobile: false,
+    isTouch: false,
+    reducedMotion: false,
+    lowEnd: false,
+    preferMobileFallback: false,
+  });
 
   useEffect(() => {
     const mqlMobile = window.matchMedia("(max-width: 768px)");
     const mqlReduced = window.matchMedia("(prefers-reduced-motion: reduce)");
 
     const evalMode = () => {
-      const memory = (navigator as unknown as { deviceMemory?: number }).deviceMemory ?? 8;
+      const memory = (navigator as any).deviceMemory ?? 8;
       const cores = navigator.hardwareConcurrency ?? 8;
       const mobile = mqlMobile.matches;
       const reduced = mqlReduced.matches;
-      const weak = memory <= 4 || cores <= 4;
-      setMode(mobile || reduced || weak ? "lite" : "full");
+      const touch =
+        "ontouchstart" in window ||
+        (navigator as any).maxTouchPoints > 0 ||
+        (navigator as any).msMaxTouchPoints > 0;
+      const conn = getConnection();
+      const saveData = Boolean(conn?.saveData);
+      const slowNet = ["slow-2g", "2g"].includes(conn?.effectiveType ?? "");
+
+      const weak = memory <= 4 || cores <= 4 || saveData || slowNet;
+      const mode: PerfMode = mobile || reduced || weak ? "lite" : "full";
+      const preferMobileFallback = mobile && (reduced || weak);
+
+      setProfile({
+        mode,
+        isMobile: mobile,
+        isTouch: touch,
+        reducedMotion: reduced,
+        lowEnd: weak,
+        preferMobileFallback,
+      });
     };
 
     evalMode();
@@ -34,15 +75,21 @@ export function usePerfMode(): PerfMode {
     };
   }, []);
 
-  return mode;
+  return profile;
+}
+
+export function usePerfMode(): PerfMode {
+  return useDeviceProfile().mode;
 }
 
 export function useScrollStory({
   container,
   sectionCount,
+  mode = "full",
 }: {
   container: React.RefObject<HTMLElement | null>;
   sectionCount: number;
+  mode?: PerfMode;
 }) {
   const [progress, setProgress] = useState(0);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -55,6 +102,31 @@ export function useScrollStory({
   useEffect(() => {
     const el = container.current;
     if (!el) return;
+
+    // Lite mode: avoid GSAP/ScrollTrigger; use native scroll.
+    if (mode === "lite") {
+      let raf = 0;
+      const onScroll = () => {
+        cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(() => {
+          const rect = el.getBoundingClientRect();
+          const viewport = window.innerHeight || 1;
+          const total = rect.height - viewport;
+          const scrolled = -rect.top;
+          const p = clamp01(total <= 0 ? 0 : scrolled / total);
+          setProgress(p);
+          setActiveIndex(nearestIndex(p, snapPoints));
+        });
+      };
+      onScroll();
+      window.addEventListener("scroll", onScroll, { passive: true });
+      window.addEventListener("resize", onScroll);
+      return () => {
+        window.removeEventListener("scroll", onScroll);
+        window.removeEventListener("resize", onScroll);
+        cancelAnimationFrame(raf);
+      };
+    }
 
     const { ScrollTrigger } = ensureGsap();
 
@@ -74,7 +146,7 @@ export function useScrollStory({
     return () => {
       st.kill();
     };
-  }, [container, snapPoints]);
+  }, [container, mode, snapPoints]);
 
   return { progress, activeIndex };
 }
