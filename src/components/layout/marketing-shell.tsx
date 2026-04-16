@@ -19,15 +19,15 @@ export function MarketingShell({ children }: PropsWithChildren) {
           </Link>
           <div className="flex items-center gap-2">
             <LinkButton href="/pricing" variant="ghost" className="hidden md:inline-flex">
-              Pricing
+              Hinnad
             </LinkButton>
             <LinkButton href="/security" variant="ghost" className="hidden md:inline-flex">
-              Security
+              Turvalisus
             </LinkButton>
-            <LinkButton href="/sign-in" variant="outline">
-              Sign in
+            <LinkButton href="/login" variant="outline">
+              Logi sisse
             </LinkButton>
-            <LinkButton href="/sign-up">Start free</LinkButton>
+            <LinkButton href="/register">Alusta tasuta</LinkButton>
           </div>
         </div>
       </header>

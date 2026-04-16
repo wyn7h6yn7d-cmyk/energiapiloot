@@ -1,45 +1,54 @@
 import Link from "next/link";
 
 import { MarketingShell } from "@/components/layout/marketing-shell";
-import { Button } from "@/components/ui/button";
 import { LinkButton } from "@/components/ui/link-button";
 
 export default function PricingPage() {
   return (
     <MarketingShell>
       <div className="max-w-2xl">
-        <p className="text-xs font-medium tracking-wide text-foreground/60">
-          Pricing
-        </p>
+        <p className="text-xs font-medium tracking-wide text-foreground/60">Hinnad</p>
         <h1 className="mt-3 text-balance text-3xl font-semibold tracking-tight md:text-4xl">
-          Simple plans that scale from household to SMB.
+          Lihtsad paketid kodust kuni väikeettevõtteni.
         </h1>
         <p className="mt-4 text-pretty text-base leading-relaxed text-foreground/70">
-          We’re wiring in Stripe-ready billing next. For now, this page is the
-          structure your paywall will hang from.
+          Stripe-valmis arvelduse lisame järgmisena. See leht defineerib paketid, mille
+          külge tasuline ligipääs kinnitub.
         </p>
 
         <div className="mt-8 grid gap-4 md:grid-cols-2">
           <PlanCard
-            name="Free"
+            name="Tasuta"
             price="€0"
-            blurb="Baseline modeling + 1 saved scenario."
-            cta={{ label: "Start free", href: "/sign-up" }}
+            blurb="Baasmodelleerimine + 1 salvestatud stsenaarium."
+            cta={{ label: "Alusta tasuta", href: "/register" }}
           />
           <PlanCard
             name="Pro"
             price="€12/mo"
-            blurb="Unlimited scenarios + advanced simulators."
-            cta={{ label: "Join waitlist", href: "/sign-up" }}
+            blurb="Piiramatu stsenaarium + täpsemad simulaatorid."
+            cta={{ label: "Liitu ootenimekirjaga", href: "/register" }}
             highlight
           />
         </div>
 
         <div className="mt-10">
           <LinkButton href="/" variant="ghost">
-            Back to home
+            Tagasi avalehele
           </LinkButton>
         </div>
+
+        <p className="mt-10 text-xs text-foreground/55">
+          Detailid? Vaata{" "}
+          <Link className="underline underline-offset-4" href="/security">
+            Turvalisus
+          </Link>{" "}
+          ja{" "}
+          <Link className="underline underline-offset-4" href="/legal/privacy">
+            Privaatsuspoliitika
+          </Link>
+          .
+        </p>
       </div>
     </MarketingShell>
   );
@@ -80,4 +89,3 @@ function PlanCard({
     </div>
   );
 }
-

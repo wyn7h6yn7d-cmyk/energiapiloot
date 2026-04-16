@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 
-import { Button } from "@/components/ui/button";
 import { LinkButton } from "@/components/ui/link-button";
 
 export function MarketingNav() {
@@ -18,21 +17,21 @@ export function MarketingNav() {
             <span className="text-sm font-semibold tracking-tight">Energiapiloot</span>
           </Link>
           <span className="hidden text-xs text-foreground/50 md:inline">
-            Baltic energy decisions, simplified
+            Energiaotsused, selgelt
           </span>
         </div>
 
         <nav className="pointer-events-auto flex items-center gap-2">
           <LinkButton href="/pricing" variant="ghost" className="hidden md:inline-flex">
-            Pricing
+            Hinnad
           </LinkButton>
           <LinkButton href="/security" variant="ghost" className="hidden md:inline-flex">
-            Security
+            Turvalisus
           </LinkButton>
-          <LinkButton href="/sign-in" variant="outline">
-            Sign in
+          <LinkButton href="/login" variant="outline">
+            Logi sisse
           </LinkButton>
-          <LinkButton href="/sign-up">Start free</LinkButton>
+          <LinkButton href="/register">Alusta tasuta</LinkButton>
         </nav>
       </div>
     </header>

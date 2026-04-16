@@ -9,37 +9,37 @@ export default function SecurityPage() {
     <MarketingShell>
       <div className="max-w-2xl">
         <p className="text-xs font-medium tracking-wide text-foreground/60">
-          Security
+          Turvalisus
         </p>
         <h1 className="mt-3 text-balance text-3xl font-semibold tracking-tight md:text-4xl">
-          Trust by default.
+          Usaldus vaikimisi.
         </h1>
         <p className="mt-4 text-pretty text-base leading-relaxed text-foreground/70">
-          Energiapiloot is being built with a production-grade architecture: secure
-          authentication, least-privilege access, and auditable data flows.
+          Energiapilooti ehitame tootmiskindla arhitektuuriga: turvaline autentimine,
+          vähimõiguse põhimõte ja auditeeritavad andmevood.
         </p>
 
         <div className="mt-8 grid gap-4">
           <SecurityCard
-            title="Authentication"
-            body="Supabase Auth, secure session handling, and clear separation between marketing and app routes."
+            title="Autentimine"
+            body="Supabase Auth, turvaline sessioonihaldus ja selge eraldus avalehe ning rakenduse vahel."
           />
           <SecurityCard
-            title="Data access"
-            body="Row-level security (RLS) policies will gate all user data. No shared scenarios, no accidental exposure."
+            title="Andmepääs"
+            body="Row-level security (RLS) reeglid kaitsevad kogu kasutajaandmestikku. Ei jagatud stsenaariume, ei juhuslikku lekkimist."
           />
           <SecurityCard
-            title="Payments"
-            body="Stripe-ready billing structure with webhook verification and minimal stored payment data."
+            title="Maksed"
+            body="Stripe-valmis arvelduse struktuur webhooki verifitseerimisega ja minimaalse makseinfo talletamisega."
           />
         </div>
 
         <div className="mt-10 flex items-center gap-3">
           <LinkButton href="/legal/privacy" variant="outline">
-            Privacy
+            Privaatsus
           </LinkButton>
           <LinkButton href="/" variant="ghost">
-            Back to home
+            Tagasi avalehele
           </LinkButton>
         </div>
       </div>

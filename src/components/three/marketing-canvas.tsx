@@ -28,7 +28,7 @@ export function MarketingCanvas({ progress }: Props) {
 
 function Scene({ progress }: Props) {
   const group = useRef<THREE.Group>(null);
-  const ring = useRef<THREE.Mesh>(null);
+  const logo = useRef<THREE.Group>(null);
   const lineGroup = useRef<THREE.Group>(null);
   const { invalidate } = useThree();
 
@@ -65,14 +65,15 @@ function Scene({ progress }: Props) {
       );
     }
 
-    if (ring.current) {
-      ring.current.rotation.z += dt * 0.25;
-      ring.current.position.y = THREE.MathUtils.lerp(
-        ring.current.position.y,
-        -0.1 + Math.sin(t * 0.6) * 0.08 + (p - 0.5) * 0.2,
+    if (logo.current) {
+      logo.current.rotation.y += dt * 0.18;
+      logo.current.rotation.z = Math.sin(t * 0.25) * 0.06;
+      logo.current.position.y = THREE.MathUtils.lerp(
+        logo.current.position.y,
+        0.15 + Math.sin(t * 0.65) * 0.08 + (p - 0.5) * 0.18,
         1 - Math.pow(0.001, dt)
       );
-      ring.current.scale.setScalar(THREE.MathUtils.lerp(1.0, 1.25, smoothstep(p)));
+      logo.current.scale.setScalar(THREE.MathUtils.lerp(1.15, 1.45, smoothstep(p)));
     }
 
     if (lineGroup.current) {
@@ -98,16 +99,9 @@ function Scene({ progress }: Props) {
         distance={12}
       />
 
-      <mesh ref={ring} position={[0, -0.1, 0]}>
-        <torusKnotGeometry args={[1.15, 0.36, 220, 20, 2, 3]} />
-        <meshStandardMaterial
-          color={new THREE.Color("#0B111F")}
-          metalness={0.85}
-          roughness={0.25}
-          emissive={new THREE.Color("#0A2B3A")}
-          emissiveIntensity={1.4}
-        />
-      </mesh>
+      <group ref={logo} position={[0, 0.15, 0]}>
+        <ElectricLogo3D />
+      </group>
 
       <group ref={lineGroup}>
         <Line
@@ -120,6 +114,92 @@ function Scene({ progress }: Props) {
       </group>
 
       <GridPlane />
+    </group>
+  );
+}
+
+function ElectricLogo3D() {
+  const ringMat = useMemo(
+    () =>
+      new THREE.MeshStandardMaterial({
+        color: new THREE.Color("#081021"),
+        metalness: 0.9,
+        roughness: 0.22,
+        emissive: new THREE.Color("#061A22"),
+        emissiveIntensity: 1.6,
+      }),
+    []
+  );
+
+  const boltMat = useMemo(
+    () =>
+      new THREE.MeshStandardMaterial({
+        color: new THREE.Color("#0A1222"),
+        metalness: 0.5,
+        roughness: 0.18,
+        emissive: new THREE.Color("#2BC3FF"),
+        emissiveIntensity: 2.2,
+      }),
+    []
+  );
+
+  const boltGeo = useMemo(() => {
+    // Stylized lightning bolt, extruded.
+    const s = new THREE.Shape();
+    s.moveTo(-0.28, 0.5);
+    s.lineTo(0.05, 0.5);
+    s.lineTo(-0.1, 0.12);
+    s.lineTo(0.28, 0.12);
+    s.lineTo(-0.04, -0.55);
+    s.lineTo(0.02, -0.08);
+    s.lineTo(-0.28, -0.08);
+    s.closePath();
+
+    return new THREE.ExtrudeGeometry(s, {
+      depth: 0.24,
+      bevelEnabled: true,
+      bevelThickness: 0.04,
+      bevelSize: 0.03,
+      bevelSegments: 3,
+      curveSegments: 6,
+    });
+  }, []);
+
+  const ringGeo = useMemo(() => new THREE.TorusGeometry(1.25, 0.12, 28, 160), []);
+  const innerGeo = useMemo(() => new THREE.TorusGeometry(1.02, 0.05, 18, 120), []);
+
+  return (
+    <group>
+      <mesh geometry={ringGeo} material={ringMat} rotation={[Math.PI / 2, 0, 0]} />
+      <mesh
+        geometry={innerGeo}
+        material={ringMat}
+        rotation={[Math.PI / 2, 0, 0]}
+        position={[0, 0, 0.08]}
+      />
+
+      <mesh
+        geometry={boltGeo}
+        material={boltMat}
+        rotation={[0, 0, 0.12]}
+        position={[0, 0, 0.12]}
+        castShadow={false}
+        receiveShadow={false}
+      />
+
+      {/* Subtle electric arc */}
+      <Line
+        points={[
+          new THREE.Vector3(-0.9, 0.25, 0.28),
+          new THREE.Vector3(-0.3, 0.55, 0.2),
+          new THREE.Vector3(0.4, 0.35, 0.22),
+          new THREE.Vector3(0.9, 0.1, 0.26),
+        ]}
+        color="#2EF2B5"
+        opacity={0.55}
+        transparent
+        lineWidth={1}
+      />
     </group>
   );
 }

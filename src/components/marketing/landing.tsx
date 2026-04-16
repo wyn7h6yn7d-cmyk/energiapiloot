@@ -4,31 +4,30 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { motion, useMotionValueEvent, useScroll } from "framer-motion";
 
-import { Button } from "@/components/ui/button";
 import { LinkButton } from "@/components/ui/link-button";
 import { MarketingNav } from "@/components/marketing/marketing-nav";
 import { MarketingCanvas } from "@/components/three/marketing-canvas";
 
 const beats = [
   {
-    eyebrow: "Baltic energy decisions",
-    title: "See your electricity like a system — not a bill.",
-    body: "Connect consumption, contract terms, and investments into a single decision model. Clear options. Measurable outcomes.",
+    eyebrow: "Energiaotsused Baltikumis",
+    title: "Näe oma elektrit süsteemina, mitte arvena.",
+    body: "Seo tarbimine, lepingutingimused ja investeeringud üheks otsustusmudeliks. Selged valikud. Mõõdetav mõju.",
   },
   {
-    eyebrow: "Contracts & savings",
-    title: "Compare offers. Simulate savings. Act with confidence.",
-    body: "Understand fixed vs. spot pricing, peak impact, and real-world savings — without spreadsheets.",
+    eyebrow: "Lepingud ja sääst",
+    title: "Võrdle pakkumisi. Simuleeri säästu. Tegutse kindlalt.",
+    body: "Mõista fikseeritud vs börsihinda, tipukoormuse mõju ja päris säästu — ilma Excelita.",
   },
   {
-    eyebrow: "Investments",
-    title: "Solar, battery, EV charging, heat pump, peak shaving.",
-    body: "Evaluate payback and risk with scenario-based modeling designed for households and small businesses.",
+    eyebrow: "Investeeringud",
+    title: "Päike, aku, EV laadimine, soojuspump, tipukoormuse vähendus.",
+    body: "Hinda tasuvust ja riski stsenaariumipõhise modelleerimisega, mis on loodud kodudele ja väikestele ettevõtetele.",
   },
   {
-    eyebrow: "Recommendations",
-    title: "Actionable next steps, not generic advice.",
-    body: "We translate your data into decisions: contract changes, load shifting, and investment timing.",
+    eyebrow: "Soovitused",
+    title: "Konkreetsed järgmised sammud, mitte üldine jutt.",
+    body: "Tõlgime sinu andmed otsusteks: lepingumuudatused, koormuse nihutamine ja investeeringu ajastus.",
   },
 ] as const;
 
@@ -61,7 +60,7 @@ export function Landing() {
                   transition={{ duration: 0.5 }}
                   className="text-sm font-medium tracking-wide text-foreground/70"
                 >
-                  Energiapiloot is a decision platform for EE · LV · LT
+                  Energiapiloot on otsustusplatvorm EE · LV · LT jaoks
                 </motion.p>
                 <motion.h1
                   initial={{ opacity: 0, y: 10 }}
@@ -69,9 +68,9 @@ export function Landing() {
                   transition={{ duration: 0.6, delay: 0.05 }}
                   className="mt-4 text-balance text-4xl font-semibold leading-[1.05] tracking-tight md:text-6xl"
                 >
-                  Make electricity decisions with clarity.
+                  Tee elektriotsused selgelt.
                   <span className="block text-foreground/70">
-                    Contracts, consumption, and investments — modeled together.
+                    Lepingud, tarbimine ja investeeringud — ühes mudelis.
                   </span>
                 </motion.h1>
                 <motion.p
@@ -80,24 +79,24 @@ export function Landing() {
                   transition={{ duration: 0.6, delay: 0.1 }}
                   className="mt-5 max-w-2xl text-pretty text-lg leading-relaxed text-foreground/75"
                 >
-                  A premium, trustworthy platform for households and small businesses to
-                  compare electricity contracts, simulate savings, and plan upgrades like
-                  solar, batteries, EV charging, and heat pumps.
+                  Premium ja usaldusväärne platvorm kodudele ja väikestele ettevõtetele:
+                  võrdle elektrilepinguid, simuleeri säästu ja planeeri uuendusi nagu
+                  päike, akud, EV laadimine ja soojuspumbad.
                 </motion.p>
 
                 <div className="pointer-events-auto mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <LinkButton href="/sign-up" size="lg">
-                    Start free
+                  <LinkButton href="/register" size="lg">
+                    Alusta tasuta
                   </LinkButton>
                   <LinkButton href="/pricing" size="lg" variant="outline">
-                    View pricing
+                    Vaata hindu
                   </LinkButton>
                 </div>
 
                 <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3">
-                  <Kpi label="Time-to-decision" value="minutes" hint="From confusion to a plan." />
-                  <Kpi label="Scenarios" value="saved" hint="Track what-if outcomes." />
-                  <Kpi label="Focus" value="Baltics" hint="EE · LV · LT energy reality." />
+                  <Kpi label="Otsuseni" value="minutid" hint="Segadusest plaanini." />
+                  <Kpi label="Stsenaariumid" value="salvestatud" hint="Jälgi “mis siis kui” tulemusi." />
+                  <Kpi label="Fookus" value="Baltikum" hint="EE · LV · LT energia reaalsus." />
                 </div>
               </div>
 
@@ -105,38 +104,38 @@ export function Landing() {
                 <div className="pointer-events-auto rounded-2xl border border-border/60 bg-card/40 backdrop-blur-md">
                   <div className="p-6">
                     <p className="text-sm font-medium text-foreground/80">
-                      Quick preview
+                      Kiirülevaade
                     </p>
                     <p className="mt-2 text-pretty text-sm leading-relaxed text-foreground/65">
-                      Enter a monthly kWh estimate and we’ll generate a baseline, then show
-                      the impact of contract changes and upgrades. No lock-in.
+                      Sisesta kuine kWh hinnang ja loome baasjoone, seejärel näitame
+                      lepingumuudatuste ja uuenduste mõju. Ilma kohustuseta.
                     </p>
                     <div className="mt-5 grid gap-3">
                       <div className="rounded-xl border border-border/60 bg-background/40 px-4 py-3">
-                        <p className="text-xs text-foreground/60">Monthly usage</p>
+                        <p className="text-xs text-foreground/60">Kuutarbimine</p>
                         <p className="mt-1 font-mono text-sm text-foreground/85">
                           420 kWh
                         </p>
                       </div>
                       <div className="rounded-xl border border-border/60 bg-background/40 px-4 py-3">
-                        <p className="text-xs text-foreground/60">Potential savings</p>
+                        <p className="text-xs text-foreground/60">Võimalik sääst</p>
                         <p className="mt-1 font-mono text-sm text-foreground/85">
-                          €18–€43 / month
+                          18–43 € / kuu
                         </p>
                       </div>
                       <div className="rounded-xl border border-border/60 bg-background/40 px-4 py-3">
-                        <p className="text-xs text-foreground/60">Next best action</p>
+                        <p className="text-xs text-foreground/60">Järgmine parim samm</p>
                         <p className="mt-1 text-sm text-foreground/85">
-                          Shift peak load + compare spot vs fixed
+                          Nihuta tipukoormust + võrdle börsi vs fikseeritud
                         </p>
                       </div>
                     </div>
                     <div className="mt-6 flex items-center justify-between">
                       <p className="text-xs text-foreground/55">
-                        Built for reliability and privacy.
+                        Ehitatud töökindluse ja privaatsuse jaoks.
                       </p>
-                      <LinkButton href="/sign-in" size="sm" variant="secondary">
-                        Sign in
+                      <LinkButton href="/login" size="sm" variant="secondary">
+                        Logi sisse
                       </LinkButton>
                     </div>
                   </div>
@@ -164,18 +163,18 @@ export function Landing() {
               <div>
                 <p className="text-sm font-medium">Energiapiloot</p>
                 <p className="mt-1 text-sm text-foreground/60">
-                  Production-grade SaaS foundation. Built for the Baltics.
+                  Tootmiskindel SaaS-vundament. Loodud Baltikumi jaoks.
                 </p>
               </div>
               <div className="pointer-events-auto flex items-center gap-3">
                 <LinkButton href="/security" variant="ghost">
-                  Security
+                  Turvalisus
                 </LinkButton>
                 <LinkButton href="/legal/privacy" variant="ghost">
-                  Privacy
+                  Privaatsus
                 </LinkButton>
                 <LinkButton href="/legal/terms" variant="ghost">
-                  Terms
+                  Tingimused
                 </LinkButton>
               </div>
             </div>
@@ -230,10 +229,10 @@ function StoryBeat({
           {body}
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
-          <Pill>Contracts</Pill>
-          <Pill>Consumption</Pill>
-          <Pill>Investments</Pill>
-          <Pill>Recommendations</Pill>
+          <Pill>Lepingud</Pill>
+          <Pill>Tarbimine</Pill>
+          <Pill>Investeeringud</Pill>
+          <Pill>Soovitused</Pill>
         </div>
       </div>
     </section>

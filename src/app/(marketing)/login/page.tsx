@@ -6,28 +6,24 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { LinkButton } from "@/components/ui/link-button";
 
-export default function SignUpPage() {
+export default function LoginPage() {
   const [email, setEmail] = useState("");
 
   return (
     <div className="min-h-screen px-6 py-16">
       <div className="mx-auto w-full max-w-md">
         <Link href="/" className="inline-flex items-center gap-2 text-sm">
-          <span className="h-2 w-2 rounded-full bg-[oklch(0.82_0.16_145)] shadow-[0_0_18px_oklch(0.82_0.16_145_/_0.45)]" />
+          <span className="h-2 w-2 rounded-full bg-[oklch(0.83_0.14_205)] shadow-[0_0_18px_oklch(0.83_0.14_205_/_0.45)]" />
           <span className="font-semibold tracking-tight">Energiapiloot</span>
         </Link>
 
-        <h1 className="mt-6 text-2xl font-semibold tracking-tight">
-          Create your account
-        </h1>
+        <h1 className="mt-6 text-2xl font-semibold tracking-tight">Logi sisse</h1>
         <p className="mt-2 text-sm text-foreground/65">
-          Start with a baseline scenario. Upgrade later if you need advanced simulators.
+          Autentimise ühendame järgmisena Supabase’iga. Praegu on see UI ja routing’u vundament.
         </p>
 
         <div className="mt-8 rounded-2xl border border-border/60 bg-card/40 p-6 backdrop-blur-md">
-          <label className="block text-xs font-medium text-foreground/70">
-            Email
-          </label>
+          <label className="block text-xs font-medium text-foreground/70">E-post</label>
           <input
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -37,22 +33,22 @@ export default function SignUpPage() {
 
           <div className="mt-6 flex flex-col gap-3">
             <Button size="lg" disabled>
-              Create account
+              Jätka
             </Button>
-            <LinkButton href="/sign-in" size="lg" variant="outline">
-              I already have an account
+            <LinkButton href="/register" size="lg" variant="outline">
+              Loo konto
             </LinkButton>
           </div>
         </div>
 
         <p className="mt-6 text-xs text-foreground/55">
-          By continuing, you agree to our{" "}
+          Jätkates nõustud{" "}
           <Link className="underline underline-offset-4" href="/legal/terms">
-            Terms
+            tingimustega
           </Link>{" "}
-          and{" "}
+          ja{" "}
           <Link className="underline underline-offset-4" href="/legal/privacy">
-            Privacy Policy
+            privaatsuspoliitikaga
           </Link>
           .
         </p>
@@ -60,4 +56,3 @@ export default function SignUpPage() {
     </div>
   );
 }
-
