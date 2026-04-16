@@ -6,6 +6,7 @@ import {
   AreaChart,
   CartesianGrid,
   ResponsiveContainer,
+  ReferenceLine,
   Tooltip,
   XAxis,
   YAxis,
@@ -146,6 +147,7 @@ export function MarketPriceBoard({ area }: { area: "EE" | "LV" | "LT" | "FI" }) 
 
     return {
       current,
+      currentEurPerMwh: current?.eurPerMwh ?? null,
       today,
       tomorrow,
       tomorrowAvailable: tomorrow.length >= 12,
@@ -157,6 +159,7 @@ export function MarketPriceBoard({ area }: { area: "EE" | "LV" | "LT" | "FI" }) 
         eurPerMwh: p.eurPerMwh,
         hour: new Date(p.ts).toLocaleTimeString("et-EE", { hour: "2-digit", minute: "2-digit" }),
         day: new Date(p.ts).toLocaleDateString("et-EE", { day: "2-digit", month: "2-digit" }),
+        isNowHour: hourKey(p.ts) === nowHour,
       })),
     };
   }, [data]);
@@ -167,10 +170,7 @@ export function MarketPriceBoard({ area }: { area: "EE" | "LV" | "LT" | "FI" }) 
         <PanelHeader>
           <div>
             <PanelTitle>Hetkehinnang</PanelTitle>
-            <PanelDescription>
-              Börsihind (day-ahead). “15-min” vaade on test-buildi preview: tuletame selle tunnipunktidest, et oleks lihtne
-              näha suunda.
-            </PanelDescription>
+            <PanelDescription>Börsihind (day-ahead) praeguse tunni jaoks.</PanelDescription>
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="neutral">{area}</Badge>
@@ -181,7 +181,7 @@ export function MarketPriceBoard({ area }: { area: "EE" | "LV" | "LT" | "FI" }) 
           <div className="grid gap-4 md:grid-cols-12 md:items-start">
             <div className="md:col-span-5">
               <div className="rounded-2xl border border-border/50 bg-card/25 p-5">
-                <p className="text-xs font-medium tracking-wide text-foreground/60">Praegune tund</p>
+                <p className="text-xs font-medium tracking-wide text-foreground/60">Praegu</p>
                 <p className="mt-2 font-mono text-3xl font-semibold tracking-tight text-foreground/90">
                   {computed.current ? fmtCentsPerKwh(computed.current.eurPerMwh) : "—"}
                 </p>
@@ -226,11 +226,6 @@ export function MarketPriceBoard({ area }: { area: "EE" | "LV" | "LT" | "FI" }) 
                     </div>
                   ))}
                 </div>
-                {!mounted ? (
-                  <p className="mt-3 text-xs text-foreground/50">
-                    Märkus: esmakäivituse ajal võib loend ilmuda hetk hiljem (mõõtude stabiliseerimine).
-                  </p>
-                ) : null}
               </div>
             </div>
           </div>
@@ -284,13 +279,40 @@ export function MarketPriceBoard({ area }: { area: "EE" | "LV" | "LT" | "FI" }) 
                       <stop offset="100%" stopColor="oklch(0.83 0.14 205 / 6%)" />
                     </linearGradient>
                   </defs>
+                  {typeof computed.currentEurPerMwh === "number" ? (
+                    <ReferenceLine
+                      y={computed.currentEurPerMwh}
+                      stroke="oklch(0.95 0.02 85 / 55%)"
+                      strokeDasharray="6 6"
+                      strokeWidth={1.5}
+                      label={{
+                        value: "Praegu",
+                        position: "insideTopRight",
+                        fill: "oklch(1 0 0 / 70%)",
+                        fontSize: 11,
+                      }}
+                    />
+                  ) : null}
                   <Area
                     type="monotone"
                     dataKey="eurPerMwh"
                     stroke="oklch(0.83 0.14 205 / 78%)"
                     strokeWidth={2.25}
                     fill="url(#epPrice48)"
-                    dot={false}
+                    dot={(props: any) => {
+                      const isNow = Boolean(props?.payload?.isNowHour);
+                      if (!isNow) return null;
+                      return (
+                        <circle
+                          cx={props.cx}
+                          cy={props.cy}
+                          r={4.5}
+                          fill="oklch(0.95 0.02 85 / 95%)"
+                          stroke="oklch(0.83 0.14 205 / 70%)"
+                          strokeWidth={2}
+                        />
+                      );
+                    }}
                   />
                 </AreaChart>
               </ResponsiveContainer>
