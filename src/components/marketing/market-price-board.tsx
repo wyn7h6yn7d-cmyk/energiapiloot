@@ -1,6 +1,15 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 import { Badge } from "@/components/ui/badge";
 import { LinkButton } from "@/components/ui/link-button";
@@ -17,6 +26,10 @@ function fmtEurPerMwh(v: number) {
 function fmtCentsPerKwh(vEurPerMwh: number) {
   const s = (vEurPerMwh / 10).toFixed(1);
   return `${s} s/kWh`;
+}
+
+function tooltipClass() {
+  return "rounded-xl border border-border/60 bg-background/80 px-3 py-2 text-xs text-foreground/85 shadow-[var(--shadow-elev-2)] backdrop-blur-md";
 }
 
 function hourKey(iso: string) {
@@ -139,6 +152,12 @@ export function MarketPriceBoard({ area }: { area: "EE" | "LV" | "LT" | "FI" }) 
       nextQuarters: quarters.slice(0, 48), // next 12 hours -> 48 slots
       todayStats: stats(today),
       tomorrowStats: stats(tomorrow),
+      chart48h: pts.slice(0, 48).map((p) => ({
+        ts: p.ts,
+        eurPerMwh: p.eurPerMwh,
+        hour: new Date(p.ts).toLocaleTimeString("et-EE", { hour: "2-digit", minute: "2-digit" }),
+        day: new Date(p.ts).toLocaleDateString("et-EE", { day: "2-digit", month: "2-digit" }),
+      })),
     };
   }, [data]);
 
@@ -215,6 +234,73 @@ export function MarketPriceBoard({ area }: { area: "EE" | "LV" | "LT" | "FI" }) 
               </div>
             </div>
           </div>
+        </div>
+      </Panel>
+
+      <Panel className="overflow-hidden">
+        <PanelHeader>
+          <div>
+            <PanelTitle>Hinnagraafik (48h)</PanelTitle>
+            <PanelDescription>Liigu hiirega üle graafiku, et näha iga tunni hinda. Homne ilmub, kui API avaldab.</PanelDescription>
+          </div>
+          <Badge variant="neutral">hourly</Badge>
+        </PanelHeader>
+        <div className="px-6 pb-6">
+          <div className="h-72 w-full min-w-0 rounded-2xl border border-border/60 bg-background/30 p-4">
+            {mounted ? (
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                <AreaChart data={computed.chart48h} margin={{ top: 10, right: 10, left: -18, bottom: 0 }}>
+                  <CartesianGrid stroke="oklch(1 0 0 / 6%)" vertical={false} />
+                  <XAxis
+                    dataKey="hour"
+                    tickLine={false}
+                    axisLine={false}
+                    interval="preserveStartEnd"
+                    minTickGap={18}
+                    tick={{ fill: "oklch(1 0 0 / 55%)", fontSize: 11 }}
+                  />
+                  <YAxis tickLine={false} axisLine={false} tick={{ fill: "oklch(1 0 0 / 45%)", fontSize: 11 }} />
+                  <Tooltip
+                    wrapperStyle={{ outline: "none" }}
+                    cursor={{ stroke: "oklch(0.83 0.14 205 / 35%)" }}
+                    content={({ active, payload }) => {
+                      if (!active || !payload?.length) return null;
+                      const row = payload[0]?.payload as any;
+                      const v = payload[0]?.value as number;
+                      return (
+                        <div className={tooltipClass()}>
+                          <p className="font-medium">
+                            {row.day} {row.hour}
+                          </p>
+                          <p className="mt-1 font-mono">{fmtEurPerMwh(v)}</p>
+                          <p className="mt-1 text-foreground/65">{fmtCentsPerKwh(v)}</p>
+                        </div>
+                      );
+                    }}
+                  />
+                  <defs>
+                    <linearGradient id="epPrice48" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="oklch(0.83 0.14 205 / 55%)" />
+                      <stop offset="100%" stopColor="oklch(0.83 0.14 205 / 6%)" />
+                    </linearGradient>
+                  </defs>
+                  <Area
+                    type="monotone"
+                    dataKey="eurPerMwh"
+                    stroke="oklch(0.83 0.14 205 / 78%)"
+                    strokeWidth={2.25}
+                    fill="url(#epPrice48)"
+                    dot={false}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full w-full rounded-xl border border-border/40 bg-card/20" aria-hidden />
+            )}
+          </div>
+          <p className="mt-3 text-xs text-foreground/55">
+            Märkus: day-ahead on tunnipõhine. 15-min vaade lehel on test-buildi preview (tuletatud tunnipunktidest).
+          </p>
         </div>
       </Panel>
 
