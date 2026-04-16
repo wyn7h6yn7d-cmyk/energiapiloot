@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Panel, PanelDescription, PanelHeader, PanelTitle } from "@/components/ui/panel";
 import { LinkButton } from "@/components/ui/link-button";
 import { PremiumGate } from "@/components/product/premium-gate";
+import { PremiumReportExportPanel } from "@/components/product/premium-report-deliverable";
 import {
   buildConsumptionInsights,
   type ConsumptionInsights,
@@ -214,8 +215,8 @@ export function ConsumptionInsightsModule({
         {publicExperience ? (
           <PremiumGate
             className="rounded-3xl"
-            title="Täielik tarbimise sügavus"
-            description="Premium avab täisgraafiku, draiverid, anomaaliad ja säästuplaani — pluss PDF eksport tulevikus. Seni: demo avamine või osta eelvaade."
+            title="Tarbimise täisvaade"
+            description="Täisvaade toob täisgraafiku, draiverid, anomaaliad ja säästuplaani — PDF lisandub samasse voogu. Makse Stripe&apos;i kaudu; seni näed eelvaadet."
           >
             <ConsumptionDeepPanels
               insights={insights}
@@ -223,6 +224,11 @@ export function ConsumptionInsightsModule({
               avgAllIn={avgAllIn}
               dayShare={dayShare}
               publicExperience
+            />
+            <PremiumReportExportPanel
+              reportType="savings_opportunity_summary"
+              className="mt-4"
+              description="Tarbimise sügavus ja säästuplaani kiht eksporditakse struktureeritud kokkuvõttena — valmis juhatuse või omaniku jaoks. Serveri PDF tuleb peagi."
             />
           </PremiumGate>
         ) : (
@@ -368,7 +374,7 @@ function ConsumptionDeepPanels({
             </div>
             {publicExperience ? (
               <LinkButton href="/pricing#avamine" variant="outline">
-                Täissignaalid
+                Täisvaade
               </LinkButton>
             ) : (
               <Link href="/dashboard/recommendations">
@@ -436,7 +442,7 @@ function ConsumptionDeepPanels({
             {publicExperience ? (
               <>
                 <LinkButton href="/pricing#avamine" variant="gradient">
-                  Ava täielik plaan + PDF (tulekul)
+                  Ava täisvaade + PDF (tulekul)
                 </LinkButton>
                 <LinkButton href="/leping" variant="outline">
                   Võrdle lepingut

@@ -28,7 +28,7 @@ export type HeroUniverseCanvasProps = {
 export function HeroUniverseCanvas({
   progress,
   mode = "full",
-  heroRangeEnd = 0.22,
+  heroRangeEnd = 0.26,
   panels,
   intensity = 1,
 }: HeroUniverseCanvasProps) {
@@ -82,6 +82,33 @@ const HeroUniverseScene = React.memo(function HeroUniverseScene({
   const flash = useRef<THREE.PointLight>(null);
   const key = useRef<THREE.PointLight>(null);
   const fill = useRef<THREE.PointLight>(null);
+  const coreWorld = useRef(new THREE.Vector3());
+  const lightningMat = useMemo(
+    () =>
+      new THREE.LineBasicMaterial({
+        color: new THREE.Color("#E8FDFF"),
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      }),
+    []
+  );
+  const lightningGeoms = useMemo(() => {
+    const boltCount = mode === "lite" ? 1 : 4;
+    const ptCount = mode === "lite" ? 7 : 11;
+    return Array.from({ length: boltCount }, () => {
+      const geo = new THREE.BufferGeometry();
+      const arr = new Float32Array(ptCount * 3);
+      geo.setAttribute("position", new THREE.BufferAttribute(arr, 3));
+      return geo;
+    });
+  }, [mode]);
+
+  const lightningLines = useMemo(
+    () => lightningGeoms.map((g) => new THREE.Line(g, lightningMat)),
+    [lightningGeoms, lightningMat]
+  );
 
   const { invalidate, camera } = useThree();
 
@@ -129,10 +156,15 @@ const HeroUniverseScene = React.memo(function HeroUniverseScene({
         -0.12 + story * 0.22,
         1 - Math.pow(0.001, dt)
       );
+      group.current.position.x = THREE.MathUtils.lerp(
+        group.current.position.x,
+        (chaos - 0.5) * 0.18,
+        1 - Math.pow(0.001, dt)
+      );
     }
 
     if (core.current) {
-      const baseX = mode === "lite" ? 1.0 : 1.3;
+      const baseX = mode === "lite" ? 1.42 : 1.78;
       core.current.position.x = THREE.MathUtils.lerp(
         core.current.position.x,
         baseX + handoff * 0.1,
@@ -247,11 +279,53 @@ const HeroUniverseScene = React.memo(function HeroUniverseScene({
       flash.current.position.y = 2.2 + Math.sin(t * 0.7) * 0.4;
       flash.current.position.z = -6.5;
     }
+
+    // Lightning arcs: intense while chaotic, calm pulses as the story clarifies.
+    if (core.current) {
+      core.current.getWorldPosition(coreWorld.current);
+    }
+    const tg = coreWorld.current;
+    const tw = state.clock.getElapsedTime();
+    const lx = chaos * intensity;
+    const strike = lx > 0.06 && frac(tw * 2.65) < 0.12 + lx * 0.26;
+    lightningMat.opacity = strike ? 0.68 * lx : 0.035 * lx + 0.012 * (1 - chaos);
+
+    const nPts = (lightningGeoms[0]?.getAttribute("position") as THREE.BufferAttribute | undefined)?.count ?? 0;
+    if (nPts >= 2) {
+      for (let b = 0; b < lightningGeoms.length; b++) {
+        const geo = lightningGeoms[b];
+        const posAttr = geo.getAttribute("position") as THREE.BufferAttribute;
+        const arr = posAttr.array as Float32Array;
+        const sx = tg.x + (hash01(b, 11) - 0.5) * 3.2 * Math.min(1, lx * 1.15 + 0.12);
+        const sy = 3.15 + hash01(b, 13) * 0.55;
+        const sz = tg.z - 0.75 + (hash01(b, 17) - 0.5) * 2.6;
+        arr[0] = sx;
+        arr[1] = sy;
+        arr[2] = sz;
+        for (let i = 1; i < nPts - 1; i++) {
+          const u = i / (nPts - 1);
+          const bx = THREE.MathUtils.lerp(sx, tg.x, u);
+          const by = THREE.MathUtils.lerp(sy, tg.y, u);
+          const bz = THREE.MathUtils.lerp(sz, tg.z, u);
+          const jx = (pseudoRand(tw * 1.65 + b * 0.37 + i * 0.19) - 0.5) * lx * (1 - u) * 2.5;
+          const jz = (pseudoRand(tw * 2.05 + i * 0.33) - 0.5) * lx * (1 - u) * 1.75;
+          arr[i * 3] = bx + jx;
+          arr[i * 3 + 1] = by;
+          arr[i * 3 + 2] = bz + jz;
+        }
+        arr[(nPts - 1) * 3] = tg.x;
+        arr[(nPts - 1) * 3 + 1] = tg.y;
+        arr[(nPts - 1) * 3 + 2] = tg.z;
+        posAttr.needsUpdate = true;
+      }
+    }
+
+    invalidate();
   });
 
   return (
     <group ref={group}>
-      <fog attach="fog" args={["#070A12", 8, 18]} />
+      <fog attach="fog" args={["#070A12", 7, 16.5]} />
       <ambientLight intensity={0.28} />
       <directionalLight position={[4, 3, 2]} intensity={1.05} />
 
@@ -297,7 +371,13 @@ const HeroUniverseScene = React.memo(function HeroUniverseScene({
         />
       </group>
 
-      <group ref={uiPanels}>{showPanels ? <DataPanels /> : null}</group>
+      <group ref={uiPanels}>{showPanels ? <HolographicPanels /> : null}</group>
+
+      <group>
+        {lightningLines.map((ln, i) => (
+          <primitive key={i} object={ln} />
+        ))}
+      </group>
     </group>
   );
 });
@@ -364,11 +444,15 @@ function IntelligenceCore({
   const inner = useRef<THREE.Mesh>(null);
   const ring = useRef<THREE.Mesh>(null);
   const glow = useRef<THREE.Mesh>(null);
+  const cage = useRef<THREE.LineSegments>(null);
+  const innerPulse = useRef<THREE.Mesh>(null);
 
   const outerGeo = useMemo(() => new THREE.IcosahedronGeometry(0.95, 2), []);
   const innerGeo = useMemo(() => new THREE.SphereGeometry(0.56, 32, 32), []);
   const ringGeo = useMemo(() => new THREE.TorusGeometry(0.92, 0.02, 10, 220), []);
   const glowGeo = useMemo(() => new THREE.SphereGeometry(1.15, 24, 24), []);
+  const cageGeo = useMemo(() => new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(1.02, 1)), []);
+  const pulseGeo = useMemo(() => new THREE.TorusGeometry(0.62, 0.012, 8, 96), []);
 
   useFrame((state, dt) => {
     const t = state.clock.getElapsedTime();
@@ -377,31 +461,55 @@ function IntelligenceCore({
     const chaos = 1 - clarity;
 
     if (outer.current) {
-      outer.current.rotation.y += dt * (0.12 + clarity * 0.18);
-      outer.current.rotation.x += dt * (0.08 + chaos * 0.18);
+      outer.current.rotation.y += dt * (0.12 + clarity * 0.2);
+      outer.current.rotation.x += dt * (0.08 + chaos * 0.22);
     }
     if (inner.current) {
       const mat = inner.current.material as THREE.MeshStandardMaterial;
-      const pulse = 0.9 + Math.sin(t * (mode === "lite" ? 1.1 : 1.8)) * 0.12;
-      const raw = 1.55 + chaos * 0.85;
+      const pulse = 0.9 + Math.sin(t * (mode === "lite" ? 1.1 : 1.95)) * 0.14;
+      const raw = 1.35 + chaos * 1.05 + clarity * 0.55;
       mat.emissiveIntensity = THREE.MathUtils.lerp(
         mat.emissiveIntensity,
         raw * pulse * intensity,
         1 - Math.pow(0.001, dt)
       );
       inner.current.scale.setScalar(
-        THREE.MathUtils.lerp(inner.current.scale.x, 1.0 + chaos * 0.06, 1 - Math.pow(0.001, dt))
+        THREE.MathUtils.lerp(inner.current.scale.x, 1.0 + chaos * 0.08, 1 - Math.pow(0.001, dt))
       );
     }
     if (ring.current) {
-      ring.current.rotation.z += dt * (0.45 + clarity * 0.32);
-      ring.current.rotation.x = THREE.MathUtils.lerp(ring.current.rotation.x, 0.3 + clarity * 0.22, 1 - Math.pow(0.001, dt));
+      ring.current.rotation.z += dt * (0.45 + clarity * 0.38);
+      ring.current.rotation.x = THREE.MathUtils.lerp(
+        ring.current.rotation.x,
+        0.28 + clarity * 0.26,
+        1 - Math.pow(0.001, dt)
+      );
       const mat = ring.current.material as THREE.MeshStandardMaterial;
-      mat.emissiveIntensity = THREE.MathUtils.lerp(mat.emissiveIntensity, (0.6 + clarity * 1.2) * intensity, 1 - Math.pow(0.001, dt));
+      mat.emissiveIntensity = THREE.MathUtils.lerp(
+        mat.emissiveIntensity,
+        (0.55 + clarity * 1.35 + chaos * 0.35) * intensity,
+        1 - Math.pow(0.001, dt)
+      );
     }
     if (glow.current) {
       const mat = glow.current.material as THREE.MeshBasicMaterial;
-      mat.opacity = THREE.MathUtils.lerp(mat.opacity, mode === "lite" ? 0.05 : 0.11 + chaos * 0.07, 1 - Math.pow(0.001, dt));
+      mat.opacity = THREE.MathUtils.lerp(
+        mat.opacity,
+        mode === "lite" ? 0.06 : 0.1 + chaos * 0.12 + clarity * 0.06,
+        1 - Math.pow(0.001, dt)
+      );
+    }
+    if (cage.current) {
+      const mat = cage.current.material as THREE.LineBasicMaterial;
+      mat.opacity = THREE.MathUtils.lerp(mat.opacity, 0.07 + chaos * 0.42 + clarity * 0.12, 1 - Math.pow(0.001, dt));
+      cage.current.rotation.y += dt * (0.05 + chaos * 0.12);
+      cage.current.rotation.x = Math.sin(t * 0.31) * (0.04 + chaos * 0.1);
+    }
+    if (innerPulse.current) {
+      innerPulse.current.rotation.z += dt * (1.1 + clarity * 0.9);
+      innerPulse.current.rotation.x = 0.52 + clarity * 0.2;
+      const mat = innerPulse.current.material as THREE.MeshBasicMaterial;
+      mat.opacity = 0.12 + chaos * 0.35 + Math.sin(t * 3.2) * 0.04 * chaos;
     }
   });
 
@@ -416,29 +524,47 @@ function IntelligenceCore({
           depthWrite={false}
         />
       </mesh>
+      <lineSegments ref={cage} geometry={cageGeo}>
+        <lineBasicMaterial
+          color={new THREE.Color("#7AE8FF")}
+          transparent
+          opacity={0.2}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
+      </lineSegments>
       <mesh ref={outer} geometry={outerGeo}>
         <meshStandardMaterial
           color={new THREE.Color("#07111F")}
-          metalness={0.65}
-          roughness={0.22}
+          metalness={0.72}
+          roughness={0.2}
           emissive={new THREE.Color("#061A22")}
-          emissiveIntensity={1.1}
+          emissiveIntensity={1.15}
         />
       </mesh>
       <mesh ref={inner} geometry={innerGeo} position={[0, 0, 0.02]}>
         <meshStandardMaterial
           color={new THREE.Color("#081021")}
-          metalness={0.2}
-          roughness={0.18}
+          metalness={0.25}
+          roughness={0.16}
           emissive={new THREE.Color("#2BC3FF")}
           emissiveIntensity={1.6}
+        />
+      </mesh>
+      <mesh ref={innerPulse} geometry={pulseGeo} rotation={[0.55, 0.2, 0]}>
+        <meshBasicMaterial
+          color={new THREE.Color("#2EF2B5")}
+          transparent
+          opacity={0.22}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
         />
       </mesh>
       <mesh ref={ring} geometry={ringGeo} rotation={[0.4, 0.2, 0]}>
         <meshStandardMaterial
           color={new THREE.Color("#0A1526")}
-          metalness={0.85}
-          roughness={0.25}
+          metalness={0.88}
+          roughness={0.22}
           emissive={new THREE.Color("#2EF2B5")}
           emissiveIntensity={0.9}
         />
@@ -503,11 +629,19 @@ function EnergyGrid({
     if (!pivot) return;
     pivot.rotation.y = Math.sin(t * 0.06) * (0.06 + chaos * 0.05);
     pivot.position.y = Math.sin(t * 0.3) * (0.012 + chaos * 0.018);
+
+    const gmat = grid.material as THREE.Material | THREE.Material[];
+    const mats = Array.isArray(gmat) ? gmat : [gmat];
+    const breathe = 0.2 + Math.sin(t * (1.15 + chaos * 0.9)) * 0.035 * chaos + clarity * 0.08;
+    for (const m of mats) {
+      (m as THREE.Material & { opacity?: number }).opacity = mode === "lite" ? 0.19 : breathe;
+    }
   });
 
   return (
     <group position={[0, -1.25, 0]} rotation={[-Math.PI / 2, 0, 0]}>
       <primitive object={grid} />
+      <StormGridPulse progress={progress} heroRangeEnd={heroRangeEnd} mode={mode} />
       <group ref={nodesPivot}>
         <primitive object={nodes} />
       </group>
@@ -515,37 +649,88 @@ function EnergyGrid({
   );
 }
 
-function DataPanels() {
+function StormGridPulse({
+  progress,
+  heroRangeEnd,
+  mode,
+}: {
+  progress: number;
+  heroRangeEnd: number;
+  mode: HeroPerfMode;
+}) {
+  const mesh = useRef<THREE.Mesh>(null);
+  const ringGeo = useMemo(() => new THREE.RingGeometry(0.35, 0.37, 56), []);
   const mat = useMemo(
     () =>
       new THREE.MeshBasicMaterial({
-        color: new THREE.Color("#0A1222"),
+        color: new THREE.Color("#3ED0FF"),
         transparent: true,
-        opacity: 0.22,
+        opacity: 0,
+        side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+      }),
+    []
+  );
+
+  useFrame((state) => {
+    if (!mesh.current) return;
+    const t = state.clock.getElapsedTime();
+    const heroT = clamp01(progress / Math.max(0.001, heroRangeEnd));
+    const clarity = smoothstep(heroT);
+    const phase = (t * (0.26 + clarity * 0.24)) % 1;
+    mesh.current.scale.setScalar(1.6 + phase * 11);
+    mat.opacity = (1 - phase) * 0.13 * (0.4 + clarity) * (mode === "lite" ? 0.55 : 1);
+    mesh.current.rotation.z = t * 0.045;
+  });
+
+  return <mesh ref={mesh} geometry={ringGeo} material={mat} position={[0, 0.02, 0]} />;
+}
+
+function HolographicPanels() {
+  const glass = useMemo(
+    () =>
+      new THREE.MeshBasicMaterial({
+        color: new THREE.Color("#071018"),
+        transparent: true,
+        opacity: 0.38,
         blending: THREE.NormalBlending,
+      }),
+    []
+  );
+  const glowBack = useMemo(
+    () =>
+      new THREE.MeshBasicMaterial({
+        color: new THREE.Color("#2BC3FF"),
+        transparent: true,
+        opacity: 0.1,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
       }),
     []
   );
   const edge = useMemo(
     () =>
       new THREE.LineBasicMaterial({
-        color: new THREE.Color("#2BC3FF"),
+        color: new THREE.Color("#5AE8FF"),
         transparent: true,
-        opacity: 0.35,
+        opacity: 0.55,
         blending: THREE.AdditiveBlending,
       }),
     []
   );
-
-  const geo = useMemo(() => new THREE.PlaneGeometry(1.4, 0.9, 1, 1), []);
+  const geo = useMemo(() => new THREE.PlaneGeometry(1.45, 0.92, 1, 1), []);
+  const glowGeo = useMemo(() => new THREE.PlaneGeometry(1.62, 1.05, 1, 1), []);
   const outline = useMemo(() => {
     const g = new THREE.BufferGeometry();
+    const w = 0.725;
+    const h = 0.46;
     const pts = [
-      new THREE.Vector3(-0.7, -0.45, 0),
-      new THREE.Vector3(0.7, -0.45, 0),
-      new THREE.Vector3(0.7, 0.45, 0),
-      new THREE.Vector3(-0.7, 0.45, 0),
-      new THREE.Vector3(-0.7, -0.45, 0),
+      new THREE.Vector3(-w, -h, 0),
+      new THREE.Vector3(w, -h, 0),
+      new THREE.Vector3(w, h, 0),
+      new THREE.Vector3(-w, h, 0),
+      new THREE.Vector3(-w, -h, 0),
     ];
     g.setFromPoints(pts);
     return g;
@@ -554,26 +739,76 @@ function DataPanels() {
   const line1 = useMemo(() => new THREE.Line(outline, edge), [outline, edge]);
   const line2 = useMemo(() => new THREE.Line(outline, edge), [outline, edge]);
 
+  const chartPts = useMemo(() => {
+    const g = new THREE.BufferGeometry();
+    const pts: THREE.Vector3[] = [];
+    let y = -0.28;
+    for (let i = 0; i < 14; i++) {
+      const x = -0.55 + (i / 13) * 1.1;
+      y += (hash01(i, 91) - 0.42) * 0.05;
+      y = THREE.MathUtils.clamp(y, -0.32, 0.28);
+      pts.push(new THREE.Vector3(x, y, 0.004));
+    }
+    g.setFromPoints(pts);
+    return g;
+  }, []);
+  const chartLine = useMemo(
+    () =>
+      new THREE.LineBasicMaterial({
+        color: new THREE.Color("#2EF2B5"),
+        transparent: true,
+        opacity: 0.65,
+        blending: THREE.AdditiveBlending,
+      }),
+    []
+  );
+
+  const chartLineObj = useMemo(() => new THREE.Line(chartPts, chartLine), [chartPts, chartLine]);
+
+  const heights = useMemo(() => [0.14, 0.22, 0.31, 0.26, 0.38, 0.2], []);
+
   return (
     <group>
-      <mesh geometry={geo} material={mat} position={[0.0, 0.0, 0]} rotation={[0, 0.1, 0]} />
-      <primitive object={line1} position={[0.0, 0.0, 0.002]} />
-      <mesh geometry={geo} material={mat} position={[0.25, -0.62, -0.18]} rotation={[0, 0.28, 0]} scale={0.78} />
-      <primitive object={line2} position={[0.25, -0.62, -0.178]} rotation={[0, 0.28, 0]} scale={0.78} />
+      <mesh geometry={glowGeo} material={glowBack} position={[0.02, -0.02, -0.06]} rotation={[0, 0.12, 0]} />
+      <mesh geometry={geo} material={glass} position={[0, 0, 0]} rotation={[0, 0.12, 0]} />
+      <primitive object={line1} position={[0, 0, 0.003]} rotation={[0, 0.12, 0]} />
+      <primitive object={chartLineObj} position={[0, 0.02, 0.008]} rotation={[0, 0.12, 0]} />
+
+      {heights.map((h, i) => (
+        <mesh
+          key={i}
+          position={[-0.42 + i * 0.16, -0.34 + h * 0.5, 0.012]}
+          rotation={[0, 0.12, 0]}
+        >
+          <boxGeometry args={[0.1, h, 0.03]} />
+          <meshStandardMaterial
+            color="#050c14"
+            metalness={0.82}
+            roughness={0.18}
+            emissive="#2EF2B5"
+            emissiveIntensity={1.15}
+            transparent
+            opacity={0.92}
+          />
+        </mesh>
+      ))}
+
+      <mesh geometry={geo} material={glass} position={[0.28, -0.64, -0.2]} rotation={[0, 0.32, 0]} scale={0.76} />
+      <primitive object={line2} position={[0.28, -0.64, -0.198]} rotation={[0, 0.32, 0]} scale={0.76} />
     </group>
   );
 }
 
 function sampleHeroCamera(t01: number, mode: HeroPerfMode) {
-  // Keep left copy readable; look slightly right into the data/core.
-  const z = mode === "lite" ? 6.4 : 6.15;
+  // Frame the energy core in the right third; keep the optical weight off the headline column.
+  const z = mode === "lite" ? 6.45 : 6.18;
   const keys = [
-    { pos: new THREE.Vector3(-0.2, 0.32, z), lookAt: new THREE.Vector3(0.55, 0.12, 0.0), drift: 0.08 },
-    { pos: new THREE.Vector3(-0.55, 0.42, z + 0.15), lookAt: new THREE.Vector3(0.75, 0.1, 0.0), drift: 0.07 },
-    { pos: new THREE.Vector3(-0.25, 0.28, z), lookAt: new THREE.Vector3(0.65, 0.08, 0.0), drift: 0.06 },
-    { pos: new THREE.Vector3(-0.35, 0.46, z - 0.1), lookAt: new THREE.Vector3(0.5, 0.0, 0.0), drift: 0.05 },
-    { pos: new THREE.Vector3(-0.45, 0.38, z + 0.05), lookAt: new THREE.Vector3(0.62, 0.05, -0.08), drift: 0.045 },
-    { pos: new THREE.Vector3(-0.3, 0.34, z - 0.05), lookAt: new THREE.Vector3(0.58, 0.04, -0.05), drift: 0.04 },
+    { pos: new THREE.Vector3(-0.42, 0.34, z), lookAt: new THREE.Vector3(0.92, 0.1, -0.1), drift: 0.072 },
+    { pos: new THREE.Vector3(-0.68, 0.44, z + 0.12), lookAt: new THREE.Vector3(1.02, 0.08, -0.12), drift: 0.064 },
+    { pos: new THREE.Vector3(-0.38, 0.3, z), lookAt: new THREE.Vector3(0.96, 0.06, -0.08), drift: 0.056 },
+    { pos: new THREE.Vector3(-0.52, 0.48, z - 0.1), lookAt: new THREE.Vector3(0.88, 0.02, -0.1), drift: 0.048 },
+    { pos: new THREE.Vector3(-0.58, 0.4, z + 0.06), lookAt: new THREE.Vector3(0.98, 0.05, -0.12), drift: 0.044 },
+    { pos: new THREE.Vector3(-0.46, 0.36, z - 0.06), lookAt: new THREE.Vector3(0.94, 0.04, -0.08), drift: 0.04 },
   ];
 
   const n = keys.length;
@@ -602,6 +837,10 @@ function clamp01(v: number) {
 function pseudoRand(x: number) {
   const s = Math.sin(x * 12.9898) * 43758.5453;
   return s - Math.floor(s);
+}
+
+function frac(v: number) {
+  return v - Math.floor(v);
 }
 
 function hash01(i: number, salt: number) {

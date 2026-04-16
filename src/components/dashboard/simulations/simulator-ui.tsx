@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { PremiumGate } from "@/components/product/premium-gate";
+import { PremiumReportExportPanel } from "@/components/product/premium-report-deliverable";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,7 @@ import {
 import type { Entitlements } from "@/lib/billing/plans";
 import { PaywallCard } from "@/components/billing/paywall-card";
 import type { SolarIntegrationHints } from "@/lib/integrations/solar-hints";
+import { cn } from "@/lib/utils";
 
 function fmtEur(n: number) {
   const sign = n < 0 ? "−" : "";
@@ -57,6 +59,32 @@ function verdictEt(v: "do_now" | "evaluate_further" | "wait") {
   if (v === "do_now") return "Tugev signaal";
   if (v === "wait") return "Nõrk signaal";
   return "Hinda edasi";
+}
+
+const SIM_SURFACE = "ep-sim-panel";
+
+const SIM_FIELD_LABELS: Record<string, string> = {
+  upfrontEur: "Alginvesteering (€)",
+  systemKw: "Süsteemi võimsus (kW)",
+  selfConsumptionShare: "Oma-tarbimine (osa 0–1)",
+  annualYieldKwhPerKw: "Toodang (kWh/kW/a)",
+  electricityPriceEurPerKwh: "Elektri hind (€/kWh)",
+  capacityKwh: "Mahutavus (kWh)",
+  cyclesPerDay: "Tsüklid ööpäevas",
+  efficiency: "Kasutegur",
+  valuePerKwhShiftedEur: "Nihutatud kWh väärtus (€)",
+  monthlyKwhCharged: "Laadimine (kWh/kuu)",
+  smartChargingShare: "Nutikas laadimine (osa)",
+  monthlyHeatKwh: "Soojuskoormus (kWh/kuu)",
+  cop: "COP",
+  replacedFuelCostEurPerKwh: "Asendatud kütus (€/kWh)",
+  peakKwReduced: "Tipu vähenemine (kW)",
+  networkChargeEurPerKwMonth: "Võrgu tasu (€/kW/kuu)",
+  monthsPerYear: "Kuud aastas",
+};
+
+function simFieldLabel(key: string) {
+  return SIM_FIELD_LABELS[key] ?? key;
 }
 
 export function InvestmentSimulationsModule({
@@ -140,24 +168,48 @@ export function InvestmentSimulationsModule({
 
   return (
     <div className="grid gap-6">
-      <div className="flex flex-col items-start justify-between gap-4 lg:flex-row">
-        <div>
-          <p className="text-xs font-medium tracking-wide text-foreground/60">Simulatsioonid</p>
-          <h1 className="mt-3 text-balance text-3xl font-semibold tracking-tight">
-            {isPublic
-              ? "Investeeringu labor: näe mõju enne allkirja."
-              : "Investeeringu mõju, selgelt ja võrreldavalt."}
+      {isPublic ? (
+        <div className="ep-cinema-panel relative overflow-hidden rounded-[1.75rem] p-8 md:p-10">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-[oklch(0.83_0.14_205_/_0.14)] blur-3xl"
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-10 top-0 h-px bg-gradient-to-r from-transparent via-[oklch(0.83_0.14_205_/_0.45)] to-transparent"
+          />
+          <p className="ep-eyebrow-caps text-foreground/50">Simulatsioonid</p>
+          <h1 className="ep-display mt-4 text-balance text-3xl font-semibold tracking-tight md:text-4xl">
+            Investeeringu labor: näe mõju enne allkirja.
           </h1>
-          <p className="mt-3 max-w-3xl text-pretty text-base leading-relaxed text-foreground/70">
-            {isPublic
-              ? "Avalik režiim näitab kiiret ülevaadet ja KPI-sid. Täielik otsustuskiht, graafikud ja eksport tulevad premium avamisega (Stripe + PDF on struktuuris valmis)."
-              : "Simulaatorid kasutavad selgeid, kontrollitavaid valemeid. Täpne tarbimine ja turuhinnad ühenduvad hiljem sama liidese alla — ilma töövoogu ümber tegemata."}
+          <p className="mt-4 max-w-3xl text-pretty text-base leading-relaxed text-foreground/70">
+            Avalik režiim näitab kiiret ülevaadet ja KPI-sid. Täisvaade — otsustuskiht, graafikud ja eksport — avaneb
+            ühe ostuga (makse Stripe&apos;i kaudu; PDF on teekonnas).
           </p>
         </div>
-      </div>
+      ) : (
+        <div className="ep-cinema-panel relative overflow-hidden rounded-[1.75rem] p-6 md:p-8">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-[oklch(0.82_0.16_145_/_0.1)] blur-3xl"
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[oklch(0.83_0.14_205_/_0.4)] to-transparent"
+          />
+          <p className="ep-eyebrow-caps text-foreground/50">Simulatsioonid</p>
+          <h1 className="ep-display relative mt-3 text-balance text-3xl font-semibold tracking-tight md:text-4xl">
+            Investeeringu mõju, selgelt ja võrreldavalt.
+          </h1>
+          <p className="relative mt-4 max-w-3xl text-pretty text-base leading-relaxed text-foreground/70">
+            Simulaatorid kasutavad selgeid, kontrollitavaid valemeid. Täpne tarbimine ja turuhinnad ühenduvad hiljem
+            sama liidese alla — ilma töövoogu ümber tegemata.
+          </p>
+        </div>
+      )}
 
       {!isPublic && solarHints ? (
-        <Panel>
+        <Panel className={SIM_SURFACE}>
           <PanelHeader>
             <div>
               <PanelTitle>Päikese eelhinnang (PVGIS, server-only)</PanelTitle>
@@ -166,13 +218,15 @@ export function InvestmentSimulationsModule({
                 brauseris väliseid päringuid.
               </PanelDescription>
             </div>
-            <Badge variant="cyan">{solarHints.source}</Badge>
+            <Badge variant="cyan" className="shadow-[0_0_20px_-6px_oklch(0.83_0.14_205_/_0.4)]">
+              {solarHints.source}
+            </Badge>
           </PanelHeader>
           <div className="px-6 pb-6">
-            <p className="text-sm text-foreground/75">
-              ~<span className="font-mono font-semibold">{Math.round(solarHints.annualProductionKwh)}</span> kWh/a
-              @ <span className="font-mono font-semibold">{solarHints.demoPeakPowerKwp}</span> kWp •{" "}
-              <span className="font-mono text-foreground/70">
+            <p className="text-sm text-foreground/78">
+              ~<span className="font-mono font-semibold text-foreground/90">{Math.round(solarHints.annualProductionKwh)}</span>{" "}
+              kWh/a @ <span className="font-mono font-semibold text-foreground/90">{solarHints.demoPeakPowerKwp}</span> kWp •{" "}
+              <span className="font-mono text-foreground/65">
                 {solarHints.lat.toFixed(3)}, {solarHints.lng.toFixed(3)}
               </span>
             </p>
@@ -181,20 +235,34 @@ export function InvestmentSimulationsModule({
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-12">
-        <Panel className="lg:col-span-4">
+        <Panel
+          className={cn(
+            SIM_SURFACE,
+            "lg:col-span-4",
+            isPublic && "shadow-[0_0_100px_-48px_oklch(0.83_0.14_205_/_0.32)]"
+          )}
+        >
           <PanelHeader>
             <div>
-              <PanelTitle>Simulaator</PanelTitle>
-              <PanelDescription>Vali tüüp ja seadista sisendid.</PanelDescription>
+              <p className="ep-eyebrow-caps text-[0.58rem] text-foreground/45">Investeeringu instrument</p>
+              <PanelTitle className="mt-2">Simulaator</PanelTitle>
+              <PanelDescription className="mt-2">
+                Muuda parameetreid — väljund uueneb kohe, et näeksid mõju enne otsust.
+              </PanelDescription>
             </div>
-            <Badge variant="neutral">Esialgne</Badge>
+            <Badge variant="neutral" className="shadow-[0_0_20px_-6px_oklch(0.83_0.14_205_/_0.28)]">
+              Esialgne
+            </Badge>
           </PanelHeader>
           <div className="px-6 pb-6">
-            <div className="grid gap-3">
+            <div className="grid gap-5">
               <div className="grid gap-2">
-                <label className="text-xs font-medium tracking-wide text-foreground/60">Tüüp</label>
+                <label className="ep-eyebrow-caps text-[0.58rem] text-foreground/50">Stsenaariumi tüüp</label>
                 <select
-                  className="h-10 rounded-xl border border-border/60 bg-card/40 px-3 text-sm font-medium text-foreground shadow-[var(--shadow-elev-1)] backdrop-blur-md outline-none transition focus-visible:ring-2 focus-visible:ring-[color:var(--ep-focus)]"
+                  className={cn(
+                    "ep-sim-select h-11 w-full px-3.5 text-sm font-medium text-foreground",
+                    "outline-none"
+                  )}
                   value={type}
                   onChange={(e) => setType(e.target.value as SimulationType)}
                 >
@@ -205,42 +273,50 @@ export function InvestmentSimulationsModule({
                   ))}
                 </select>
                 {allowedSims.length < sims.length ? (
-                  <p className="text-xs text-foreground/55">
-                    Mõned simulaatorid on sinu paketis lukus.
-                  </p>
+                  <p className="text-xs text-foreground/55">Mõned simulaatorid on sinu paketis lukus.</p>
                 ) : null}
               </div>
 
               <div className="grid gap-2">
-                <label className="text-xs font-medium tracking-wide text-foreground/60">Stsenaariumi nimi</label>
-                <Input value={name} onChange={(e) => setName(e.target.value)} />
+                <label className="ep-eyebrow-caps text-[0.58rem] text-foreground/50">Stsenaariumi nimi</label>
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="ep-sim-input h-11 bg-transparent px-3.5 shadow-none focus-visible:ring-0"
+                />
               </div>
 
-              <div className="mt-2 rounded-2xl border border-border/50 bg-card/25 p-4">
-                <p className="text-xs font-medium tracking-wide text-foreground/60">Sisendid</p>
-                <div className="mt-3 grid gap-3">
+              <div className="ep-sim-instrument-well p-4 md:p-5">
+                <p className="ep-eyebrow-caps text-[0.58rem] text-[oklch(0.83_0.14_205)]">Mõõdetavad sisendid</p>
+                <p className="mt-2 text-xs leading-relaxed text-foreground/55">
+                  Iga väli mõjutab kohe tulemusi — see on tööriist, mitte passiivne vorm.
+                </p>
+                <div className="mt-4 grid gap-4">
                   {Object.entries(inputs)
                     .filter(([k, v]) => isNumberField(k, v))
                     .map(([k, v]) => (
-                      <div key={k} className="grid gap-1.5">
-                        <label className="text-xs text-foreground/55">{k}</label>
+                      <div key={k} className="grid gap-2">
+                        <label className="text-[11px] font-medium uppercase tracking-wider text-foreground/55">
+                          {simFieldLabel(k)}
+                        </label>
                         <Input
                           inputMode="decimal"
                           value={String(v)}
                           onChange={(e) =>
                             setInputs((prev) => ({ ...prev, [k]: Number(e.target.value) }))
                           }
+                          className="ep-sim-input h-11 bg-transparent px-3.5 font-mono text-[0.95rem] shadow-none focus-visible:ring-0"
                         />
                       </div>
                     ))}
                 </div>
               </div>
 
-              <div className="mt-2 flex flex-wrap items-center gap-2">
+              <div className="mt-1 flex flex-wrap items-center gap-2">
                 {isPublic ? (
                   <>
                     <LinkButton href="/pricing#avamine" variant="gradient">
-                      Ava salvestus ja võrdlus
+                      Ava salvestus ning võrdlus
                     </LinkButton>
                     <Button
                       variant="outline"
@@ -250,9 +326,9 @@ export function InvestmentSimulationsModule({
                     >
                       Lähtesta
                     </Button>
-                    <p className="w-full text-xs text-foreground/55">
-                      Ilma premium avamiseta ei salvesta brauser su stsenaariume serverisse — see on teadlikult lihtne
-                      ja privaatne avalik kogemus.
+                    <p className="w-full text-xs leading-relaxed text-foreground/55">
+                      Ilma täisvaadeta ei salvesta brauser su stsenaariume serverisse — privaatne eelvaade, mis näitab
+                      väärtust enne ostuotsust.
                     </p>
                   </>
                 ) : (
@@ -287,30 +363,54 @@ export function InvestmentSimulationsModule({
                 )}
               </div>
 
-              <div className="mt-3 rounded-2xl border border-border/40 bg-card/20 p-4">
-                <p className="text-xs font-medium tracking-wide text-foreground/60">Soovitus</p>
-                <p className="mt-2 text-sm font-semibold">{result.summary.title}</p>
-                <p className="mt-2 text-sm text-foreground/65">{result.summary.bestFit}</p>
+              <div className="ep-sim-insight mt-1 p-4 md:p-5">
+                <p className="ep-eyebrow-caps text-[0.58rem] text-[oklch(0.82_0.14_145)]">Kohene signaal</p>
+                <p className="mt-3 text-sm font-semibold leading-snug text-foreground/92">{result.summary.title}</p>
+                <p className="mt-2 text-sm leading-relaxed text-foreground/68">{result.summary.bestFit}</p>
               </div>
             </div>
           </div>
         </Panel>
 
-        <div className="grid gap-4 lg:col-span-8">
-          <div className="grid gap-4 md:grid-cols-3">
-            <Kpi label="Kuutine sääst" value={`${fmtEur(result.monthlySavingsEur)}`} hint="Hinnanguline." />
-            <Kpi label="Aastane sääst" value={`${fmtEur(result.annualSavingsEur)}`} hint="12 × kuine sääst." />
-            <Kpi label="Tasuvus" value={fmtYears(result.paybackYears)} hint="Upfront / aastane sääst." />
+        <div className="grid gap-6 lg:col-span-8">
+          <div className="ep-sim-kpi-row">
+            <p className="ep-eyebrow-caps text-foreground/45">Mõõdetud väljund</p>
+            <p className="mt-2 max-w-2xl text-sm text-foreground/58">
+              Need KPI-d uuenevad reaalajas — täisvaade lisab domeenihinnangu, graafikud ja ekspordi.
+            </p>
+            <div className="mt-5 grid gap-4 md:grid-cols-3">
+              <Kpi label="Kuutine sääst" value={`${fmtEur(result.monthlySavingsEur)}`} hint="Hinnanguline, kohene." />
+              <Kpi label="Aastane sääst" value={`${fmtEur(result.annualSavingsEur)}`} hint="12 × kuine sääst." />
+              <Kpi label="Tasuvus" value={fmtYears(result.paybackYears)} hint="Alginvesteering / aastane sääst." />
+            </div>
           </div>
 
           {isPublic ? (
             <PremiumGate
-              className="min-h-[360px] rounded-3xl"
-              title="Täielik investeeringu signaal"
-              description="Ava premium, et näha domeenihinnangut, 15-aastast rahavoogu, tundlikkust ja täielikku eelduste lõiku. Allalaaditav raport tuleb samasse voogu."
+              className="min-h-[440px] rounded-[1.75rem]"
+              title="Investeeringu täisvaade"
+              description="Näed juba kiiret ülevaadet — täisvaade lisab domeenihinnangu, 15-aastase rahavoo, tundlikkuse ja eelduste lõike ühes kinemaatilises vaates. Kokkuvõte ja jagamine jäävad samasse voogu."
+              ctaLabel="Ava täisvaade"
+              secondaryCta={{
+                href: "/pricing#avamine",
+                label: "Ava täiskokkuvõte",
+                checkoutOfferId: "ep_offer_report",
+              }}
+              tertiaryCta={{
+                href: "/pricing#avamine",
+                label: "Laadi PDF alla",
+                checkoutOfferId: "ep_offer_download",
+              }}
+              valuePoints={[
+                "Sügavam säästu- ja riskianalüüs (rahavoog + tundlikkus)",
+                "Mitme investeeringu stsenaariumi võrdlus",
+                "Laaditav kokkuvõte otsuse jaoks (PDF tulekul)",
+                "Soovituste kiht joondatud sinu profiiliga",
+                "Selgem investeerimisjuhis koos eelduste lõiguga",
+              ]}
             >
               <div className="grid gap-4">
-                <Panel>
+                <Panel className={SIM_SURFACE}>
                   <PanelHeader>
                     <div>
                       <PanelTitle>Otsustustugi (domeenikiht)</PanelTitle>
@@ -327,11 +427,9 @@ export function InvestmentSimulationsModule({
                     </Badge>
                   </PanelHeader>
                   <div className="px-6 pb-6">
-                    <p className="text-sm text-foreground/75">{domainEval.summaryEt}</p>
+                    <p className="text-sm leading-relaxed text-foreground/78">{domainEval.summaryEt}</p>
                     {domainEval.cautionEt ? (
-                      <p className="mt-3 rounded-2xl border border-border/50 bg-card/25 p-3 text-sm text-foreground/70">
-                        {domainEval.cautionEt}
-                      </p>
+                      <p className="ep-sim-insight mt-3 p-3 text-sm text-foreground/72">{domainEval.cautionEt}</p>
                     ) : null}
                     <div className="mt-4 grid gap-3 sm:grid-cols-3">
                       <MiniStat label="Strateegiline sobivus" value={`${domainEval.strategicFit.score0to100}/100`} />
@@ -348,7 +446,7 @@ export function InvestmentSimulationsModule({
                   </div>
                 </Panel>
 
-                <Panel className="overflow-hidden">
+                <Panel className={cn(SIM_SURFACE, "overflow-hidden")}>
                   <PanelHeader>
                     <div>
                       <PanelTitle>Cash flow</PanelTitle>
@@ -362,7 +460,7 @@ export function InvestmentSimulationsModule({
                 </Panel>
 
                 <div className="grid gap-4 md:grid-cols-2">
-                  <Panel className="overflow-hidden">
+                  <Panel className={cn(SIM_SURFACE, "overflow-hidden")}>
                     <PanelHeader>
                       <div>
                         <PanelTitle>Sensitivity</PanelTitle>
@@ -374,7 +472,7 @@ export function InvestmentSimulationsModule({
                     </div>
                   </Panel>
 
-                  <Panel>
+                  <Panel className={SIM_SURFACE}>
                     <PanelHeader>
                       <div>
                         <PanelTitle>Eeldused</PanelTitle>
@@ -384,18 +482,24 @@ export function InvestmentSimulationsModule({
                     <div className="px-6 pb-6">
                       <div className="space-y-2">
                         {result.assumptions.map((a) => (
-                          <div key={a.label} className="flex items-center justify-between gap-4 rounded-xl border border-border/40 bg-card/20 px-3 py-2">
-                            <p className="text-xs text-foreground/60">{a.label}</p>
-                            <p className="text-xs font-medium text-foreground/80">{a.value}</p>
+                          <div
+                            key={a.label}
+                            className="ep-sim-assumption-row flex items-center justify-between gap-4 px-3.5 py-2.5"
+                          >
+                            <p className="text-xs text-foreground/62">{a.label}</p>
+                            <p className="text-xs font-medium font-mono text-foreground/85">{a.value}</p>
                           </div>
                         ))}
                       </div>
 
-                      <div className="mt-4 rounded-2xl border border-border/40 bg-card/20 p-4">
-                        <p className="text-xs font-medium tracking-wide text-foreground/60">Selgitus</p>
-                        <ul className="mt-3 space-y-2 text-sm text-foreground/70">
+                      <div className="ep-sim-instrument-well mt-4 p-4">
+                        <p className="ep-eyebrow-caps text-[0.58rem] text-foreground/48">Selgitus</p>
+                        <ul className="mt-3 space-y-2.5 text-sm leading-relaxed text-foreground/72">
                           {result.summary.bullets.map((b, idx) => (
-                            <li key={idx}>• {b}</li>
+                            <li key={idx} className="flex gap-2">
+                              <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-[oklch(0.83_0.14_205)] shadow-[0_0_12px_oklch(0.83_0.14_205_/_0.5)]" />
+                              <span>{b}</span>
+                            </li>
                           ))}
                         </ul>
                       </div>
@@ -403,11 +507,16 @@ export function InvestmentSimulationsModule({
                   </Panel>
                 </div>
 
+                <PremiumReportExportPanel
+                  reportType="investment_simulation_report"
+                  className="mt-2"
+                  description="Sama stsenaarium, mida näed graafikutena — koondatud otsustaja mäluks: KPI-d, rahavoog, tundlikkus ja eelduste lõik. PDF genereerimine ühendatakse serverisse; nupp näitab juba päris olekut."
+                />
               </div>
             </PremiumGate>
           ) : (
             <>
-          <Panel>
+          <Panel className={SIM_SURFACE}>
             <PanelHeader>
               <div>
                 <PanelTitle>Otsustustugi (domeenikiht)</PanelTitle>
@@ -424,11 +533,9 @@ export function InvestmentSimulationsModule({
               </Badge>
             </PanelHeader>
             <div className="px-6 pb-6">
-              <p className="text-sm text-foreground/75">{domainEval.summaryEt}</p>
+              <p className="text-sm leading-relaxed text-foreground/78">{domainEval.summaryEt}</p>
               {domainEval.cautionEt ? (
-                <p className="mt-3 rounded-2xl border border-border/50 bg-card/25 p-3 text-sm text-foreground/70">
-                  {domainEval.cautionEt}
-                </p>
+                <p className="ep-sim-insight mt-3 p-3 text-sm text-foreground/72">{domainEval.cautionEt}</p>
               ) : null}
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
                 <MiniStat label="Strateegiline sobivus" value={`${domainEval.strategicFit.score0to100}/100`} />
@@ -445,7 +552,7 @@ export function InvestmentSimulationsModule({
             </div>
           </Panel>
 
-          <Panel className="overflow-hidden">
+          <Panel className={cn(SIM_SURFACE, "overflow-hidden")}>
             <PanelHeader>
               <div>
                 <PanelTitle>Cash flow</PanelTitle>
@@ -459,7 +566,7 @@ export function InvestmentSimulationsModule({
           </Panel>
 
           <div className="grid gap-4 md:grid-cols-2">
-            <Panel className="overflow-hidden">
+            <Panel className={cn(SIM_SURFACE, "overflow-hidden")}>
               <PanelHeader>
                 <div>
                   <PanelTitle>Sensitivity</PanelTitle>
@@ -471,7 +578,7 @@ export function InvestmentSimulationsModule({
               </div>
             </Panel>
 
-            <Panel>
+            <Panel className={SIM_SURFACE}>
               <PanelHeader>
                 <div>
                   <PanelTitle>Eeldused</PanelTitle>
@@ -481,18 +588,24 @@ export function InvestmentSimulationsModule({
               <div className="px-6 pb-6">
                 <div className="space-y-2">
                   {result.assumptions.map((a) => (
-                    <div key={a.label} className="flex items-center justify-between gap-4 rounded-xl border border-border/40 bg-card/20 px-3 py-2">
-                      <p className="text-xs text-foreground/60">{a.label}</p>
-                      <p className="text-xs font-medium text-foreground/80">{a.value}</p>
+                    <div
+                      key={a.label}
+                      className="ep-sim-assumption-row flex items-center justify-between gap-4 px-3.5 py-2.5"
+                    >
+                      <p className="text-xs text-foreground/62">{a.label}</p>
+                      <p className="text-xs font-medium font-mono text-foreground/85">{a.value}</p>
                     </div>
                   ))}
                 </div>
 
-                <div className="mt-4 rounded-2xl border border-border/40 bg-card/20 p-4">
-                  <p className="text-xs font-medium tracking-wide text-foreground/60">Selgitus</p>
-                  <ul className="mt-3 space-y-2 text-sm text-foreground/70">
+                <div className="ep-sim-instrument-well mt-4 p-4">
+                  <p className="ep-eyebrow-caps text-[0.58rem] text-foreground/48">Selgitus</p>
+                  <ul className="mt-3 space-y-2.5 text-sm leading-relaxed text-foreground/72">
                     {result.summary.bullets.map((b, idx) => (
-                      <li key={idx}>• {b}</li>
+                      <li key={idx} className="flex gap-2">
+                        <span className="mt-2 h-1 w-1 shrink-0 rounded-full bg-[oklch(0.83_0.14_205)] shadow-[0_0_12px_oklch(0.83_0.14_205_/_0.5)]" />
+                        <span>{b}</span>
+                      </li>
                     ))}
                   </ul>
                 </div>
@@ -500,7 +613,7 @@ export function InvestmentSimulationsModule({
             </Panel>
           </div>
 
-          <Panel>
+          <Panel className={SIM_SURFACE}>
             <PanelHeader>
               <div>
                 <PanelTitle>Salvestatud stsenaariumid</PanelTitle>
@@ -529,17 +642,18 @@ export function InvestmentSimulationsModule({
                 </div>
               ) : null}
               {saved.length === 0 ? (
-                <div className="rounded-2xl border border-border/50 bg-card/25 p-4">
-                  <p className="text-sm font-semibold">Pole salvestatud stsenaariume</p>
-                  <p className="mt-2 text-sm text-foreground/65">
+                <div className="ep-sim-instrument-well p-5">
+                  <p className="text-sm font-semibold text-foreground/90">Pole salvestatud stsenaariume</p>
+                  <p className="mt-2 text-sm leading-relaxed text-foreground/62">
                     Salvesta ülal stsenaarium ja saad neid võrrelda.
                   </p>
                 </div>
               ) : (
                 <div className="grid gap-3">
                   {saved.map((s) => (
-                    <div key={s.id} className="rounded-2xl border border-border/50 bg-card/25 p-4">
-                      <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div key={s.id} className="ep-cinema-card relative p-4 md:p-5">
+                      <div className="relative z-10">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
                         <div className="min-w-0">
                           {renamingId === s.id ? (
                             <div className="flex items-center gap-2">
@@ -641,17 +755,18 @@ export function InvestmentSimulationsModule({
                         </div>
                       </div>
                       <ScenarioPreview scenario={s} />
+                      </div>
                     </div>
                   ))}
                 </div>
               )}
 
               {compareList.length >= 2 ? (
-                <div className="mt-4 rounded-3xl border border-border/50 bg-card/20 p-5">
-                  <p className="text-xs font-medium tracking-wide text-foreground/60">Võrdlus</p>
+                <div className="ep-sim-instrument-well mt-4 p-5 md:p-6">
+                  <p className="ep-eyebrow-caps text-[0.58rem] text-foreground/48">Võrdlus</p>
                   <div className="mt-3 grid gap-3 md:grid-cols-3">
                     {compareList.map((s) => (
-                      <div key={s.id} className="rounded-2xl border border-border/50 bg-card/25 p-4">
+                      <div key={s.id} className="ep-sim-stat-chip rounded-2xl p-4">
                         <p className="text-sm font-semibold">{s.name}</p>
                         <p className="mt-1 text-xs text-foreground/55">{typeLabel(s.simulation_type)}</p>
                         <div className="mt-3 space-y-2">
@@ -679,25 +794,23 @@ export function InvestmentSimulationsModule({
 
 function Kpi({ label, value, hint }: { label: string; value: string; hint: string }) {
   return (
-    <Panel className="relative overflow-hidden">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(420px_220px_at_25%_0%,rgba(38,230,255,0.08),transparent_60%)]"
-      />
-      <div className="relative px-6 py-5">
-        <p className="text-xs font-medium tracking-wide text-foreground/60">{label}</p>
-        <p className="mt-3 font-mono text-2xl font-semibold tracking-tight">{value}</p>
-        <p className="mt-2 text-sm text-foreground/60">{hint}</p>
+    <div className="group ep-stat-plinth relative transition-[box-shadow] duration-300 hover:shadow-[0_0_48px_-16px_oklch(0.83_0.14_205_/_0.35)]">
+      <div className="relative z-10">
+        <p className="ep-eyebrow-caps text-[0.58rem] text-foreground/50">{label}</p>
+        <p className="mt-3 bg-gradient-to-br from-foreground via-foreground to-foreground/75 bg-clip-text font-mono text-2xl font-semibold tracking-tight text-transparent">
+          {value}
+        </p>
+        <p className="mt-2 text-sm text-foreground/58">{hint}</p>
       </div>
-    </Panel>
+    </div>
   );
 }
 
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-baseline justify-between gap-4 rounded-xl border border-border/40 bg-card/20 px-3 py-2">
-      <p className="text-xs text-foreground/60">{label}</p>
-      <p className="font-mono text-xs font-semibold text-foreground/85">{value}</p>
+    <div className="ep-sim-stat-chip flex items-baseline justify-between gap-4 px-3.5 py-3">
+      <p className="text-[11px] font-medium uppercase tracking-wider text-foreground/55">{label}</p>
+      <p className="font-mono text-xs font-semibold tabular-nums text-foreground/90">{value}</p>
     </div>
   );
 }

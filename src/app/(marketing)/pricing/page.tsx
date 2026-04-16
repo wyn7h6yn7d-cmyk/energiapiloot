@@ -1,100 +1,70 @@
 import Link from "next/link";
 
 import { MarketingShell } from "@/components/layout/marketing-shell";
+import { PricingUnlockExperience } from "@/components/marketing/pricing-unlock-experience";
 import { LinkButton } from "@/components/ui/link-button";
-import { Badge } from "@/components/ui/badge";
-import { PricingCard } from "@/components/ui/pricing-card";
-import { PLANS, formatPrice, type BillingInterval } from "@/lib/billing/plans";
 
 export default function PricingPage() {
-  const interval: BillingInterval = "monthly";
-
   return (
     <MarketingShell>
-      <div className="max-w-5xl">
-        <p className="text-xs font-medium tracking-wide text-foreground/60">Hinnad</p>
-        <h1 className="mt-3 text-balance text-3xl font-semibold tracking-tight md:text-4xl">
-          Ava täielik Energiapiloot — ilma kontota.
-        </h1>
-        <p className="mt-4 max-w-3xl text-pretty text-base leading-relaxed text-foreground/70">
-          Energiapiloot on avalik energiaotsuste stuudio: leping, tarbimine ja simulatsioonid brauseris. Osaliselt näed
-          tulemust kohe; sügav analüüs, salvestus ja PDF tulevad ühe ostu / avamisega. Stripe makse ja aruannete
-          genereerimine ühendatakse API-dega, mis on juba eraldi marsruutides ette valmistatud.
-        </p>
-
-        <div className="mt-7 flex flex-wrap items-center gap-2">
-          <Badge variant="cyan">Premium avamine</Badge>
-          <Badge variant="neutral">Stripe (järgmine iteratsioon)</Badge>
-          <span className="text-xs text-foreground/55">Seniks: demo avamine ja struktuurne ostu API.</span>
-        </div>
-
-        <section id="avamine" className="mt-12 scroll-mt-28 rounded-3xl border border-[oklch(0.83_0.14_205_/_0.28)] bg-card/30 p-8 shadow-[0_0_80px_-40px_oklch(0.83_0.14_205_/_0.55)] backdrop-blur-md">
-          <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[oklch(0.83_0.14_205)]">Avamine</p>
-          <h2 className="mt-3 text-balance text-2xl font-semibold tracking-tight">Mida premium avab?</h2>
-          <ul className="mt-5 space-y-3 text-sm text-foreground/75">
-            <li>• Täielik lepingu intelligentsus ja võrdlusgraafikud</li>
-            <li>• Tarbimise draiverid, lipud ja säästuplaani täissügavus</li>
-            <li>• Investeeringu domeenikiht, cashflow ja tundlikkuse graafikud</li>
-            <li>• Tulevikus: kohene Stripe checkout + allalaaditav PDF raport</li>
-          </ul>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <LinkButton href="/?unlock=demo" variant="gradient" className="shadow-[0_0_28px_-8px_oklch(0.83_0.14_205_/_0.7)]">
-              Proovi demo avamist
+      <div className="mx-auto w-full max-w-5xl">
+        <header className="relative overflow-hidden rounded-[1.75rem] border border-[oklch(0.83_0.14_205_/_0.22)] bg-[linear-gradient(135deg,oklch(0.16_0.04_250_/_0.92),oklch(0.11_0.03_250_/_0.88))] px-6 py-10 shadow-[0_0_100px_-52px_oklch(0.83_0.14_205_/_0.55)] backdrop-blur-xl md:px-10 md:py-12">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,oklch(0.83_0.14_205_/_0.55),transparent)]"
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -right-16 top-1/2 h-48 w-48 -translate-y-1/2 rounded-full bg-[oklch(0.83_0.14_205_/_0.09)] blur-3xl"
+          />
+          <p className="ep-eyebrow-caps relative text-[oklch(0.78_0.1_205)]">Täisvaate avamine</p>
+          <h1 className="ep-display relative mt-4 max-w-3xl text-balance text-3xl font-semibold tracking-tight md:text-4xl lg:text-[2.35rem]">
+            Maksa siis, kui näed, et see sulle päriselt aitab.
+          </h1>
+          <p className="relative mt-5 max-w-2xl text-pretty text-base leading-relaxed text-foreground/72 md:text-[1.05rem]">
+            Alusta tasuta — näed kohe suunda ja peamisi näitajaid. Täisvaade, võrdlused ja PDF avanevad ühe ostuga, ilma
+            kuupaketi ja registreerimiseta.
+          </p>
+          <div className="relative mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+            <LinkButton
+              href="#avamine"
+              variant="gradient"
+              className="shadow-[0_0_28px_-8px_oklch(0.83_0.14_205_/_0.7)]"
+            >
+              Vaata avamise võimalusi
+            </LinkButton>
+            <LinkButton href="/simulatsioonid" variant="outline" className="border-[oklch(1_0_0_/_14%)] bg-[oklch(1_0_0_/_4%)]">
+              Proovi tasuta
             </LinkButton>
           </div>
-          <p className="mt-3 font-mono text-[11px] text-foreground/50">
-            POST /api/checkout/unlock · POST /api/reports/premium (stubid, 501)
-          </p>
-          <p className="mt-4 text-xs text-foreground/55">
-            Ostu API tagastab praegu 501; edasi ühendame Stripe Checkout Sessioni ja määrame{" "}
-            <code className="rounded-md bg-card/50 px-1.5 py-0.5 text-[11px]">ep_unlock</code> küpsise.
-          </p>
-        </section>
+        </header>
 
-        <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {PLANS.map((p) => (
-            <PricingCard
-              key={p.id}
-              name={p.name}
-              price={formatPrice(p.id, interval)}
-              badge={p.badge}
-              description={p.tagline}
-              features={p.features}
-              cta={{
-                label: p.id === "free" ? "Ava tööriistad" : "Vali see tase",
-                href: "/pricing#avamine",
-              }}
-              highlight={p.highlight}
-            />
-          ))}
+        <div className="mt-14 md:mt-20">
+          <PricingUnlockExperience />
         </div>
 
-        <div className="mt-10 rounded-3xl border border-border/50 bg-card/20 p-6">
-          <p className="text-xs font-medium tracking-wide text-foreground/60">Miks mitte “tasuta konto”?</p>
-          <p className="mt-3 max-w-3xl text-sm leading-relaxed text-foreground/70">
-            Kontovaba mudel vähendab hõõrdumist ja hoiab fookuse otsusel. Kui hiljem lisandub meeskonnatöö või
-            salvestatud objektid, saame need ühendada sama premium avamise kihiga — ilma et peaksid kolima teise
-            tootesse.
+        <div className="mt-16 rounded-2xl border border-[oklch(1_0_0_/_8%)] bg-[oklch(0_0_0_/_0.18)] px-5 py-6 md:px-8 md:py-7">
+          <p className="text-sm font-medium text-foreground/80">Miks mitte igakuine pakett?</p>
+          <p className="mt-2 max-w-3xl text-sm leading-relaxed text-foreground/60">
+            Energiaotsused on sageli hetked, mitte igakuine “paketihaldus”. Seetõttu on fookus ühel selgel ostul ja
+            konkreetsel väljundil — mitte astmetega tabelil. Vajadusel saab sama loogikaga hiljem lisada täiendusi.
           </p>
         </div>
 
-        <div className="mt-10">
-          <LinkButton href="/" variant="ghost">
-            Tagasi avalehele
+        <div className="mt-12 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <LinkButton href="/" variant="ghost" className="text-foreground/55 hover:text-foreground/78">
+            ← Tagasi avalehele
           </LinkButton>
+          <p className="text-xs text-foreground/45">
+            <Link className="underline underline-offset-4 hover:text-foreground/65" href="/security">
+              Turvalisus
+            </Link>
+            <span className="mx-2 text-foreground/30">·</span>
+            <Link className="underline underline-offset-4 hover:text-foreground/65" href="/legal/privacy">
+              Privaatsus
+            </Link>
+          </p>
         </div>
-
-        <p className="mt-10 text-xs text-foreground/55">
-          Detailid? Vaata{" "}
-          <Link className="underline underline-offset-4" href="/security">
-            Turvalisus
-          </Link>{" "}
-          ja{" "}
-          <Link className="underline underline-offset-4" href="/legal/privacy">
-            Privaatsuspoliitika
-          </Link>
-          .
-        </p>
       </div>
     </MarketingShell>
   );

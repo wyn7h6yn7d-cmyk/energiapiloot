@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Panel, PanelDescription, PanelHeader, PanelTitle } from "@/components/ui/panel";
 import { LinkButton } from "@/components/ui/link-button";
 import { PremiumGate } from "@/components/product/premium-gate";
+import { PremiumReportExportPanel } from "@/components/product/premium-report-deliverable";
 import { cn } from "@/lib/utils";
 import { analyzeContracts, type AnalysisInputs, type ContractType } from "@/lib/contracts/model";
 import type { ConsumptionProfileInputs } from "@/lib/consumption/insights";
@@ -387,8 +388,8 @@ export function ContractsAnalysisModule({
           {publicExperience ? (
             <PremiumGate
               className="rounded-3xl"
-              title="Täielik lepingu võrdlus ja riskikiht"
-              description="Premium avab intelligentsuskihi, täpse võrdlusgraafiku ja eksportitava kokkuvõtte. Makse tuleb Stripe’iga; seniks saad demo avamisega eelvaate."
+              title="Lepingu täisvaade ja riskikiht"
+              description="Täisvaade avab intelligentsuskihi, täpse võrdlusgraafiku ja eksportitava kokkuvõtte. Makse Stripe&apos;i kaudu; seniks saad demo eelvaatega tutvuda."
             >
               <div className="grid gap-4">
                 <Panel>
@@ -499,6 +500,12 @@ export function ContractsAnalysisModule({
                     </div>
                   </div>
                 </Panel>
+
+                <PremiumReportExportPanel
+                  reportType="contract_risk_summary"
+                  className="mt-2"
+                  description="Lepingu intelligentsus ja võrdlus jäävad ekraanil samaks — PDF pakendab need jagatavaks mäluks: riskikontekst, võrdlused ja soovituste sõnastus."
+                />
               </div>
             </PremiumGate>
           ) : (

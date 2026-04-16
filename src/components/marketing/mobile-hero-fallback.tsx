@@ -4,23 +4,25 @@ import { Badge } from "@/components/ui/badge";
 
 export function MobileHeroFallback({ label }: { label?: string }) {
   return (
-    <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-card/20 p-6 shadow-[var(--shadow-elev-2)] backdrop-blur-md">
+    <div className="ep-cinema-card relative overflow-hidden p-6 md:p-7">
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-[radial-gradient(700px_340px_at_20%_10%,rgba(38,230,255,0.18),transparent_62%),radial-gradient(560px_300px_at_85%_40%,rgba(46,242,181,0.14),transparent_65%),radial-gradient(540px_300px_at_50%_110%,rgba(245,239,196,0.08),transparent_55%)]"
+        className="pointer-events-none absolute inset-0 bg-[radial-gradient(700px_340px_at_20%_10%,oklch(0.83_0.14_205_/_16%),transparent_62%),radial-gradient(560px_300px_at_85%_40%,oklch(0.82_0.16_145_/_12%),transparent_65%),radial-gradient(540px_300px_at_50%_110%,oklch(0.95_0.04_85_/_8%),transparent_55%)]"
       />
-      <div aria-hidden className="pointer-events-none absolute inset-0 ep-grid-overlay opacity-[0.18]" />
+      <div aria-hidden className="pointer-events-none absolute inset-0 ep-grid-overlay opacity-[0.14]" />
 
       <div className="relative">
-        <div className="flex items-center justify-between gap-3">
-          <Badge variant="cyan">Premium mobiilrežiim</Badge>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Badge variant="cyan" className="border-[oklch(0.83_0.14_205_/_35%)] shadow-[0_0_18px_-6px_oklch(0.83_0.14_205_/_0.4)]">
+            Mobiilne plasma
+          </Badge>
           {label ? <Badge variant="warm">{label}</Badge> : null}
         </div>
 
         <div className="mt-6">
-          <p className="text-sm font-semibold tracking-tight">Kerge, kuid tähendusrikas</p>
-          <p className="mt-2 text-sm text-foreground/65">
-            Vähem visuaalset koormust, sama sõnum. Tekst püsib loetav ja kerimine sujuv ka väiksematel ekraanidel.
+          <p className="ep-display text-base font-semibold tracking-tight">Kerge. Selge. Tähendusrikas.</p>
+          <p className="mt-2 text-sm leading-relaxed text-foreground/65">
+            Vähem visuaalset koormust, sama narratiiv. Loetavus ja rütm on hoitud ka väiksematel ekraanidel.
           </p>
         </div>
 

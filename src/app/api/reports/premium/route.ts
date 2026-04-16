@@ -1,14 +1,50 @@
 import { NextResponse } from "next/server";
 
+import type { ReportType } from "@/lib/reports/types";
+import { getServerUnlockGrants, isUnlockGrantedOnServer } from "@/lib/unlock/server-snapshot";
+
+const REPORT_TYPES = new Set<ReportType>([
+  "monthly_energy_summary",
+  "contract_risk_summary",
+  "savings_opportunity_summary",
+  "investment_simulation_report",
+]);
+
 /**
- * Future: generate signed URL or stream PDF for unlocked users (cookie `ep_unlock=full`).
+ * Future: generate signed URL or stream PDF for users with `download` entitlement.
+ * Body: { reportType: ReportType }
  */
-export async function POST() {
+export async function POST(req: Request) {
+  let reportType: ReportType | null = null;
+  try {
+    const body = (await req.json()) as { reportType?: string };
+    if (typeof body.reportType === "string" && REPORT_TYPES.has(body.reportType as ReportType)) {
+      reportType = body.reportType as ReportType;
+    }
+  } catch {
+    /* empty body ok */
+  }
+
+  const grants = await getServerUnlockGrants();
+  if (!isUnlockGrantedOnServer(grants, "download")) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: "download_locked",
+        message: "Laaditav PDF nõuab ostetud PDF-paketti.",
+        reportType,
+      },
+      { status: 403 }
+    );
+  }
+
   return NextResponse.json(
     {
       ok: false,
       error: "pdf_not_live",
-      message: "Premium PDF aruanne lisandub pärast makset ja lukustuse kontrolli.",
+      message: "Laaditav PDF lisandub pärast makse ja genereerija ühendust.",
+      reportType,
+      nextStep: "enqueue_pdf_job",
     },
     { status: 501 }
   );

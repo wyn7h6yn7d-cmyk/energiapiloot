@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 /**
  * Public-first product: legacy account URLs redirect home (see `src/legacy/` for archived UI).
- * Future: Stripe success may set `ep_unlock` cookie via /api/checkout/complete.
+ * Future: Stripe success may set `ep_unlock=full` or granular `ep_entitlements` via /api/checkout/complete.
  */
 const LEGACY_AUTH = ["/login", "/register", "/forgot-password", "/reset-password"] as const;
 const LEGACY_APP = ["/dashboard", "/onboarding"] as const;

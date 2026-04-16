@@ -4,12 +4,56 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@keyframes ep-border-flow {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes ep-aurora-shift {
+  0% {
+    opacity: 0.55;
+    transform: translateX(-3%) scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: translateX(3%) scale(1.02);
+  }
+  100% {
+    opacity: 0.55;
+    transform: translateX(-3%) scale(1);
+  }
+}
+
+@keyframes ep-flicker-soft {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.65;
+  }
+}
+
+@keyframes ep-drift-lines {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-24px);
+  }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
+  --font-heading: var(--font-display), var(--font-sans);
   --color-brand-cyan: var(--brand-cyan);
   --color-brand-green: var(--brand-green);
   --color-brand-warm: var(--brand-warm);
@@ -175,13 +219,28 @@
   body {
     @apply bg-background text-foreground;
     background-image:
-      radial-gradient(1200px 900px at 12% -8%, oklch(0.83 0.14 205 / 14%), transparent 55%),
-      radial-gradient(900px 700px at 92% 0%, oklch(0.82 0.16 145 / 10%), transparent 52%),
-      radial-gradient(1400px 1000px at 50% 120%, oklch(0.14 0.04 255 / 90%), transparent 58%);
-    background-attachment: fixed;
+      radial-gradient(1400px 1000px at 8% -12%, oklch(0.83 0.14 205 / 18%), transparent 52%),
+      radial-gradient(1100px 820px at 96% 4%, oklch(0.82 0.16 145 / 12%), transparent 50%),
+      radial-gradient(900px 700px at 50% 108%, oklch(0.72 0.2 265 / 8%), transparent 55%),
+      radial-gradient(1600px 1200px at 50% 120%, oklch(0.06 0.02 255 / 95%), transparent 60%);
+    /* scroll on narrow viewports — fixed attachment is costly on mobile Safari */
+    background-attachment: scroll;
+  }
+
+  @media (min-width: 768px) {
+    body {
+      background-attachment: fixed;
+    }
   }
   html {
     @apply font-sans;
+  }
+  h1,
+  h2,
+  h3,
+  .ep-display {
+    font-family: var(--font-display), var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: -0.03em;
   }
 }
 
@@ -240,17 +299,788 @@
       conic-gradient(from 210deg at 50% 35%, oklch(0.83 0.14 205 / 8%), transparent 38%, oklch(0.82 0.16 145 / 6%), transparent 72%);
   }
 
-  /* Readability scrims for immersive pages (esp. over fixed 3D) */
+  /* Readability scrims — cinematic depth, preserves3D readability */
   .ep-readability-scrim {
     background:
-      radial-gradient(900px 700px at 18% 35%, oklch(0.12 0.01 255 / 78%), transparent 62%),
-      radial-gradient(760px 560px at 78% 22%, oklch(0.12 0.01 255 / 62%), transparent 64%),
-      linear-gradient(180deg, oklch(0.12 0.01 255 / 55%), oklch(0.12 0.01 255 / 86%));
+      radial-gradient(1200px 820px at 12% 30%, oklch(0.07 0.02 255 / 92%), transparent 56%),
+      radial-gradient(1100px 780px at 14% 28%, oklch(0.08 0.02 255 / 82%), transparent 58%),
+      radial-gradient(880px 620px at 82% 18%, oklch(0.1 0.025 255 / 72%), transparent 62%),
+      linear-gradient(185deg, oklch(0.06 0.02 255 / 72%) 0%, oklch(0.09 0.02 255 / 45%) 45%, oklch(0.11 0.015 255 / 92%) 100%);
   }
 
   .ep-hero-vignette {
-    background: radial-gradient(1200px 900px at 50% 40%, transparent 35%, oklch(0.12 0.01 255 / 72%) 72%);
+    background:
+      radial-gradient(ellipse 100% 70% at 50% 0%, transparent 20%, oklch(0.04 0.02 255 / 55%) 100%),
+      radial-gradient(1200px 900px at 50% 42%, transparent 32%, oklch(0.07 0.02 255 / 78%) 72%);
     pointer-events: none;
+  }
+
+  /* Subtle animated field — energy particles (CSS only) */
+  .ep-hero-field {
+    position: absolute;
+    inset: -20% -10% auto -10%;
+    height: min(85vh, 720px);
+    background-image:
+      radial-gradient(circle at 20% 30%, oklch(0.83 0.14 205 / 12%) 0%, transparent 2%),
+      radial-gradient(circle at 70% 55%, oklch(0.82 0.16 145 / 10%) 0%, transparent 1.5%),
+      radial-gradient(circle at 45% 80%, oklch(0.83 0.14 205 / 8%) 0%, transparent 1.2%),
+      radial-gradient(circle at 88% 22%, oklch(0.95 0.02 85 / 9%) 0%, transparent 1.8%);
+    background-size: 100% 100%;
+    opacity: 0.9;
+    animation: ep-flicker-soft 7s ease-in-out infinite;
+    pointer-events: none;
+    mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, black 15%, transparent 72%);
+  }
+
+  /* Holographic instrument panel — hero preview */
+  .ep-holo-panel {
+    position: relative;
+    border-radius: 1.35rem;
+    background:
+      linear-gradient(145deg, oklch(1 0 0 / 9%) 0%, oklch(0.83 0.14 205 / 4%) 38%, oklch(0 0 0 / 28%) 100%);
+    border: 1px solid oklch(0.83 0.14 205 / 22%);
+    box-shadow:
+      0 0 0 1px oklch(1 0 0 / 6%) inset,
+      0 0 60px -20px oklch(0.83 0.14 205 / 45%),
+      0 0 100px -40px oklch(0.82 0.16 145 / 22%);
+    backdrop-filter: blur(22px);
+    overflow: hidden;
+  }
+
+  .ep-holo-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      oklch(0.83 0.14 205 / 4%) 2px,
+      oklch(0.83 0.14 205 / 4%) 3px
+    );
+    opacity: 0.35;
+    pointer-events: none;
+    animation: ep-holo-scan 10s linear infinite;
+    mask-image: linear-gradient(180deg, transparent 0%, black 18%, black 82%, transparent 100%);
+  }
+
+  .ep-holo-panel::after {
+    content: "";
+    position: absolute;
+    inset: -40%;
+    background: conic-gradient(
+      from 200deg at 50% 120%,
+      transparent 30%,
+      oklch(0.83 0.14 205 / 12%) 42%,
+      transparent 54%,
+      oklch(0.82 0.16 145 / 8%) 68%,
+      transparent 80%
+    );
+    opacity: 0.5;
+    pointer-events: none;
+    animation: ep-holo-sweep 14s ease-in-out infinite;
+  }
+
+  @keyframes ep-holo-scan {
+    0% {
+      transform: translateY(-6px);
+    }
+    100% {
+      transform: translateY(6px);
+    }
+  }
+
+  @keyframes ep-holo-sweep {
+    0%,
+    100% {
+      transform: rotate(0deg) scale(1);
+      opacity: 0.35;
+    }
+    50% {
+      transform: rotate(8deg) scale(1.02);
+      opacity: 0.55;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ep-holo-panel::before,
+    .ep-holo-panel::after {
+      animation: none;
+    }
+    .ep-holo-panel::before {
+      opacity: 0.2;
+    }
+  }
+
+  .ep-energy-rail {
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      oklch(0.83 0.14 205 / 45%) 22%,
+      oklch(0.82 0.16 145 / 35%) 55%,
+      transparent 100%
+    );
+    width: 2px;
+    filter: blur(0.5px);
+    box-shadow: 0 0 24px oklch(0.83 0.14 205 / 35%);
+  }
+
+  .ep-cinema-card {
+    position: relative;
+    border-radius: 1.35rem;
+    border: 1px solid oklch(1 0 0 / 9%);
+    background: linear-gradient(165deg, oklch(1 0 0 / 8%) 0%, oklch(1 0 0 / 2.5%) 42%, oklch(0 0 0 / 18%) 100%);
+    box-shadow:
+      var(--shadow-elev-2),
+      0 0 0 1px oklch(0.83 0.14 205 / 8%) inset,
+      0 -40px 80px -50px oklch(0.83 0.14 205 / 25%);
+    backdrop-filter: blur(20px);
+  }
+
+  .ep-cinema-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      125deg,
+      oklch(0.83 0.14 205 / 45%),
+      oklch(1 0 0 / 6%) 35%,
+      oklch(0.82 0.16 145 / 28%) 70%,
+      oklch(0.83 0.14 205 / 20%)
+    );
+    background-size: 200% 200%;
+    animation: ep-border-flow 14s ease infinite;
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    opacity: 0.65;
+  }
+
+  .ep-cinema-panel {
+    position: relative;
+    border-radius: 1.75rem;
+    border: 1px solid oklch(1 0 0 / 11%);
+    background: linear-gradient(180deg, oklch(1 0 0 / 7%) 0%, oklch(1 0 0 / 2%) 48%, oklch(0 0 0 / 12%) 100%);
+    box-shadow: var(--shadow-elev-1), 0 0 80px -40px oklch(0.83 0.14 205 / 22%);
+    backdrop-filter: blur(18px);
+  }
+
+  .ep-cinema-panel::after {
+    content: "";
+    position: absolute;
+    left: 1.25rem;
+    right: 1.25rem;
+    top: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, oklch(0.83 0.14 205 / 55%), transparent);
+    opacity: 0.7;
+    pointer-events: none;
+  }
+
+  .ep-section-glow {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 70% 50% at 50% 0%, oklch(0.83 0.14 205 / 6%), transparent 70%);
+    pointer-events: none;
+  }
+
+  /* Homepage story world — one continuous premium narrative */
+  .ep-story-continuum {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .ep-story-continuum::before {
+    content: "";
+    position: absolute;
+    left: max(0px, calc(50% - 42rem));
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      oklch(0.83 0.14 205 / 28%) 8%,
+      oklch(0.83 0.14 205 / 12%) 25%,
+      oklch(0.82 0.16 145 / 18%) 45%,
+      oklch(0.95 0.04 85 / 15%) 68%,
+      oklch(0.83 0.14 205 / 18%) 88%,
+      transparent 100%
+    );
+    box-shadow: 0 0 32px oklch(0.83 0.14 205 / 25%);
+    opacity: 0.55;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  @media (max-width: 768px) {
+    .ep-story-continuum::before {
+      opacity: 0.28;
+      left: 10px;
+    }
+  }
+
+  .ep-story-section {
+    position: relative;
+    isolation: isolate;
+    --story-t: 0.5;
+  }
+
+  .ep-story-section-layers {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  .ep-story-aurora {
+    position: absolute;
+    inset: -25% -12%;
+    background:
+      radial-gradient(
+        ellipse 75% 48% at calc(28% + var(--story-t) * 48%) 18%,
+        oklch(0.83 0.14 205 / 14%),
+        transparent 58%
+      ),
+      radial-gradient(
+        ellipse 68% 52% at calc(72% - var(--story-t) * 35%) 78%,
+        oklch(0.82 0.16 145 / 9%),
+        transparent 55%
+      );
+    opacity: 0.9;
+    animation: ep-story-float 26s ease-in-out infinite;
+  }
+
+  .ep-story-section--warm .ep-story-aurora {
+    background:
+      radial-gradient(
+        ellipse 72% 50% at calc(35% + var(--story-t) * 40%) 22%,
+        oklch(0.95 0.06 85 / 16%),
+        transparent 58%
+      ),
+      radial-gradient(
+        ellipse 70% 48% at calc(65% - var(--story-t) * 30%) 72%,
+        oklch(0.83 0.14 205 / 8%),
+        transparent 55%
+      );
+  }
+
+  .ep-story-section--green .ep-story-aurora {
+    background:
+      radial-gradient(
+        ellipse 74% 50% at calc(30% + var(--story-t) * 45%) 20%,
+        oklch(0.82 0.16 145 / 14%),
+        transparent 58%
+      ),
+      radial-gradient(
+        ellipse 68% 48% at calc(70% - var(--story-t) * 38%) 76%,
+        oklch(0.83 0.14 205 / 8%),
+        transparent 55%
+      );
+  }
+
+  .ep-story-section--neutral .ep-story-aurora {
+    background:
+      radial-gradient(ellipse 70% 45% at 50% 25%, oklch(1 0 0 / 8%), transparent 60%),
+      radial-gradient(ellipse 65% 48% at 50% 75%, oklch(0.83 0.14 205 / 6%), transparent 58%);
+    animation-duration: 32s;
+  }
+
+  @keyframes ep-story-float {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0) scale(1);
+    }
+    33% {
+      transform: translate3d(0.8%, -0.4%, 0) scale(1.01);
+    }
+    66% {
+      transform: translate3d(-0.6%, 0.5%, 0) scale(1.005);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ep-story-aurora {
+      animation: none;
+    }
+  }
+
+  .ep-story-depth {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      185deg,
+      oklch(0.05 0.02 255 / 42%) 0%,
+      transparent 42%,
+      oklch(0.08 0.02 255 / 35%) 100%
+    );
+    mask-image: linear-gradient(180deg, transparent 0%, black 12%, black 88%, transparent 100%);
+  }
+
+  .ep-story-horizon {
+    position: absolute;
+    left: 8%;
+    right: 8%;
+    top: 38%;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      oklch(0.83 0.14 205 / 22%),
+      oklch(0.82 0.16 145 / 15%),
+      oklch(0.83 0.14 205 / 22%),
+      transparent
+    );
+    opacity: 0.35;
+    pointer-events: none;
+  }
+
+  .ep-story-section--warm .ep-story-horizon {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      oklch(0.95 0.05 85 / 28%),
+      oklch(0.83 0.14 205 / 12%),
+      oklch(0.95 0.05 85 / 28%),
+      transparent
+    );
+  }
+
+  .ep-story-bridge {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: clamp(88px, 14vh, 168px);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .ep-story-bridge--top {
+    top: 0;
+    background: linear-gradient(
+      180deg,
+      oklch(0.055 0.02 255 / 88%) 0%,
+      oklch(0.065 0.02 255 / 42%) 45%,
+      transparent 100%
+    );
+  }
+
+  .ep-story-bridge--bottom {
+    bottom: 0;
+    background: linear-gradient(
+      0deg,
+      oklch(0.07 0.02 255 / 88%) 0%,
+      oklch(0.065 0.02 255 / 38%) 48%,
+      transparent 100%
+    );
+  }
+
+  .ep-story-beat-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.5rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    font-family: var(--font-geist-mono, ui-monospace, monospace);
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    color: oklch(0.88 0.06 205);
+    border: 1px solid oklch(0.83 0.14 205 / 35%);
+    background: linear-gradient(180deg, oklch(0.83 0.14 205 / 12%), oklch(0 0 0 / 35%));
+    box-shadow:
+      0 0 24px -8px oklch(0.83 0.14 205 / 45%),
+      inset 0 1px 0 0 oklch(1 0 0 / 8%);
+  }
+
+  .ep-story-visual-shell {
+    position: relative;
+    border-radius: 1.85rem;
+    padding: 1px;
+    background: linear-gradient(
+      145deg,
+      oklch(0.83 0.14 205 / 28%),
+      oklch(1 0 0 / 6%) 40%,
+      oklch(0.82 0.16 145 / 18%) 100%
+    );
+    box-shadow:
+      0 40px 100px -50px oklch(0 0 0 / 90%),
+      0 0 80px -40px oklch(0.83 0.14 205 / 22%);
+  }
+
+  .ep-story-visual-shell-inner {
+    border-radius: 1.8rem;
+    background: linear-gradient(165deg, oklch(0 0 0 / 35%) 0%, oklch(0.06 0.02 255 / 15%) 100%);
+    padding: 0.6rem;
+  }
+
+  .ep-story-panel-frame {
+    box-shadow:
+      var(--shadow-elev-2),
+      0 0 0 1px oklch(0.83 0.14 205 / 12%) inset,
+      0 0 100px -48px oklch(0.83 0.14 205 / 28%),
+      0 0 120px -60px oklch(0.82 0.16 145 / 12%);
+  }
+
+  .ep-story-spectrum {
+    position: relative;
+    height: 5.5rem;
+    border-radius: 1rem;
+    border: 1px solid oklch(1 0 0 / 10%);
+    overflow: hidden;
+    background: oklch(0 0 0 / 28%);
+    box-shadow: inset 0 1px 0 0 oklch(1 0 0 / 6%);
+  }
+
+  .ep-story-spectrum-glow {
+    position: absolute;
+    inset: -40%;
+    background: conic-gradient(
+      from 220deg at 50% 120%,
+      oklch(0.83 0.14 205 / 22%),
+      transparent 35%,
+      oklch(0.82 0.16 145 / 18%),
+      transparent 70%
+    );
+    animation: ep-holo-sweep 18s ease-in-out infinite;
+    opacity: 0.55;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ep-story-spectrum-glow {
+      animation: none;
+      opacity: 0.28;
+    }
+  }
+
+  /* Simulation / calculator — premium instrument surfaces */
+  .ep-sim-panel {
+    border-radius: 1.75rem;
+    border: 1px solid oklch(0.83 0.14 205 / 16%);
+    background: linear-gradient(165deg, oklch(1 0 0 / 7%) 0%, oklch(0 0 0 / 20%) 100%);
+    box-shadow:
+      var(--shadow-elev-2),
+      0 0 96px -48px oklch(0.83 0.14 205 / 24%),
+      0 0 0 1px oklch(0.83 0.14 205 / 5%) inset;
+    backdrop-filter: blur(22px);
+  }
+
+  .ep-sim-instrument-well {
+    border-radius: 1.25rem;
+    border: 1px solid oklch(1 0 0 / 9%);
+    background: linear-gradient(180deg, oklch(0 0 0 / 28%) 0%, oklch(0.06 0.02 255 / 12%) 100%);
+    box-shadow: inset 0 1px 0 0 oklch(1 0 0 / 7%);
+  }
+
+  .ep-sim-insight {
+    border-radius: 1.25rem;
+    border: 1px solid oklch(0.82 0.16 145 / 18%);
+    background: linear-gradient(135deg, oklch(0.82 0.16 145 / 8%) 0%, oklch(0 0 0 / 22%) 100%);
+    box-shadow:
+      0 0 40px -18px oklch(0.82 0.16 145 / 25%),
+      inset 0 1px 0 0 oklch(1 0 0 / 6%);
+  }
+
+  .ep-sim-input {
+    border-radius: 0.875rem;
+    border: 1px solid oklch(1 0 0 / 11%);
+    background: linear-gradient(180deg, oklch(0 0 0 / 35%) 0%, oklch(0 0 0 / 18%) 100%);
+    box-shadow: inset 0 1px 0 0 oklch(1 0 0 / 7%);
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  .ep-sim-input:hover {
+    border-color: oklch(0.83 0.14 205 / 22%);
+  }
+
+  .ep-sim-input:focus-visible {
+    outline: none;
+    border-color: oklch(0.83 0.14 205 / 45%);
+    box-shadow:
+      inset 0 1px 0 0 oklch(1 0 0 / 9%),
+      0 0 0 1px oklch(0.83 0.14 205 / 22%),
+      0 0 28px -6px oklch(0.83 0.14 205 / 28%);
+  }
+
+  .ep-sim-select {
+    border-radius: 0.875rem;
+    border: 1px solid oklch(1 0 0 / 11%);
+    background: linear-gradient(180deg, oklch(0 0 0 / 32%) 0%, oklch(0 0 0 / 16%) 100%);
+    box-shadow: inset 0 1px 0 0 oklch(1 0 0 / 7%);
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  .ep-sim-select:hover {
+    border-color: oklch(0.83 0.14 205 / 22%);
+  }
+
+  .ep-sim-select:focus-visible {
+    outline: none;
+    border-color: oklch(0.83 0.14 205 / 45%);
+    box-shadow: 0 0 0 1px oklch(0.83 0.14 205 / 22%), 0 0 28px -6px oklch(0.83 0.14 205 / 28%);
+  }
+
+  .ep-sim-chart-frame {
+    position: relative;
+    border-radius: 1rem;
+    border: 1px solid oklch(1 0 0 / 10%);
+    background: linear-gradient(180deg, oklch(0 0 0 / 38%) 0%, oklch(0.07 0.02 255 / 42%) 100%);
+    box-shadow:
+      inset 0 1px 0 0 oklch(1 0 0 / 8%),
+      0 0 48px -20px oklch(0.83 0.14 205 / 18%);
+  }
+
+  .ep-sim-kpi-row {
+    position: relative;
+  }
+
+  .ep-sim-kpi-row::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -0.5rem;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, oklch(0.83 0.14 205 / 35%), transparent);
+    opacity: 0.7;
+    pointer-events: none;
+  }
+
+  .ep-sim-stat-chip {
+    border-radius: 0.875rem;
+    border: 1px solid oklch(1 0 0 / 10%);
+    background: linear-gradient(160deg, oklch(1 0 0 / 5%) 0%, oklch(0 0 0 / 24%) 100%);
+    box-shadow:
+      inset 0 1px 0 0 oklch(1 0 0 / 7%),
+      0 0 32px -14px oklch(0.83 0.14 205 / 18%);
+  }
+
+  .ep-sim-assumption-row {
+    border-radius: 0.875rem;
+    border: 1px solid oklch(1 0 0 / 8%);
+    background: oklch(0 0 0 / 18%);
+    box-shadow: inset 0 1px 0 0 oklch(1 0 0 / 5%);
+    transition: border-color 0.2s ease;
+  }
+
+  .ep-sim-assumption-row:hover {
+    border-color: oklch(0.83 0.14 205 / 16%);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ep-sim-input,
+    .ep-sim-select,
+    .ep-sim-assumption-row {
+      transition: none;
+    }
+  }
+
+  /* Locked premium results — gradient veil (blur optional via .ep-locked-veil--blur) */
+  .ep-locked-peek-mask {
+    -webkit-mask-image: linear-gradient(
+      180deg,
+      black 0%,
+      black 38%,
+      rgba(0, 0, 0, 0.78) 54%,
+      rgba(0, 0, 0, 0.32) 74%,
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      180deg,
+      black 0%,
+      black 38%,
+      rgba(0, 0, 0, 0.78) 54%,
+      rgba(0, 0, 0, 0.32) 74%,
+      transparent 100%
+    );
+  }
+
+  .ep-locked-veil {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    z-index: 6;
+  }
+
+  .ep-locked-veil--wash {
+    background: linear-gradient(
+      185deg,
+      transparent 0%,
+      oklch(0.07 0.02 255 / 18%) 28%,
+      oklch(0.08 0.02 255 / 62%) 55%,
+      oklch(0.09 0.02 255 / 92%) 100%
+    );
+  }
+
+  .ep-locked-veil--depth {
+    background: radial-gradient(ellipse 95% 70% at 50% 100%, oklch(0.05 0.02 255 / 88%), transparent 62%);
+    opacity: 0.85;
+    mix-blend-mode: multiply;
+  }
+
+  .ep-locked-veil--blur {
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    mask-image: linear-gradient(to bottom, transparent 0%, black 36%, black 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 36%, black 100%);
+  }
+
+  /* Lighter obfuscation on tablet/desktop only — premium depth without mobile jank */
+  .ep-locked-veil--blur-responsive {
+    display: none;
+  }
+
+  @media (min-width: 768px) {
+    .ep-locked-veil--blur-responsive {
+      display: block;
+      pointer-events: none;
+      position: absolute;
+      inset: 0;
+      z-index: 7;
+      backdrop-filter: blur(11px) saturate(1.05);
+      -webkit-backdrop-filter: blur(11px) saturate(1.05);
+      mask-image: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.65) 38%, black 100%);
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.65) 38%, black 100%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ep-locked-veil--blur-responsive {
+      display: none !important;
+    }
+  }
+
+  .ep-locked-veil-aura {
+    background: radial-gradient(
+      ellipse 80% 55% at 50% 0%,
+      oklch(0.83 0.14 205 / 9%),
+      transparent 58%
+    );
+    opacity: 0.9;
+  }
+
+  .ep-locked-reveal-content--unlocked {
+    animation: ep-locked-reveal-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @keyframes ep-locked-reveal-in {
+    from {
+      opacity: 0.88;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ep-locked-reveal-content--unlocked {
+      animation: none;
+    }
+  }
+
+  .ep-footer-aurora {
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 0%, oklch(0.83 0.14 205 / 12%), transparent 55%),
+      radial-gradient(ellipse 60% 40% at 20% 100%, oklch(0.82 0.16 145 / 8%), transparent 50%),
+      linear-gradient(180deg, oklch(0.06 0.02 255 / 95%), oklch(0.09 0.02 255 / 100%));
+  }
+
+  .ep-unlock-aurora {
+    animation: ep-aurora-shift 12s ease-in-out infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ep-unlock-aurora {
+      animation: none;
+    }
+    .ep-unlock-aurora::after {
+      animation: none;
+    }
+  }
+
+  .ep-unlock-aurora::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    background: linear-gradient(
+      135deg,
+      oklch(0.83 0.14 205 / 25%),
+      transparent 40%,
+      oklch(0.82 0.16 145 / 18%),
+      transparent 75%
+    );
+    opacity: 0.5;
+    z-index: -1;
+    filter: blur(12px);
+    animation: ep-aurora-shift 10s ease-in-out infinite reverse;
+  }
+
+  .ep-text-gradient {
+    background: linear-gradient(
+      105deg,
+      oklch(0.98 0.01 255) 0%,
+      oklch(0.92 0.04 205) 38%,
+      oklch(0.88 0.08 145) 72%,
+      oklch(0.95 0.02 85) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .ep-eyebrow-caps {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: oklch(0.78 0.06 205);
+  }
+
+  .ep-stat-plinth {
+    position: relative;
+    border-radius: 1rem;
+    border: 1px solid oklch(1 0 0 / 8%);
+    background: linear-gradient(160deg, oklch(1 0 0 / 6%) 0%, oklch(0 0 0 / 25%) 100%);
+    padding: 1rem 1.1rem;
+    box-shadow: 0 12px 40px -28px oklch(0 0 0 / 80%), 0 0 0 1px oklch(0.83 0.14 205 / 6%) inset;
+    backdrop-filter: blur(12px);
+  }
+
+  .ep-stat-plinth::before {
+    content: "";
+    position: absolute;
+    left: 0.75rem;
+    right: 0.75rem;
+    top: 0;
+    height: 2px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, transparent, oklch(0.83 0.14 205 / 50%), transparent);
+    opacity: 0.85;
+  }
+
+  .ep-spark-bar {
+    border-radius: 999px;
+    background: linear-gradient(180deg, oklch(0.83 0.14 205 / 55%), oklch(0.72 0.12 205 / 25%));
+    box-shadow: 0 0 12px oklch(0.83 0.14 205 / 35%);
+  }
+
+  .ep-story-grid-shift {
+    background-size: 22px 22px;
+    animation: ep-drift-lines 18s linear infinite;
   }
 
   /* “Instrument panel” language — less “generic SaaS card”, more product world */

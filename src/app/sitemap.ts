@@ -1,14 +1,9 @@
 import type { MetadataRoute } from "next";
 
-function baseUrl() {
-  // Prefer explicit URL in production. Fallback keeps dev working.
-  const env = process.env.NEXT_PUBLIC_SITE_URL;
-  if (env) return env.replace(/\/+$/, "");
-  return "https://energiapiloot.com";
-}
+import { getSiteUrl } from "@/lib/site-url";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const url = baseUrl();
+  const url = getSiteUrl();
   const now = new Date();
 
   const routes: Array<{ path: string; priority: number; changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"] }> =
