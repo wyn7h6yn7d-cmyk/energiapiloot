@@ -10,6 +10,7 @@ import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/ca
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePerfMode, useScrollStory } from "@/lib/motion/use-scroll-story";
+import { useScrollChoreography } from "@/lib/motion/use-scroll-choreography";
 import { useRef } from "react";
 
 export function Landing() {
@@ -17,6 +18,8 @@ export function Landing() {
   const mode = usePerfMode();
   const sections = 8;
   const { progress, activeIndex } = useScrollStory({ container: containerRef, sectionCount: sections });
+
+  useScrollChoreography({ container: containerRef, mode });
 
   return (
     <div ref={containerRef} className="relative w-full">
@@ -29,30 +32,30 @@ export function Landing() {
 
         <main>
           {/* HERO */}
-          <section className="relative min-h-[100svh] pt-20 md:pt-28">
+          <section className="relative min-h-[100svh] pt-20 md:pt-28" data-section="hero">
             <div className="ep-container">
               <div className="grid items-start gap-10 md:grid-cols-12">
                 <div className="md:col-span-7">
-                  <div className="max-w-2xl">
-                    <div className="flex items-center gap-2">
+                  <div className="max-w-2xl" data-hero-pin>
+                    <div className="flex items-center gap-2" data-reveal>
                       <Badge variant="cyan">Uus standard energiaotsustes</Badge>
                       {mode === "lite" ? <Badge variant="warm">Kergem režiim</Badge> : null}
                     </div>
-                    <p className="mt-6 text-sm font-medium tracking-wide text-foreground/70">
+                    <p className="mt-6 text-sm font-medium tracking-wide text-foreground/70" data-reveal>
                       Energiapiloot — premium energiaintellekti platvorm
                     </p>
-                    <h1 className="mt-4 text-balance text-4xl font-semibold leading-[1.05] tracking-tight md:text-6xl">
+                    <h1 className="mt-4 text-balance text-4xl font-semibold leading-[1.05] tracking-tight md:text-6xl" data-reveal>
                       Mõista oma energiat. Tee targemaid otsuseid.
                       <span className="block text-foreground/70">
                         Lepingud, tarbimine, investeeringud ja soovitused — ühes süsteemis.
                       </span>
                     </h1>
-                    <p className="mt-6 max-w-2xl text-pretty text-lg leading-relaxed text-foreground/75">
+                    <p className="mt-6 max-w-2xl text-pretty text-lg leading-relaxed text-foreground/75" data-reveal>
                       Scrolli ja vaata, kuidas hinnad, tipud ja investeeringud muutuvad
                       konkreetseteks valikuteks. Töökindel. Loetav. Mitte lärmakas.
                     </p>
 
-                    <div className="pointer-events-auto mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
+                    <div className="pointer-events-auto mt-9 flex flex-col gap-3 sm:flex-row sm:items-center" data-reveal>
                       <LinkButton href="/register" size="lg" variant="gradient">
                         Alusta tasuta
                       </LinkButton>
@@ -64,7 +67,7 @@ export function Landing() {
                       </LinkButton>
                     </div>
 
-                    <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3">
+                    <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-3" data-reveal>
                       <Kpi label="Otsuseni" value="minutid" hint="Segadusest plaanini." />
                       <Kpi label="Stsenaariumid" value="ühes kohas" hint="Mis siis kui, koos riskiga." />
                       <Kpi label="Fookus" value="EE · LV · LT" hint="Baltikumi energia reaalsus." />
@@ -73,7 +76,9 @@ export function Landing() {
                 </div>
 
                 <div className="md:col-span-5">
-                  <HeroPreview />
+                  <div data-reveal>
+                    <HeroPreview />
+                  </div>
                 </div>
               </div>
             </div>

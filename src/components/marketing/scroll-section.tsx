@@ -28,6 +28,7 @@ export function ScrollSection({
   return (
     <section
       id={id}
+      data-section="story"
       className={cn(
         "relative min-h-[100svh] py-18 md:py-24",
         "flex items-center",
@@ -36,7 +37,7 @@ export function ScrollSection({
     >
       <div className="ep-container relative z-10">
         <div className="grid items-start gap-10 md:grid-cols-12">
-          <div className="md:col-span-6">
+          <div className="md:col-span-6" data-reveal="left">
             <div className="max-w-xl">
               <p className="text-xs font-medium tracking-wide text-foreground/60">
                 {eyebrow}
@@ -58,7 +59,7 @@ export function ScrollSection({
             </div>
           </div>
 
-          <div className="md:col-span-6">
+          <div className="md:col-span-6" data-reveal="right">
             {right ? (
               right
             ) : (
