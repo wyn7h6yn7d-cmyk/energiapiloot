@@ -1,3 +1,32 @@
+# Energiapiloot
+
+Production-grade startup website + SaaS MVP foundation.
+
+## Stack
+
+- Next.js (App Router) + TypeScript
+- Tailwind CSS + shadcn/ui
+- Framer Motion + GSAP (ScrollTrigger where useful)
+- React Three Fiber + Drei
+- Supabase (auth + database)
+- Stripe-ready billing structure (scaffold)
+- Recharts (charts)
+- next-intl (i18n readiness)
+
+## Getting started
+
+1. Copy env template:
+
+```bash
+cp .env.example .env.local
+```
+
+2. Run dev:
+
+```bash
+npm run dev
+```
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
