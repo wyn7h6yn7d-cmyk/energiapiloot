@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { MarketingShell } from "@/components/layout/marketing-shell";
 import { LinkButton } from "@/components/ui/link-button";
+import { PricingCard } from "@/components/ui/pricing-card";
 
 export default function PricingPage() {
   return (
@@ -17,16 +18,27 @@ export default function PricingPage() {
         </p>
 
         <div className="mt-8 grid gap-4 md:grid-cols-2">
-          <PlanCard
+          <PricingCard
             name="Tasuta"
-            price="€0"
-            blurb="Baasmodelleerimine + 1 salvestatud stsenaarium."
+            price="0 €"
+            description="Kiire baasanalüüs ja lihtsad otsused."
+            features={[
+              "Baasjoon ja kiire ülevaade",
+              "1 salvestatud stsenaarium",
+              "Põhilised soovitused",
+            ]}
             cta={{ label: "Alusta tasuta", href: "/register" }}
           />
-          <PlanCard
+          <PricingCard
             name="Pro"
-            price="€12/mo"
-            blurb="Piiramatu stsenaarium + täpsemad simulaatorid."
+            price="12 € / kuu"
+            badge="Soovitus"
+            description="Täielik tööriistakast investeeringute ja lepingute jaoks."
+            features={[
+              "Piiramatu stsenaarium",
+              "Täiendatud simulaatorid",
+              "Raportid ja eksport",
+            ]}
             cta={{ label: "Liitu ootenimekirjaga", href: "/register" }}
             highlight
           />
@@ -51,41 +63,5 @@ export default function PricingPage() {
         </p>
       </div>
     </MarketingShell>
-  );
-}
-
-function PlanCard({
-  name,
-  price,
-  blurb,
-  cta,
-  highlight,
-}: {
-  name: string;
-  price: string;
-  blurb: string;
-  cta: { label: string; href: string };
-  highlight?: boolean;
-}) {
-  return (
-    <div
-      className={[
-        "rounded-2xl border bg-card/40 p-6 backdrop-blur-md",
-        highlight
-          ? "border-[oklch(0.83_0.14_205_/60%)] shadow-[0_0_0_1px_oklch(0.83_0.14_205_/20%),0_12px_60px_-30px_oklch(0.83_0.14_205_/30%)]"
-          : "border-border/60",
-      ].join(" ")}
-    >
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm font-semibold">{name}</p>
-        <p className="font-mono text-sm text-foreground/80">{price}</p>
-      </div>
-      <p className="mt-2 text-sm leading-relaxed text-foreground/65">{blurb}</p>
-      <div className="mt-6">
-        <LinkButton href={cta.href} variant={highlight ? "default" : "outline"}>
-          {cta.label}
-        </LinkButton>
-      </div>
-    </div>
   );
 }

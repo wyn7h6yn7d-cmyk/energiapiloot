@@ -8,7 +8,12 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground [a]:hover:bg-primary/80",
+        default:
+          "bg-primary text-primary-foreground shadow-[var(--glow-cyan)] hover:shadow-[var(--shadow-elev-2),var(--glow-cyan)]",
+        gradient:
+          "text-primary-foreground shadow-[var(--glow-cyan)] bg-[linear-gradient(135deg,oklch(0.82_0.16_145)_0%,oklch(0.83_0.14_205)_55%,oklch(0.95_0.02_85)_110%)] hover:shadow-[var(--shadow-elev-2),var(--glow-green)]",
+        glow:
+          "bg-[color-mix(in_oklab,var(--surface-2)_70%,transparent)] text-foreground border border-[var(--border-subtle)] shadow-[var(--glow-cyan)] hover:border-[var(--border-strong)] hover:shadow-[var(--shadow-elev-2),var(--glow-cyan)]",
         outline:
           "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
         secondary:
