@@ -2,7 +2,7 @@
 
 import { LinkButton } from "@/components/ui/link-button";
 import { MarketingNav } from "@/components/marketing/marketing-nav";
-import { MarketingCanvas } from "@/components/three/marketing-canvas";
+import { HeroUniverseCanvas } from "@/components/three/hero-universe-canvas";
 import { ThreeOverlay } from "@/components/three/three-overlay";
 import { ScrollSection } from "@/components/marketing/scroll-section";
 import { Badge } from "@/components/ui/badge";
@@ -20,7 +20,7 @@ export function Landing() {
 
   return (
     <div ref={containerRef} className="relative w-full">
-      <MarketingCanvas progress={progress} mode={mode} />
+      <HeroUniverseCanvas progress={progress} mode={mode} heroRangeEnd={0.22} panels intensity={1} />
 
       <ThreeOverlay />
 
