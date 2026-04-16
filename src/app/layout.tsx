@@ -63,7 +63,7 @@ export default function RootLayout({
       lang="et"
       className={`${geistSans.variable} ${geistMono.variable} ${outfit.variable} dark h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col selection:bg-[oklch(0.83_0.14_205_/_0.28)] selection:text-foreground dark:selection:bg-[oklch(0.83_0.14_205_/_0.38)]">
         <Providers>{children}</Providers>
       </body>
     </html>

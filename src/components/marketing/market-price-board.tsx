@@ -171,72 +171,6 @@ export function MarketPriceBoard({ area }: { area: "EE" | "LV" | "LT" | "FI" }) 
       <Panel className="overflow-hidden">
         <PanelHeader>
           <div>
-            <PanelTitle>Hetkehinnang</PanelTitle>
-            <PanelDescription>Börsihind (day-ahead) praeguse tunni jaoks.</PanelDescription>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="neutral">{area}</Badge>
-            <Badge variant="cyan">{data?.source === "nord_pool" ? "Elering NPS" : "Allikas"}</Badge>
-          </div>
-        </PanelHeader>
-        <div className="px-6 pb-6">
-          <div className="grid gap-4 md:grid-cols-12 md:items-start">
-            <div className="md:col-span-5">
-              <div className="rounded-2xl border border-border/50 bg-card/25 p-5">
-                <p className="text-xs font-medium tracking-wide text-foreground/60">Praegu</p>
-                <p className="mt-2 font-mono text-3xl font-semibold tracking-tight text-foreground/90">
-                  {computed.current ? fmtCentsPerKwh(computed.current.eurPerMwh) : "—"}
-                </p>
-                <p className="mt-2 text-sm text-foreground/65">
-                  {computed.current ? fmtEurPerMwh(computed.current.eurPerMwh) : loading ? "Laen…" : "Hind puudub."}
-                </p>
-                {error ? <p className="mt-3 text-sm text-destructive">{error}</p> : null}
-                <div className="mt-5 flex flex-wrap items-center gap-2">
-                  <LinkButton href="/leping" variant="outline" size="sm">
-                    Kontrolli lepingut
-                  </LinkButton>
-                  <LinkButton href="/tarbimine" variant="outline" size="sm">
-                    Vaata tarbimist
-                  </LinkButton>
-                </div>
-              </div>
-            </div>
-
-            <div className="md:col-span-7">
-              <div className="rounded-2xl border border-border/50 bg-card/25 p-5">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-medium tracking-wide text-foreground/60">Järgmised 12 tundi (15 min)</p>
-                    <p className="mt-2 text-sm text-foreground/65">Kiire vaade — hea ajastuse tunnetamiseks.</p>
-                  </div>
-                  <Badge variant="neutral">preview</Badge>
-                </div>
-
-                <div className="mt-4 grid gap-2 sm:grid-cols-2">
-                  {computed.nextQuarters.map((q) => (
-                    <div
-                      key={q.ts}
-                      className={cn(
-                        "flex items-center justify-between gap-3 rounded-xl border border-border/40 bg-background/30 px-3 py-2",
-                        "text-sm"
-                      )}
-                    >
-                      <span className="font-mono text-xs text-foreground/65">
-                        {new Date(q.ts).toLocaleTimeString("et-EE", { hour: "2-digit", minute: "2-digit" })}
-                      </span>
-                      <span className="font-mono font-semibold text-foreground/85">{fmtCentsPerKwh(q.eurPerMwh)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Panel>
-
-      <Panel className="overflow-hidden">
-        <PanelHeader>
-          <div>
             <PanelTitle>Hinnagraafik (48h)</PanelTitle>
             <PanelDescription>Liigu hiirega üle graafiku, et näha iga tunni hinda. Homne ilmub, kui API avaldab.</PanelDescription>
           </div>
@@ -352,6 +286,72 @@ export function MarketPriceBoard({ area }: { area: "EE" | "LV" | "LT" | "FI" }) 
           loading={loading}
         />
       </div>
+
+      <Panel className="overflow-hidden">
+        <PanelHeader>
+          <div>
+            <PanelTitle>Hetkehinnang</PanelTitle>
+            <PanelDescription>Börsihind (day-ahead) praeguse tunni jaoks.</PanelDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant="neutral">{area}</Badge>
+            <Badge variant="cyan">{data?.source === "nord_pool" ? "Elering NPS" : "Allikas"}</Badge>
+          </div>
+        </PanelHeader>
+        <div className="px-6 pb-6">
+          <div className="grid gap-4 md:grid-cols-12 md:items-start">
+            <div className="md:col-span-5">
+              <div className="rounded-2xl border border-border/50 bg-card/25 p-5">
+                <p className="text-xs font-medium tracking-wide text-foreground/60">Praegu</p>
+                <p className="mt-2 font-mono text-3xl font-semibold tracking-tight text-foreground/90">
+                  {computed.current ? fmtCentsPerKwh(computed.current.eurPerMwh) : "—"}
+                </p>
+                <p className="mt-2 text-sm text-foreground/65">
+                  {computed.current ? fmtEurPerMwh(computed.current.eurPerMwh) : loading ? "Laen…" : "Hind puudub."}
+                </p>
+                {error ? <p className="mt-3 text-sm text-destructive">{error}</p> : null}
+                <div className="mt-5 flex flex-wrap items-center gap-2">
+                  <LinkButton href="/leping" variant="outline" size="sm">
+                    Kontrolli lepingut
+                  </LinkButton>
+                  <LinkButton href="/tarbimine" variant="outline" size="sm">
+                    Vaata tarbimist
+                  </LinkButton>
+                </div>
+              </div>
+            </div>
+
+            <div className="md:col-span-7">
+              <div className="rounded-2xl border border-border/50 bg-card/25 p-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-medium tracking-wide text-foreground/60">Järgmised 12 tundi (15 min)</p>
+                    <p className="mt-2 text-sm text-foreground/65">Kiire vaade — hea ajastuse tunnetamiseks.</p>
+                  </div>
+                  <Badge variant="neutral">preview</Badge>
+                </div>
+
+                <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                  {computed.nextQuarters.map((q) => (
+                    <div
+                      key={q.ts}
+                      className={cn(
+                        "flex items-center justify-between gap-3 rounded-xl border border-border/40 bg-background/30 px-3 py-2",
+                        "text-sm"
+                      )}
+                    >
+                      <span className="font-mono text-xs text-foreground/65">
+                        {new Date(q.ts).toLocaleTimeString("et-EE", { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                      <span className="font-mono font-semibold text-foreground/85">{fmtCentsPerKwh(q.eurPerMwh)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Panel>
     </div>
   );
 }

@@ -8,7 +8,7 @@ export function Section({
   className,
   ...props
 }: HTMLAttributes<HTMLElement>) {
-  return <section className={cn("ep-section", className)} {...props} />;
+  return <section className={cn("ep-section ep-narrative-gap", className)} {...props} />;
 }
 
 export function SectionHeading({
@@ -25,15 +25,13 @@ export function SectionHeading({
   return (
     <div className={cn("max-w-3xl", className)}>
       {eyebrow ? (
-        <p className="text-xs font-medium tracking-wide text-foreground/60">
-          {eyebrow}
-        </p>
+        <p className="ep-eyebrow-caps text-foreground/50">{eyebrow}</p>
       ) : null}
-      <h2 className="mt-3 text-balance text-2xl font-semibold leading-tight tracking-tight md:text-3xl">
+      <h2 className="ep-display mt-4 text-balance text-2xl font-semibold leading-[1.08] tracking-tight text-foreground/95 md:text-3xl md:leading-[1.06]">
         {title}
       </h2>
       {description ? (
-        <p className="mt-3 text-pretty text-base leading-relaxed text-foreground/70 md:text-lg">
+        <p className="mt-4 text-pretty text-base leading-relaxed text-foreground/72 md:text-lg md:leading-relaxed">
           {description}
         </p>
       ) : null}

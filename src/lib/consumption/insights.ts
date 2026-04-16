@@ -48,8 +48,12 @@ export type PlainRecommendation = {
 export type ConsumptionInsights = {
   pattern: ConsumptionPatternPoint[];
   drivers: CostDriver[];
+  /** Lühike selgitus, kuidas draiverid seostuvad kogukuluga */
+  driversExplainerEt: string;
   anomalies: AnomalyFlag[];
   opportunities: SavingsOpportunity[];
+  /** Ühiselt kõigile säästuhinnangutele */
+  opportunitiesDisclaimerEt: string;
   recommendations: PlainRecommendation;
   kpis: {
     baseLoadShare: number; // 0..1
@@ -84,6 +88,60 @@ const DEVICE_KWH_MONTH: Record<MajorDeviceKey, number> = {
   machinery: 380,
 };
 
+const DEVICE_LABEL_SHORT: Record<MajorDeviceKey, string> = {
+  ev: "Elektriauto",
+  boiler: "Boiler",
+  heat_pump: "Soojuspump",
+  cooling: "Jahutus",
+  commercial_refrigeration: "Külmutus (äri)",
+  machinery: "Masinad",
+};
+
+/**
+ * Jaotab kuu kWh baasi ja “ülejäägi” vahel, seejärel ülejäägi aktiivsete seadmete mallide järgi.
+ * Kui mallide summa ületab ülejäägi, skaleeritakse — draiverite kWh summa = alati monthlyKwh.
+ */
+function partitionMonthlyKwh(
+  monthlyKwh: number,
+  baseLoadW: number,
+  devices: Record<MajorDeviceKey, boolean>
+): {
+  baseKwh: number;
+  deviceKwh: Partial<Record<MajorDeviceKey, number>>;
+  otherKwh: number;
+  devicesScaled: boolean;
+} {
+  const rawBase = (baseLoadW / 1000) * 24 * 30;
+  const baseKwh = Math.min(Math.max(0, rawBase), Math.max(0, monthlyKwh));
+  const pool = Math.max(0, monthlyKwh - baseKwh);
+
+  const active = (Object.keys(devices) as MajorDeviceKey[]).filter((k) => devices[k]);
+  const templateSum = active.reduce((s, k) => s + DEVICE_KWH_MONTH[k], 0);
+
+  const deviceKwh: Partial<Record<MajorDeviceKey, number>> = {};
+  let devicesScaled = false;
+
+  if (pool <= 0 || active.length === 0) {
+    return { baseKwh, deviceKwh, otherKwh: pool, devicesScaled: false };
+  }
+
+  if (templateSum <= pool) {
+    for (const k of active) {
+      deviceKwh[k] = DEVICE_KWH_MONTH[k];
+    }
+    const used = templateSum;
+    return { baseKwh, deviceKwh, otherKwh: round2(pool - used), devicesScaled: false };
+  }
+
+  const scale = pool / templateSum;
+  devicesScaled = true;
+  for (const k of active) {
+    deviceKwh[k] = round2(DEVICE_KWH_MONTH[k] * scale);
+  }
+  const used = active.reduce((s, k) => s + (deviceKwh[k] ?? 0), 0);
+  return { baseKwh, deviceKwh, otherKwh: round2(Math.max(0, pool - used)), devicesScaled };
+}
+
 export function buildConsumptionInsights(raw: ConsumptionProfileInputs): ConsumptionInsights {
   const monthlyKwh = Math.max(0, raw.monthlyKwh);
   const avgAllIn = Math.max(0.01, raw.avgAllInEurPerKwh);
@@ -92,18 +150,14 @@ export function buildConsumptionInsights(raw: ConsumptionProfileInputs): Consump
   const weekendShare = clamp(raw.weekendShare, 0.15, 0.6);
   const baseLoadW = Math.max(0, raw.baseLoadW);
 
-  const baseKwh = (baseLoadW / 1000) * 24 * 30;
-  const deviceKwh = (Object.keys(raw.devices) as MajorDeviceKey[])
-    .filter((k) => raw.devices[k])
-    .reduce((acc, k) => acc + DEVICE_KWH_MONTH[k], 0);
+  const { baseKwh, deviceKwh, otherKwh, devicesScaled } = partitionMonthlyKwh(monthlyKwh, baseLoadW, raw.devices);
 
-  const remainderKwh = Math.max(0, monthlyKwh - baseKwh - deviceKwh);
+  const discretionaryKwh = Math.max(0, monthlyKwh - baseKwh);
 
-  // Build a simple 24h pattern.
-  // We split into day/night buckets and add two gentle peaks (morning/evening).
   const hours = Array.from({ length: 24 }, (_, i) => i);
   const dayHours = new Set<number>([7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]);
-  const basePerHour = baseKwh / 30 / 24;
+
+  const basePerHour = monthlyKwh > 0 ? baseKwh / 30 / 24 : 0;
 
   const peakShape = (h: number) => {
     const morning = Math.exp(-Math.pow((h - 8) / 2.4, 2));
@@ -115,7 +169,6 @@ export function buildConsumptionInsights(raw: ConsumptionProfileInputs): Consump
     const inDay = dayHours.has(h);
     const bucketBias = inDay ? dayShare : 1 - dayShare;
     const shape = 0.6 + peakShape(h);
-    // Devices: EV tends to night, boiler mixed, cooling day, refrigeration/base constant, machinery weekday day.
     const evBias = raw.devices.ev ? (inDay ? 0.85 : 1.25) : 1;
     const coolingBias = raw.devices.cooling ? (inDay ? 1.18 : 0.92) : 1;
     const heatPumpBias = raw.devices.heat_pump ? (inDay ? 1.04 : 0.98) : 1;
@@ -127,14 +180,13 @@ export function buildConsumptionInsights(raw: ConsumptionProfileInputs): Consump
   });
 
   const wSum = weights.reduce((a, b) => a + b, 0) || 1;
-  const remainderPerDay = remainderKwh / 30;
+  const discretionaryPerDay = discretionaryKwh / 30;
 
   const pattern: ConsumptionPatternPoint[] = hours.map((h, idx) => {
-    const remainderHour = (weights[idx] / wSum) * remainderPerDay;
-    return { hour: `${String(h).padStart(2, "0")}:00`, kwh: round2(basePerHour + remainderHour) };
+    const discHour = (weights[idx]! / wSum) * discretionaryPerDay;
+    return { hour: `${String(h).padStart(2, "0")}:00`, kwh: round2(basePerHour + discHour) };
   });
 
-  // Peak dependency score (0..100): driven by dayShare + explicit slider + devices that bias into peak.
   const devicePeakBias =
     (raw.devices.cooling ? 0.12 : 0) +
     (raw.devices.machinery ? 0.18 : 0) +
@@ -146,46 +198,60 @@ export function buildConsumptionInsights(raw: ConsumptionProfileInputs): Consump
   );
 
   const baseLoadShare = monthlyKwh > 0 ? clamp(baseKwh / monthlyKwh, 0, 1) : 0;
-  const estMonthlyCostEur = monthlyKwh * avgAllIn;
+  const estMonthlyCostEur = round2(monthlyKwh * avgAllIn);
 
-  const drivers: CostDriver[] = [
-    {
+  const drivers: CostDriver[] = [];
+  if (baseKwh > 0.05) {
+    drivers.push({
       key: "base",
-      label: "Baas-koormus",
+      label: "Baas-koormus (24/7)",
       kwhMonthly: round1(baseKwh),
       eurMonthly: round2(baseKwh * avgAllIn),
-      note: "Pidev tarbimine 24/7 (külmikud, serverid, valmidusrežiimid).",
-    },
-    ...(Object.keys(raw.devices) as MajorDeviceKey[])
-      .filter((k) => raw.devices[k])
-      .map((k) => ({
+      note: "Pidev võimsus (W × aeg). Ülejäänud kuu maht jaotub tunniplaani ja seadmete eelduste järgi.",
+    });
+  }
+
+  for (const k of Object.keys(deviceKwh) as MajorDeviceKey[]) {
+    const kwh = deviceKwh[k];
+    if (kwh !== undefined && kwh > 0.05) {
+      drivers.push({
         key: k,
-        label:
-          k === "ev"
-            ? "Elektriauto"
-            : k === "boiler"
-              ? "Boiler"
-              : k === "heat_pump"
-                ? "Soojuspump"
-                : k === "cooling"
-                  ? "Jahutus"
-                  : k === "commercial_refrigeration"
-                    ? "Külmutus (äri)"
-                    : "Masinad",
-        kwhMonthly: DEVICE_KWH_MONTH[k],
-        eurMonthly: round2(DEVICE_KWH_MONTH[k] * avgAllIn),
-        note: "Hinnanguline panus mudelis.",
-      })),
-    {
+        label: DEVICE_LABEL_SHORT[k],
+        kwhMonthly: round1(kwh),
+        eurMonthly: round2(kwh * avgAllIn),
+        note: devicesScaled
+          ? "Osa kuu ülejäägist (mallid ületasid vaba mahtu — skaleeritud)."
+          : "Osa kuu ülejäägist vastavalt tüüpilisele mallile.",
+      });
+    }
+  }
+
+  if (otherKwh > 0.05) {
+    drivers.push({
       key: "rest",
-      label: "Muu tarbimine",
-      kwhMonthly: round1(remainderKwh),
-      eurMonthly: round2(remainderKwh * avgAllIn),
-      note: "Valgustus, köök, elektroonika, väiksemad tarbijad.",
-    },
-  ]
-    .filter((d) => d.kwhMonthly > 0.1)
-    .sort((a, b) => b.kwhMonthly - a.kwhMonthly);
+      label: "Muu / jaotamata",
+      kwhMonthly: round1(otherKwh),
+      eurMonthly: round2(otherKwh * avgAllIn),
+      note: "Kõik, mis ei mahtunud baasi ega valitud seadmete mallidesse.",
+    });
+  }
+
+  drivers.sort((a, b) => b.kwhMonthly - a.kwhMonthly);
+
+  const sumKwh = drivers.reduce((s, d) => s + d.kwhMonthly, 0);
+  const sumEur = drivers.reduce((s, d) => s + d.eurMonthly, 0);
+  const kwhOk = monthlyKwh <= 0 || Math.abs(sumKwh - monthlyKwh) < 0.15;
+  const eurOk = monthlyKwh <= 0 || Math.abs(sumEur - estMonthlyCostEur) < 0.05;
+
+  let driversExplainerEt =
+    "Draiverid jaotavad sinu sisestatud kuu kWh baasi, valitud seadmete tüüpiliste osakaalude ja ülejäägi vahel. Need on sama kogutarbimise eri read — eurod on kWh × keskmine hind (ei ole eraldi lisakulusid).";
+  if (devicesScaled) {
+    driversExplainerEt +=
+      " Kuna seadmete mallid kokku ületasid vaba kuumahtu, on seadmete read proportsionaalselt vähendatud, et kWh summa ei ületaks kuu tarbimist.";
+  }
+  if (!kwhOk || !eurOk) {
+    driversExplainerEt += " (Ümardus: väike lahknevus on lubatud.)";
+  }
 
   const anomalies: AnomalyFlag[] = [];
   if (baseLoadShare >= 0.42) {
@@ -193,7 +259,7 @@ export function buildConsumptionInsights(raw: ConsumptionProfileInputs): Consump
       severity: "high",
       title: "Kahtlaselt kõrge baas-koormus",
       description:
-        "Su suur osa tarbimisest on pidev 24/7 tarbimine. See viitab valmidusrežiimidele, varjatud tarbijatele või seadmete pidevale tööle.",
+        "Suur osa tarbimisest on pidev 24/7 tarbimine. See viitab valmidusrežiimidele, varjatud tarbijatele või seadmete pidevale tööle.",
     });
   } else if (baseLoadShare >= 0.32) {
     anomalies.push({
@@ -216,59 +282,66 @@ export function buildConsumptionInsights(raw: ConsumptionProfileInputs): Consump
       severity: "warn",
       title: "Sõltuvus tipp-tundidest on kõrge",
       description:
-        "Sinu tarbimine koondub kallimatesse tundidesse. Ajastamine võib anda märgatava säästu, eriti börsilepingu puhul.",
+        "Tarbimine koondub mudelis kallimatesse tundidesse. Ajastamine võib anda märgatavat säästu, eriti börsilepingu puhul.",
     });
   }
 
+  /** Üksiku meetme ülempiir (ei ületa ~15% arvest) — vähendab ülepõimumise illusiooni */
+  const oppCap = estMonthlyCostEur * 0.15;
+
   const opportunities: SavingsOpportunity[] = [];
   if (baseLoadShare >= 0.32) {
-    const est = Math.max(4, estMonthlyCostEur * Math.min(0.12, baseLoadShare * 0.18));
+    const raw = estMonthlyCostEur * Math.min(0.1, baseLoadShare * 0.14);
     opportunities.push({
       id: "o_base",
       title: "Vähenda baas-koormust (24/7 tarbimine)",
-      estMonthlyEur: round2(est),
+      estMonthlyEur: round2(clamp(Math.max(4, raw), 0, oppCap)),
       confidence: "keskmine",
-      rationale: "Taimerid, valmidusrežiimid, lekked ja pidevad tarbijad annavad tihti kiire võidu.",
+      rationale: "Taimerid, valmidusrežiimid ja lekked — tüüpiline “üks suund”, mitte garantii kogu summast.",
     });
   }
   if (peakDependencyScore >= 70) {
-    const est = Math.max(3, estMonthlyCostEur * 0.07);
     opportunities.push({
       id: "o_peak",
       title: "Nihuta tarbimist odavamatesse tundidesse",
-      estMonthlyEur: round2(est),
+      estMonthlyEur: round2(clamp(Math.max(3, estMonthlyCostEur * 0.06), 0, oppCap)),
       confidence: "kõrge",
-      rationale: "Boiler/EV/jahutus ajastatuna vähendab tiputundide mõju.",
+      rationale: "Kehtib eriti börsi või dünaamilise hinnaga; ei välista kattuvust teiste ajastusnõuannetega.",
     });
   }
   if (raw.devices.boiler) {
     opportunities.push({
       id: "o_boiler",
       title: "Boileri ajastus + temperatuuristrateegia",
-      estMonthlyEur: round2(Math.max(2.5, estMonthlyCostEur * 0.04)),
+      estMonthlyEur: round2(clamp(Math.max(2.5, estMonthlyCostEur * 0.035), 0, oppCap * 0.9)),
       confidence: "keskmine",
-      rationale: "Tööta öösel/odavamal ajal, hoia soojusvaru ja väldi tippe.",
+      rationale: "Kattub osaliselt üldise tipu-nihkega — ära liida eurod paksuks.",
     });
   }
   if (raw.devices.ev) {
     opportunities.push({
       id: "o_ev",
-      title: "EV laadimise reegel (odavad tunnid)",
-      estMonthlyEur: round2(Math.max(2, estMonthlyCostEur * 0.03)),
+      title: "EV laadimine odavates tundides",
+      estMonthlyEur: round2(clamp(Math.max(2, estMonthlyCostEur * 0.028), 0, oppCap * 0.9)),
       confidence: "kõrge",
-      rationale: "Laadimine on ajastatav ja annab sageli kindla säästu.",
+      rationale: "Sama ajastusloogika mis tipu-nihkel; tegelik kokkuhoid sõltub lepingust.",
     });
   }
 
-  const topOpp = opportunities
-    .sort((a, b) => b.estMonthlyEur - a.estMonthlyEur)
-    .slice(0, 4);
+  const topOpp = opportunities.sort((a, b) => b.estMonthlyEur - a.estMonthlyEur).slice(0, 4);
+
+  const opportunitiesDisclaimerEt =
+    "Iga säästurida on eraldi “kui keskendud peamiselt sellele” hinnang. Neid ei summeerita — tegevused kattuvad (nt tipu-nihk + EV + boiler).";
 
   const bullets: string[] = [];
-  bullets.push(`Sinu hinnanguline kuukulu: ${round2(estMonthlyCostEur)} € (eeldus: ${avgAllIn.toFixed(3)} €/kWh).`);
-  bullets.push(`Baas-koormus: ~${Math.round(baseKwh)} kWh/kuu (${Math.round(baseLoadShare * 100)}% tarbimisest).`);
-  bullets.push(`Tipu-sõltuvus: ${peakDependencyScore}/100 (mida kõrgem, seda rohkem aitab ajastus).`);
-  if (topOpp.length) bullets.push(`Parimad säästu kohad: ${topOpp.map((o) => o.title.toLowerCase()).slice(0, 2).join(" + ")}.`);
+  bullets.push(
+    `Hinnanguline kuukulu: ${round2(estMonthlyCostEur)} € (${monthlyKwh} kWh × ${avgAllIn.toFixed(3)} €/kWh).`
+  );
+  bullets.push(`Baas-koormus: ~${Math.round(baseKwh)} kWh/kuu (${Math.round(baseLoadShare * 100)}% kuust).`);
+  bullets.push(`Tipu-sõltuvus: ${peakDependencyScore}/100 — mida kõrgem, seda rohkem võid võita ajastusest (sõltub hinnast).`);
+  if (topOpp.length) {
+    bullets.push(`Prioriteedid ülevaates: ${topOpp.map((o) => o.title.toLowerCase()).slice(0, 2).join(" · ")}.`);
+  }
 
   const recommendations: PlainRecommendation = {
     title: "Mida teha järgmisena",
@@ -278,15 +351,16 @@ export function buildConsumptionInsights(raw: ConsumptionProfileInputs): Consump
   return {
     pattern,
     drivers,
+    driversExplainerEt,
     anomalies,
     opportunities: topOpp,
+    opportunitiesDisclaimerEt,
     recommendations,
     kpis: {
       baseLoadShare,
       estMonthlyBaseKwh: round2(baseKwh),
-      estMonthlyCostEur: round2(estMonthlyCostEur),
+      estMonthlyCostEur,
       peakDependencyScore,
     },
   };
 }
-

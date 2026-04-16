@@ -1,4 +1,5 @@
 import type { AnalysisInputs } from "@/lib/contracts/model";
+import { analyzeContracts } from "@/lib/contracts/model";
 import { buildContractIntelligence } from "@/lib/domain/contracts/intelligence";
 import { buildConsumptionIntelligence } from "@/lib/domain/consumption/intelligence";
 import { evaluateInvestmentScenario } from "@/lib/domain/investments/intelligence";
@@ -76,7 +77,8 @@ export function runDecisionEngine(input: DecisionEngineInput): DecisionEngineOut
     input.objectType
   );
 
-  const contract = buildContractIntelligence(input.contractAnalysisInputs, {
+  const contractAnalysis = analyzeContracts(input.contractAnalysisInputs);
+  const contract = buildContractIntelligence(contractAnalysis, {
     peakDependency0to100: consumption.profile.kpis.peakDependencyScore,
     flexibility0to100: consumption.flexibilityScore.score0to100,
     marketVolatility01: input.marketVolatility01,

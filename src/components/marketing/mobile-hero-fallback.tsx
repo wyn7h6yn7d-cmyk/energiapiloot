@@ -14,15 +14,15 @@ export function MobileHeroFallback({ label }: { label?: string }) {
       <div className="relative">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <Badge variant="cyan" className="border-[oklch(0.83_0.14_205_/_35%)] shadow-[0_0_18px_-6px_oklch(0.83_0.14_205_/_0.4)]">
-            Mobiilne plasma
+            Intelligence Core
           </Badge>
           {label ? <Badge variant="warm">{label}</Badge> : null}
         </div>
 
         <div className="mt-6">
-          <p className="ep-display text-base font-semibold tracking-tight">Kerge. Selge. Tähendusrikas.</p>
+          <p className="ep-display text-base font-semibold tracking-tight">Energia fookuses. Tekst juhib.</p>
           <p className="mt-2 text-sm leading-relaxed text-foreground/65">
-            Vähem visuaalset koormust, sama narratiiv. Loetavus ja rütm on hoitud ka väiksematel ekraanidel.
+            3D stseen on siin kergem: säilib sügav kontrast ja elektriline signaal, ilma et see võtaks ekraani üle.
           </p>
         </div>
 

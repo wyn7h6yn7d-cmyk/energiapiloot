@@ -30,6 +30,14 @@ function fmtEur(n: number) {
   return `${n.toFixed(2)} €`;
 }
 
+function sumDriverEur(drivers: ConsumptionInsights["drivers"]) {
+  return drivers.reduce((s, d) => s + d.eurMonthly, 0);
+}
+
+function sumDriverKwh(drivers: ConsumptionInsights["drivers"]) {
+  return drivers.reduce((s, d) => s + d.kwhMonthly, 0);
+}
+
 function severityBadge(sev: "info" | "warn" | "high") {
   if (sev === "high") return { label: "Kõrge", variant: "warm" as const };
   if (sev === "warn") return { label: "Hoiatus", variant: "neutral" as const };
@@ -313,17 +321,19 @@ function ConsumptionDeepPanels({
           </div>
 
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl border border-border/50 bg-card/25 p-4">
-              <p className="text-xs text-foreground/55">Kuukulu (hinnang)</p>
-              <p className="mt-2 font-mono text-xl font-semibold">{fmtEur(insights.kpis.estMonthlyCostEur)}</p>
+            <div className="rounded-2xl border border-[oklch(0.82_0.12_145/22%)] bg-[oklch(0.82_0.08_145/6%)] p-4">
+              <p className="text-xs font-medium tracking-wide text-foreground/60">Kuu elektrikulu (hinnang)</p>
+              <p className="mt-2 font-mono text-xl font-semibold tabular-nums">{fmtEur(insights.kpis.estMonthlyCostEur)}</p>
               <p className="mt-1 text-xs text-foreground/55">
-                {monthlyKwh} kWh • {avgAllIn.toFixed(3)} €/kWh
+                {monthlyKwh} kWh × {avgAllIn.toFixed(3)} €/kWh — üks lihtne korrutis, mitte draiverite summa.
               </p>
             </div>
             <div className="rounded-2xl border border-border/50 bg-card/25 p-4">
-              <p className="text-xs text-foreground/55">Baas-koormus</p>
-              <p className="mt-2 font-mono text-xl font-semibold">~{Math.round(insights.kpis.estMonthlyBaseKwh)} kWh</p>
-              <p className="mt-1 text-xs text-foreground/55">{Math.round(insights.kpis.baseLoadShare * 100)}% kogu tarbimisest</p>
+              <p className="text-xs text-foreground/55">Baas-koormus (kWh/kuu)</p>
+              <p className="mt-2 font-mono text-xl font-semibold tabular-nums">~{Math.round(insights.kpis.estMonthlyBaseKwh)} kWh</p>
+              <p className="mt-1 text-xs text-foreground/55">
+                {Math.round(insights.kpis.baseLoadShare * 100)}% kuust • (W ÷ 1000) × 24 h × 30 päeva; ei ületa sisestatud kuu kWh
+              </p>
             </div>
             <div className="rounded-2xl border border-border/50 bg-card/25 p-4">
               <p className="text-xs text-foreground/55">Päev vs öö</p>
@@ -341,16 +351,26 @@ function ConsumptionDeepPanels({
           <PanelHeader>
             <div>
               <PanelTitle>Kulu draiverid</PanelTitle>
-              <PanelDescription>Kust kulud tõenäoliselt tulevad.</PanelDescription>
+              <PanelDescription>
+                Üks ja sama kuu kWh jagatud loetavateks ridadeks — eurod tulevad alati kWh × keskmine hind.
+              </PanelDescription>
             </div>
           </PanelHeader>
           <div className="px-6 pb-6">
+            <div className="mb-4 rounded-2xl border border-border/45 bg-card/20 p-4">
+              <p className="text-xs leading-relaxed text-foreground/70">{insights.driversExplainerEt}</p>
+            </div>
             <div className="space-y-3">
               {insights.drivers.slice(0, 6).map((d) => (
                 <div key={d.key} className="rounded-2xl border border-border/50 bg-card/25 p-4">
                   <div className="flex items-center justify-between gap-4">
                     <p className="text-sm font-semibold tracking-tight">{d.label}</p>
-                    <Badge variant="neutral">{fmtEur(d.eurMonthly)}</Badge>
+                    <div className="shrink-0 text-right">
+                      <Badge variant="neutral" className="font-mono tabular-nums">
+≈ {fmtEur(d.eurMonthly)}
+                      </Badge>
+                      <p className="mt-1 text-[10px] uppercase tracking-wide text-foreground/45">jaotus</p>
+                    </div>
                   </div>
                   <p className="mt-2 text-xs text-foreground/55">
                     ~{Math.round(d.kwhMonthly)} kWh/kuu • {d.note}
@@ -358,9 +378,20 @@ function ConsumptionDeepPanels({
                 </div>
               ))}
             </div>
+            <div className="mt-4 rounded-2xl border border-border/40 bg-background/40 p-4">
+              <p className="text-xs font-medium tracking-wide text-foreground/55">Kontroll (läbipaistvus)</p>
+              <p className="mt-2 font-mono text-sm tabular-nums text-foreground/80">
+                Draiverite summa: {fmtEur(sumDriverEur(insights.drivers))} · ~{Math.round(sumDriverKwh(insights.drivers))}{" "}
+                kWh
+              </p>
+              <p className="mt-1 text-xs text-foreground/60">
+                Peaks klappima kuu koguga ({fmtEur(insights.kpis.estMonthlyCostEur)} · {monthlyKwh} kWh). Väike erinevus võib
+                tulla ümardusest.
+              </p>
+            </div>
             <div className="mt-4 rounded-2xl border border-border/40 bg-card/20 p-4">
               <p className="text-sm text-foreground/70">
-                Need on hinnangud. Kui ühendad päris mõõteandmed, muutuvad draiverid automaatselt täpsemaks.
+                Mallid seadmetele on suunised, mitte mõõteväärtused. Päris andmetega muutuvad read täpsemaks.
               </p>
             </div>
           </div>
@@ -399,7 +430,10 @@ function ConsumptionDeepPanels({
             </div>
 
             <div className="mt-4">
-              <p className="text-xs font-medium tracking-wide text-foreground/60">Säästu võimalused (top)</p>
+              <p className="text-xs font-medium tracking-wide text-foreground/60">Võimalik mõju (eraldi stsenaariumid)</p>
+              <p className="mt-1 text-[11px] text-foreground/50">
+                Iga rida on “kui teeksid peamiselt seda” — mitte arvelt välja lõigatud sent.
+              </p>
               <div className="mt-3 space-y-2">
                 {insights.opportunities.map((o) => (
                   <div
@@ -413,11 +447,16 @@ function ConsumptionDeepPanels({
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="font-mono text-lg font-semibold text-[oklch(0.92_0.06_145)]">{fmtEur(o.estMonthlyEur)}</p>
-                      <p className="text-[11px] text-foreground/55">€/kuu</p>
+                      <p className="font-mono text-lg font-semibold tabular-nums text-[oklch(0.92_0.06_145)]">
+                        ~{fmtEur(o.estMonthlyEur)}
+                      </p>
+                      <p className="text-[11px] text-foreground/55">hinnang €/kuu</p>
                     </div>
                   </div>
                 ))}
+              </div>
+              <div className="mt-3 rounded-2xl border border-amber-500/15 bg-amber-500/5 p-3">
+                <p className="text-xs leading-relaxed text-foreground/70">{insights.opportunitiesDisclaimerEt}</p>
               </div>
             </div>
           </div>

@@ -14,9 +14,9 @@ type ProductSiteNavProps = {
  */
 export function ProductSiteNav({ className }: ProductSiteNavProps) {
   return (
-    <header className={cn("sticky top-0 z-30 border-b border-[oklch(1_0_0_/_6%)]", className)}>
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-[oklch(0.06_0.02_255_/_96%)] via-[oklch(0.07_0.02_255_/_78%)] to-transparent backdrop-blur-xl supports-[backdrop-filter]:backdrop-blur-xl" />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[oklch(0.83_0.14_205_/_0.5)] to-transparent opacity-80 shadow-[0_0_20px_oklch(0.83_0.14_205_/_0.2)]" />
+    <header className={cn("sticky top-0 z-30 border-b border-[oklch(1_0_0_/_8%)]", className)}>
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-[oklch(0.055_0.02_255_/_97%)] via-[oklch(0.065_0.02_255_/_82%)] to-[oklch(0.055_0.02_255_/_12%)] backdrop-blur-xl supports-[backdrop-filter]:backdrop-blur-xl" />
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-[oklch(0.83_0.14_205_/_0.55)] to-transparent opacity-90 shadow-[0_0_28px_oklch(0.83_0.14_205_/_0.28)]" />
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-6 py-4">
         <div className="pointer-events-auto flex min-w-0 items-center gap-3">
           <Link href="/" className="group inline-flex min-w-0 items-center gap-3">

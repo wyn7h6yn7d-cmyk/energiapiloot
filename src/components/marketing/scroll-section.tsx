@@ -63,7 +63,7 @@ export function ScrollSection({
       className={cn(
         "ep-story-section",
         layerClass,
-        "relative flex min-h-[min(100svh,920px)] scroll-mt-24 items-center py-20 md:min-h-[100svh] md:scroll-mt-28 md:py-28",
+        "relative flex min-h-[min(100svh,940px)] scroll-mt-24 items-center py-24 md:min-h-[100svh] md:scroll-mt-28 md:py-32",
         className
       )}
     >
@@ -115,10 +115,10 @@ export function ScrollSection({
                 <p className="ep-eyebrow-caps text-foreground/50">{eyebrow}</p>
               </div>
 
-              <h2 className="ep-display mt-5 text-balance text-3xl font-semibold leading-[1.06] tracking-tight md:text-[2.75rem] md:leading-[1.05]">
+              <h2 className="ep-display mt-5 text-balance text-3xl font-semibold leading-[1.05] tracking-tight md:text-[2.85rem] md:leading-[1.04]">
                 {title}
               </h2>
-              <p className="mt-6 text-pretty text-base leading-[1.65] text-foreground/72 md:text-lg md:leading-relaxed">
+              <p className="mt-6 text-pretty text-base leading-[1.68] text-foreground/74 md:text-lg md:leading-[1.72]">
                 {body}
               </p>
 

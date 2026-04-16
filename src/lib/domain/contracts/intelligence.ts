@@ -1,5 +1,4 @@
-import type { AnalysisInputs, ContractAnalysis, ContractType } from "@/lib/contracts/model";
-import { analyzeContracts } from "@/lib/contracts/model";
+import type { ContractAnalysis, ContractType } from "@/lib/contracts/model";
 import { bandFromScore, type ScoredSignal } from "@/lib/domain/scoring/types";
 import { clamp, round2 } from "@/lib/domain/utils/math";
 
@@ -77,7 +76,7 @@ function contractFitScore(
 }
 
 export function buildContractIntelligence(
-  inputs: AnalysisInputs,
+  analysis: ContractAnalysis,
   context: {
     peakDependency0to100: number;
     flexibility0to100: number;
@@ -85,15 +84,13 @@ export function buildContractIntelligence(
     userType: "household" | "business";
   }
 ): ContractIntelligence {
-  const analysis = analyzeContracts(inputs);
   const current = analysis.current;
-  const alts = analysis.scenarios.filter((s) => s.label !== "Praegune");
-  const bestAlt = alts.reduce(
-    (a, b) => (a.estMonthlyCostEur <= b.estMonthlyCostEur ? a : b),
-    alts[0] ?? current
-  );
-  const savings = Math.max(0, round2(current.estMonthlyCostEur - bestAlt.estMonthlyCostEur));
-  const marginal = savings < 4;
+  const rec = analysis.recommendation;
+
+  /** Sama number mis kokkuvõtte „soovitus vs praegune“ (ei ületa nulli — “võit” mõttes). */
+  const savingsVsRecommendation = round2(Math.max(0, rec.deltaVsCurrentEur));
+  const marginal =
+    rec.maxSavingsVsCurrentEur < 4 && Math.abs(rec.deltaVsCurrentEur) < 4;
 
   const volatilityExposure = volatilityExposureFromCurrent(
     current.type,
@@ -102,7 +99,7 @@ export function buildContractIntelligence(
   );
   const fit = contractFitScore(
     current.type,
-    analysis.recommendation.bestFit,
+    rec.bestFit,
     context.peakDependency0to100,
     context.flexibility0to100
   );
@@ -111,12 +108,23 @@ export function buildContractIntelligence(
   if (marginal) {
     summaryEt =
       "Lepingu tüüpide vahel ei ole selle mudeli järgi suurt kuu kulu vahet — otsustajaks jäävad risk, mugavus ja pakkumise detailid, mitte üks number.";
-  } else if (current.type !== analysis.recommendation.bestFit) {
-    summaryEt = `Võrdluses paistab, et ${analysis.recommendation.bestFit === "spot" ? "börsi" : analysis.recommendation.bestFit === "fixed" ? "fikseeritud" : "hübriid"} variant võiks olla ~${savings.toFixed(1)} €/kuu soodsam — see on hinnang, mitte pakkumine.`;
+  } else if (rec.deltaVsCurrentEur > 0.5) {
+    const labelEt =
+      rec.bestFit === "spot" ? "börsi" : rec.bestFit === "fixed" ? "fikseeritud" : "hübriid";
+    summaryEt = `Soovitus (${labelEt}) annab mudeli järgi umbes ${rec.deltaVsCurrentEur.toFixed(2)} € / kuu madalama hinnanguliku kulu kui sinu praegune sisestus.`;
+    if (rec.riskWeightedChoice && rec.cheapestScenario.type !== rec.bestFit && rec.maxSavingsVsCurrentEur > rec.deltaVsCurrentEur + 0.5) {
+      summaryEt += ` Odavaim alternatiiv mudelis on „${rec.cheapestScenario.label}“ (kuni ~${rec.maxSavingsVsCurrentEur.toFixed(2)} € / kuu), kuid suure tipp-osakaalu korral eelistab mudel madalamat riski.`;
+    }
+  } else if (rec.deltaVsCurrentEur < -0.5) {
+    summaryEt = `Soovituslik lepingutüüp on mudeli järgi umbes ${Math.abs(rec.deltaVsCurrentEur).toFixed(2)} € / kuu kallim kui praegune sisestus — see võib olla mõistlik, kui eesmärk on vähendada hinnakõikumise riski.`;
+  } else if (current.type !== rec.bestFit) {
+    summaryEt = `Praegune ja soovitus erinevad, kuid kuukulu jääb mudeli järgi lähedale — vaata riski ja pakkumise detaile.`;
   } else {
     summaryEt =
       "Praegune tüüp on mudeli järgi päris hea sobivus; vaata ikkagi, kas hinnariski tase sobib sinu eelarvega.";
   }
+
+  summaryEt += " Numbrivahed on hinnangulised (lihtsustatud energiahinna kordajad).";
 
   if (context.userType === "business") {
     summaryEt += " Äri puhul tasub lisaks võrrelda võrgutasusid ja võimsustippe.";
@@ -133,7 +141,7 @@ export function buildContractIntelligence(
     analysis,
     volatilityExposure,
     contractFitScore: fit,
-    savingsOpportunityEurPerMonth: savings,
+    savingsOpportunityEurPerMonth: savingsVsRecommendation,
     isMarginalDifference: marginal,
     summaryEt,
     chartRows,

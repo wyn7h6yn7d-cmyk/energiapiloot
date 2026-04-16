@@ -50,8 +50,8 @@ function NavLink({ href, label }: { href: string; label: string }) {
       className={cn(
         "group flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-sm transition outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--ep-focus)] focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         active
-          ? "border-border/70 bg-card/55 shadow-[var(--shadow-elev-1)]"
-          : "border-border/40 bg-card/20 hover:border-border/70 hover:bg-card/35"
+          ? "border-[oklch(0.83_0.14_205_/_22%)] bg-card/60 shadow-[var(--shadow-elev-1),0_0_48px_-20px_oklch(0.83_0.14_205_/_14%)]"
+          : "border-border/40 bg-card/20 hover:border-border/70 hover:bg-card/38"
       )}
     >
       <span className="font-medium tracking-tight">{label}</span>
@@ -88,7 +88,7 @@ export function DashboardShell({
       <div aria-hidden className="pointer-events-none fixed inset-0 ep-grid-overlay opacity-[0.16]" />
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-0 bg-[radial-gradient(1200px_600px_at_20%_-10%,rgba(38,230,255,0.10),transparent_55%),radial-gradient(900px_500px_at_80%_0%,rgba(46,242,181,0.08),transparent_52%)]"
+        className="pointer-events-none fixed inset-0 bg-[radial-gradient(1200px_620px_at_18%_-8%,oklch(0.83_0.14_205_/_11%),transparent_56%),radial-gradient(960px_520px_at_82%_4%,oklch(0.82_0.16_145_/_9%),transparent_54%),radial-gradient(900px_480px_at_50%_108%,oklch(0.07_0.02_255_/_55%),transparent_58%)]"
       />
 
       {/* Mobile overlay */}
@@ -194,7 +194,7 @@ export function DashboardShell({
           </div>
         </header>
 
-        <main className="mx-auto max-w-6xl px-5 py-8 md:py-10">
+        <main className="mx-auto max-w-6xl px-5 py-10 md:py-12">
           <PageTransition>{children}</PageTransition>
         </main>
       </div>

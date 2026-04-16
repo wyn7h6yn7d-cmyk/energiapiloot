@@ -133,24 +133,22 @@ export function ContractsAnalysisModule({
 
   const contractIntel = useMemo(
     () =>
-      buildContractIntelligence(inputs, {
+      buildContractIntelligence(analysis, {
         peakDependency0to100: consIntel.profile.kpis.peakDependencyScore,
         flexibility0to100: consIntel.flexibilityScore.score0to100,
         marketVolatility01: Math.min(1, Math.max(0, spotVol)),
         userType,
       }),
-    [consIntel, inputs, spotVol, userType]
+    [analysis, consIntel.flexibilityScore.score0to100, consIntel.profile.kpis.peakDependencyScore, spotVol, userType]
   );
 
-  const chartData = analysis.scenarios
-    .filter((s) => s.label !== "Praegune")
-    .map((s) => ({
-      name: s.label,
-      est: s.estMonthlyCostEur,
-      best: s.bestCaseEur,
-      worst: s.worstCaseEur,
-      risk: s.riskScore,
-    }));
+  const chartData = analysis.scenarios.map((s) => ({
+    name: s.label,
+    est: s.estMonthlyCostEur,
+    best: s.bestCaseEur,
+    worst: s.worstCaseEur,
+    risk: s.riskScore,
+  }));
 
   return (
     <div className="grid gap-6">
@@ -316,7 +314,10 @@ export function ContractsAnalysisModule({
             <PanelHeader>
               <div>
                 <PanelTitle>Kokkuvõte</PanelTitle>
-                <PanelDescription>Selge, lihtne, tegutsemisele suunatud.</PanelDescription>
+                <PanelDescription>
+                  Üks ja sama arvutusreegel: praegune sisestus vs alternatiivid (energia on mudelis korrigeeritud, mitte
+                  päris pakkumine).
+                </PanelDescription>
               </div>
               <Badge variant={currentRisk.variant}>Risk: {currentRisk.label}</Badge>
             </PanelHeader>
@@ -344,7 +345,55 @@ export function ContractsAnalysisModule({
                   <p className="text-xs text-foreground/55">Soovitus</p>
                   <p className="mt-2 text-sm font-semibold">{best.title}</p>
                   <p className="mt-2 text-xs text-foreground/55">{best.summary}</p>
+                  <p className="mt-3 border-t border-border/35 pt-3 font-mono text-xs text-foreground/70">
+                    Praegune − soovitus = {fmtEur(best.deltaVsCurrentEur)} / kuu
+                    <span className="mt-1 block font-sans text-[11px] font-normal text-foreground/50">
+                      Positiivne: soovitus odavam. Negatiivne: soovitus kallim (tihti madalam risk).
+                    </span>
+                  </p>
                 </div>
+              </div>
+
+              <div className="mt-4 rounded-2xl border border-border/45 bg-card/15 p-4">
+                <p className="text-xs font-medium tracking-wide text-foreground/60">Võrdlus ühes tabelis (hinnang €/kuu)</p>
+                <div className="mt-3 overflow-x-auto">
+                  <table className="w-full min-w-[320px] text-left text-xs text-foreground/75">
+                    <thead>
+                      <tr className="border-b border-border/40 text-[10px] uppercase tracking-wider text-foreground/45">
+                        <th className="py-2 pr-3 font-medium">Variant</th>
+                        <th className="py-2 pr-3 font-medium">Kulu</th>
+                        <th className="py-2 pr-3 font-medium">Risk</th>
+                        <th className="py-2 font-medium">Märge</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {analysis.scenarios.map((row) => {
+                        const isCurrent = row.label === "Praegune";
+                        const isRec = !isCurrent && row.label === best.recommendedScenario.label;
+                        const isCheap = !isCurrent && row.label === best.cheapestScenario.label;
+                        let tag = "";
+                        if (isCurrent) tag = "Sisestus";
+                        else if (isRec && isCheap) tag = "Soovitus · odavaim €";
+                        else if (isRec) tag = "Soovitus";
+                        else if (isCheap) tag = "Odavaim €";
+                        return (
+                          <tr key={row.label} className="border-b border-border/25 last:border-0">
+                            <td className="py-2 pr-3 font-medium text-foreground/85">{row.label}</td>
+                            <td className="py-2 pr-3 font-mono">{fmtEur(row.estMonthlyCostEur)}</td>
+                            <td className="py-2 pr-3 font-mono">{row.riskScore}</td>
+                            <td className="py-2 text-foreground/55">{tag}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                {best.riskWeightedChoice && best.cheapestScenario.type !== best.bestFit ? (
+                  <p className="mt-3 text-[11px] leading-relaxed text-foreground/55">
+                    Suure tipp-osakaalu korral valib mudel madalama riskiga alternatiivi ka siis, kui mõni teine variant on
+                    hinnangulikult odavam — vaata veerus „Odavaim €“.
+                  </p>
+                ) : null}
               </div>
 
               <div className="mt-5 rounded-2xl border border-border/40 bg-card/20 p-4">
@@ -411,10 +460,20 @@ export function ContractsAnalysisModule({
                     <p className="text-sm text-foreground/75">{contractIntel.summaryEt}</p>
                     <div className="mt-4 grid gap-3 sm:grid-cols-3">
                       <div className="rounded-2xl border border-border/50 bg-card/25 p-4">
-                        <p className="text-xs text-foreground/55">Hinnanguline võit (parim vs praegune)</p>
+                        <p className="text-xs text-foreground/55">Säästusoov (soovitus vs praegune)</p>
                         <p className="mt-2 font-mono text-lg font-semibold">
-                          {contractIntel.savingsOpportunityEurPerMonth.toFixed(1)} € / kuu
+                          {contractIntel.savingsOpportunityEurPerMonth.toFixed(2)} € / kuu
                         </p>
+                        <p className="mt-2 text-[11px] leading-relaxed text-foreground/50">
+                          Sama Δ mis kokkuvõttes (positiivne ainult kui soovitus on odavam).
+                        </p>
+                        {analysis.recommendation.maxSavingsVsCurrentEur >
+                        contractIntel.savingsOpportunityEurPerMonth + 0.05 ? (
+                          <p className="mt-2 text-xs text-foreground/60">
+                            Odavaim alternatiiv mudelis: kuni ~{analysis.recommendation.maxSavingsVsCurrentEur.toFixed(2)}{" "}
+                            € / kuu — vt võrdlustabelit.
+                          </p>
+                        ) : null}
                         {contractIntel.isMarginalDifference ? (
                           <p className="mt-2 text-xs text-foreground/60">
                             Vahe on väike — ära jäta riski ja mugavust tähele panemata.
@@ -527,10 +586,20 @@ export function ContractsAnalysisModule({
                   <p className="text-sm text-foreground/75">{contractIntel.summaryEt}</p>
                   <div className="mt-4 grid gap-3 sm:grid-cols-3">
                     <div className="rounded-2xl border border-border/50 bg-card/25 p-4">
-                      <p className="text-xs text-foreground/55">Hinnanguline võit (parim vs praegune)</p>
+                      <p className="text-xs text-foreground/55">Säästusoov (soovitus vs praegune)</p>
                       <p className="mt-2 font-mono text-lg font-semibold">
-                        {contractIntel.savingsOpportunityEurPerMonth.toFixed(1)} € / kuu
+                        {contractIntel.savingsOpportunityEurPerMonth.toFixed(2)} € / kuu
                       </p>
+                      <p className="mt-2 text-[11px] leading-relaxed text-foreground/50">
+                        Sama Δ mis kokkuvõttes (positiivne ainult kui soovitus on odavam).
+                      </p>
+                      {analysis.recommendation.maxSavingsVsCurrentEur >
+                      contractIntel.savingsOpportunityEurPerMonth + 0.05 ? (
+                        <p className="mt-2 text-xs text-foreground/60">
+                          Odavaim alternatiiv mudelis: kuni ~{analysis.recommendation.maxSavingsVsCurrentEur.toFixed(2)} € / kuu — vt
+                          võrdlustabelit.
+                        </p>
+                      ) : null}
                       {contractIntel.isMarginalDifference ? (
                         <p className="mt-2 text-xs text-foreground/60">Vahe on väike — ära jäta riski ja mugavust tähele panemata.</p>
                       ) : null}
@@ -555,30 +624,34 @@ export function ContractsAnalysisModule({
                 </PanelHeader>
                 <div className="px-6 pb-6">
                   <div className="h-64 w-full min-w-0 rounded-2xl border border-border/60 bg-background/30 p-4">
-                    <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
-                      <BarChart data={chartData} margin={{ top: 10, right: 10, left: -18, bottom: 0 }}>
-                        <CartesianGrid stroke="oklch(1 0 0 / 6%)" vertical={false} />
-                        <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fill: "oklch(1 0 0 / 55%)", fontSize: 11 }} />
-                        <YAxis tickLine={false} axisLine={false} tick={{ fill: "oklch(1 0 0 / 45%)", fontSize: 11 }} />
-                        <Tooltip
-                          wrapperStyle={{ outline: "none" }}
-                          content={({ active, payload, label }) => {
-                            if (!active || !payload?.length) return null;
-                            const est = payload.find((p) => p.dataKey === "est")?.value as number;
-                            const risk = payload.find((p) => p.dataKey === "risk")?.payload?.risk as number;
-                            return (
-                              <div className="rounded-xl border border-border/60 bg-background/80 px-3 py-2 text-xs text-foreground/85 shadow-[var(--shadow-elev-2)] backdrop-blur-md">
-                                <p className="font-medium">{label}</p>
-                                <p className="mt-1">{fmtEur(est)} / kuu</p>
-                                <p className="mt-1 text-foreground/60">Risk: {risk}/100</p>
-                              </div>
-                            );
-                          }}
-                        />
-                        <Bar dataKey="est" radius={[10, 10, 6, 6]} fill="oklch(0.83 0.14 205 / 45%)" stroke="oklch(0.83 0.14 205 / 70%)" />
-                        <Bar dataKey="risk" hide />
-                      </BarChart>
-                    </ResponsiveContainer>
+                    {mounted ? (
+                      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
+                        <BarChart data={chartData} margin={{ top: 10, right: 10, left: -18, bottom: 0 }}>
+                          <CartesianGrid stroke="oklch(1 0 0 / 6%)" vertical={false} />
+                          <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fill: "oklch(1 0 0 / 55%)", fontSize: 11 }} />
+                          <YAxis tickLine={false} axisLine={false} tick={{ fill: "oklch(1 0 0 / 45%)", fontSize: 11 }} />
+                          <Tooltip
+                            wrapperStyle={{ outline: "none" }}
+                            content={({ active, payload, label }) => {
+                              if (!active || !payload?.length) return null;
+                              const est = payload.find((p) => p.dataKey === "est")?.value as number;
+                              const risk = payload.find((p) => p.dataKey === "risk")?.payload?.risk as number;
+                              return (
+                                <div className="rounded-xl border border-border/60 bg-background/80 px-3 py-2 text-xs text-foreground/85 shadow-[var(--shadow-elev-2)] backdrop-blur-md">
+                                  <p className="font-medium">{label}</p>
+                                  <p className="mt-1">{fmtEur(est)} / kuu</p>
+                                  <p className="mt-1 text-foreground/60">Risk: {risk}/100</p>
+                                </div>
+                              );
+                            }}
+                          />
+                          <Bar dataKey="est" radius={[10, 10, 6, 6]} fill="oklch(0.83 0.14 205 / 45%)" stroke="oklch(0.83 0.14 205 / 70%)" />
+                          <Bar dataKey="risk" hide />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="h-full w-full rounded-xl border border-border/40 bg-card/20" aria-hidden />
+                    )}
                   </div>
 
                   <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -625,8 +698,10 @@ export function ContractsAnalysisModule({
           Tehniline märkus
         </p>
         <p className="mt-2 text-sm text-foreground/70">
-          Arvutused põhinevad sinu sisenditel ja serveripoolsetel turuvihjetel (keskmine ja volatiilsuse
-          eeldus). Otse Nord Pooli reaalajas andmete täielik import sõltub eraldi andmelepingust.
+          Kõik kuu kulud ja „soovitus vs praegune“ tulevad samast ahelast: tarbimismuster (tipp/osakaal), käibemaks,
+          kuutasu ning alternatiivide energiaühik, mida mudel skaleerib fikseeritud / börs / hübriid jaoks. See on
+          hinnanguline võrdlus, mitte pakkumine. Turuvihjed (keskmine, volatiilsus) tulevad serveri kontekstist; reaalajas
+          Nord Pooli täisimport sõltub eraldi andmelepingust.
         </p>
       </div>
     </div>

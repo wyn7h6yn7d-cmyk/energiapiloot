@@ -72,10 +72,7 @@ export default function PricingPage() {
             { t: "Lepingu labor", s: "Võrdle börsi, fikseeritud ja hübriidi sama profiiliga.", href: "/leping" },
             { t: "Tarbimise labor", s: "Muster, kulud ja paindlikkus — kiirelt ja arusaadavalt.", href: "/tarbimine" },
           ].map((x) => (
-            <div
-              key={x.t}
-              className="rounded-2xl border border-[oklch(1_0_0_/_8%)] bg-[oklch(0_0_0_/_0.18)] p-6"
-            >
+            <div key={x.t} className="ep-cinema-card p-6">
               <p className="ep-display text-base font-semibold tracking-tight text-foreground/92">{x.t}</p>
               <p className="mt-2 text-sm leading-relaxed text-foreground/62">{x.s}</p>
               <div className="mt-5">
@@ -98,7 +95,7 @@ export default function PricingPage() {
             </p>
           </div>
           <div className="md:col-span-7">
-            <div className="rounded-2xl border border-border/50 bg-card/25 p-6">
+            <div className="ep-holo-panel p-6 md:p-7">
               <ul className="space-y-3 text-sm text-foreground/72">
                 <Check>Pane paika kuu tarbimine ja vaata kuukulu suunda.</Check>
                 <Check>Muuda lepingu tüüpi ja võrdle riskiskoori ning hinnangut.</Check>
@@ -142,7 +139,7 @@ export default function PricingPage() {
 
 function InfoChip({ t, s }: { t: string; s: string }) {
   return (
-    <div className="rounded-2xl border border-border/50 bg-card/25 p-5">
+    <div className="ep-cinema-card p-5">
       <p className="text-sm font-semibold tracking-tight text-foreground/90">{t}</p>
       <p className="mt-2 text-sm leading-relaxed text-foreground/65">{s}</p>
     </div>

@@ -43,15 +43,27 @@ export type ScenarioResult = {
   riskScore: number; // 0..100
 };
 
+export type ContractRecommendation = {
+  bestFit: ContractType;
+  title: string;
+  summary: string;
+  why: string[];
+  /** Alternative row chosen by the model (risk vs € tradeoff). */
+  recommendedScenario: ScenarioResult;
+  /** Lowest est. monthly cost among alternatives (pure €). */
+  cheapestScenario: ScenarioResult;
+  /** current.estMonthlyCostEur − recommendedScenario.estMonthlyCostEur (+ = soovitus odavam). */
+  deltaVsCurrentEur: number;
+  /** current.estMonthlyCostEur − cheapestScenario.estMonthlyCostEur, floored at 0 (max € upside). */
+  maxSavingsVsCurrentEur: number;
+  /** When true, bestFit follows “lower risk” path (high peak share), not only lowest €. */
+  riskWeightedChoice: boolean;
+};
+
 export type ContractAnalysis = {
   scenarios: ScenarioResult[];
   current: ScenarioResult;
-  recommendation: {
-    bestFit: ContractType;
-    title: string;
-    summary: string;
-    why: string[];
-  };
+  recommendation: ContractRecommendation;
 };
 
 function clamp(n: number, min: number, max: number) {
@@ -177,26 +189,27 @@ function scenarioFromContract({
   };
 }
 
-function recommend(scenarios: ScenarioResult[], inputs: AnalysisInputs) {
-  const current = scenarios.find((s) => s.label === "Praegune") ?? scenarios[0];
-  const byCost = [...scenarios].sort((a, b) => a.estMonthlyCostEur - b.estMonthlyCostEur);
-  const byRisk = [...scenarios].sort((a, b) => a.riskScore - b.riskScore);
+function recommend(alternatives: ScenarioResult[], current: ScenarioResult, inputs: AnalysisInputs): ContractRecommendation {
+  const byCost = [...alternatives].sort((a, b) => a.estMonthlyCostEur - b.estMonthlyCostEur);
+  const byRisk = [...alternatives].sort((a, b) => a.riskScore - b.riskScore);
+  const cheap = byCost[0]!;
+  const safe = byRisk[0]!;
 
-  // MVP: choose best fit by balancing cost and risk based on pattern.
   const riskSensitive = inputs.pattern.peakShare >= 0.42;
-  const cheap = byCost[0];
-  const safe = byRisk[0];
-
+  const riskWeightedChoice = riskSensitive;
   const bestFit = riskSensitive ? safe.type : cheap.type;
-  const bestScenario = scenarios.find((s) => s.type === bestFit) ?? cheap;
+  const recommendedScenario = alternatives.find((s) => s.type === bestFit) ?? cheap;
+  const cheapestScenario = cheap;
 
-  const delta = current.estMonthlyCostEur - bestScenario.estMonthlyCostEur;
+  const deltaVsCurrentEur = round2(current.estMonthlyCostEur - recommendedScenario.estMonthlyCostEur);
+  const maxSavingsVsCurrentEur = round2(Math.max(0, current.estMonthlyCostEur - cheapestScenario.estMonthlyCostEur));
+
   const deltaText =
-    Math.abs(delta) < 0.5
+    Math.abs(deltaVsCurrentEur) < 0.5
       ? "sarnase hinnatasemega"
-      : delta > 0
-        ? `~${round2(delta)} € / kuu soodsam`
-        : `~${round2(-delta)} € / kuu kallim`;
+      : deltaVsCurrentEur > 0
+        ? `umbes ${round2(Math.abs(deltaVsCurrentEur))} € / kuu odavam`
+        : `umbes ${round2(Math.abs(deltaVsCurrentEur))} € / kuu kallim`;
 
   const why: string[] = [];
   if (bestFit === "fixed") {
@@ -210,6 +223,14 @@ function recommend(scenarios: ScenarioResult[], inputs: AnalysisInputs) {
   }
   why.push(`Sinu mustri järgi tipp-tundide osakaal: ${Math.round(inputs.pattern.peakShare * 100)}%.`);
 
+  if (riskWeightedChoice && cheapestScenario.type !== bestFit) {
+    why.push(
+      `Odavaim hinnangulik kuukulu on mudelis „${cheapestScenario.label}“ (umbes ${maxSavingsVsCurrentEur.toFixed(2)} € / kuu vähem kui praegu, kui see peaks paika pidama). Kuna tipp-osakaal on suur, kaalub mudel siiski madalamat riski.`
+    );
+  }
+
+  const approx = "Kõik on lihtsustatud võrdlus: energiahinnad alternatiividel on mudeli koeffitsiendid, mitte pakkumised.";
+
   return {
     bestFit,
     title:
@@ -218,8 +239,13 @@ function recommend(scenarios: ScenarioResult[], inputs: AnalysisInputs) {
         : bestFit === "spot"
           ? "Parim sobivus: börs (optimeerimise potentsiaal)"
           : "Parim sobivus: hübriid (tasakaal)",
-    summary: `Võrdluses on see valik ${deltaText} kui praegune (lihtsustatud mudel).`,
+    summary: `Soovituslik variant („${recommendedScenario.label}“) on ${deltaText} kui sinu praegune sisestus. ${approx}`,
     why,
+    recommendedScenario,
+    cheapestScenario,
+    deltaVsCurrentEur,
+    maxSavingsVsCurrentEur,
+    riskWeightedChoice,
   };
 }
 
@@ -287,7 +313,8 @@ export function analyzeContracts(inputs: AnalysisInputs): ContractAnalysis {
     }),
   ];
 
-  const rec = recommend(scenarios.filter((s) => s.label !== "Praegune"), inputs);
+  const alts = scenarios.filter((s) => s.label !== "Praegune");
+  const rec = recommend(alts, current, inputs);
   return {
     scenarios,
     current,

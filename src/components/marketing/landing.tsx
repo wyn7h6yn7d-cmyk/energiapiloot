@@ -3,22 +3,29 @@
 import { LinkButton } from "@/components/ui/link-button";
 import { MarketingNav } from "@/components/marketing/marketing-nav";
 import { Badge } from "@/components/ui/badge";
-import { useDeviceProfile } from "@/lib/motion/use-scroll-story";
+import { useDeviceProfile, useScrollStory } from "@/lib/motion/use-scroll-story";
 import { MobileHeroFallback } from "@/components/marketing/mobile-hero-fallback";
 import { HeroSceneLazy } from "@/components/marketing/hero-scene-lazy";
 import { CinematicFooter } from "@/components/marketing/cinematic-footer";
 import { cn } from "@/lib/utils";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 export function Landing() {
   const device = useDeviceProfile();
   const mode = device.mode;
+  const heroArcGlowId = useId().replace(/:/g, "");
+  const storyRef = useRef<HTMLDivElement>(null);
+  const { progress: storyProgress } = useScrollStory({
+    container: storyRef,
+    sectionCount: 6,
+    mode,
+  });
 
   return (
-    <div className="relative w-full">
+    <div ref={storyRef} className="relative w-full">
       {!device.preferMobileFallback ? (
         <HeroSceneLazy
-          progress={0}
+          progress={storyProgress}
           mode={mode}
           heroRangeEnd={0.26}
           panels={!device.isMobile}
@@ -38,7 +45,10 @@ export function Landing() {
 
         <main>
           {/* HERO */}
-          <section className="relative overflow-hidden pt-8 md:pt-10" data-section="hero">
+          <section
+            className="relative flex min-h-[min(88svh,880px)] flex-col justify-center overflow-hidden pb-14 pt-8 md:min-h-[min(92svh,960px)] md:pb-20 md:pt-10"
+            data-section="hero"
+          >
             <div
               aria-hidden
               className="pointer-events-none absolute inset-y-0 left-0 z-[5] hidden w-[min(92%,640px)] bg-gradient-to-r from-[oklch(0.06_0.02_255_/_0.94)] via-[oklch(0.07_0.02_255_/_0.55)] to-transparent md:block"
@@ -46,23 +56,48 @@ export function Landing() {
             <div aria-hidden className="ep-hero-field hidden md:block" />
             <div
               aria-hidden
-              className="pointer-events-none absolute right-[8%] top-[18%] hidden h-[min(52vh,420px)] w-[min(42vw,380px)] opacity-[0.35] md:block"
+              className="pointer-events-none absolute right-[6%] top-[14%] hidden h-[min(56vh,460px)] w-[min(44vw,400px)] opacity-[0.42] md:block"
             >
               <svg viewBox="0 0 400 400" fill="none" className="h-full w-full" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <filter id={heroArcGlowId} x="-40%" y="-40%" width="180%" height="180%" colorInterpolationFilters="sRGB">
+                    <feGaussianBlur stdDeviation="2.2" result="blur" />
+                    <feColorMatrix
+                      in="blur"
+                      type="matrix"
+                      values="1 0 0 0 0 0 1 0 0 0  0 0 1 0 0  0 0 0 1.150"
+                      result="glow"
+                    />
+                    <feMerge>
+                      <feMergeNode in="glow" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                </defs>
+                <circle cx="200" cy="200" r="122" stroke="oklch(0.83 0.14 205 / 9%)" strokeWidth="1" />
+                <circle cx="200" cy="200" r="90" stroke="oklch(0.82 0.16 145 / 8%)" strokeWidth="1" />
                 <path
-                  d="M32 228 Q 128 72 200 132 T 368 168"
-                  stroke="oklch(0.83 0.14 205 / 55%)"
-                  strokeWidth="1.5"
+                  d="M28 232 Q 120 64 198 128 Q 276 192 372 162"
+                  stroke="oklch(0.83 0.14 205 / 72%)"
+                  strokeWidth="1.35"
                   strokeLinecap="round"
+                  filter={`url(#${heroArcGlowId})`}
                 />
                 <path
-                  d="M48 268 Q 168 112 268 232 T 348 148"
-                  stroke="oklch(0.82 0.16 145 / 40%)"
-                  strokeWidth="1.2"
+                  d="M44 272 Q 164 108 264 228 Q 314 288 352 142"
+                  stroke="oklch(0.82 0.16 145 / 52%)"
+                  strokeWidth="1.05"
                   strokeLinecap="round"
+                  filter={`url(#${heroArcGlowId})`}
                 />
-                <circle cx="200" cy="200" r="120" stroke="oklch(0.83 0.14 205 / 12%)" strokeWidth="1" />
-                <circle cx="200" cy="200" r="88" stroke="oklch(0.82 0.16 145 / 10%)" strokeWidth="1" />
+                <path
+                  d="M210 48 L 198 118 L 248 124 L 186 198 L 228 202 L 168 288"
+                  stroke="oklch(0.88 0.1 205 / 38%)"
+                  strokeWidth="1.1"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  filter={`url(#${heroArcGlowId})`}
+                />
               </svg>
             </div>
             <div className="ep-container relative z-10">
@@ -83,7 +118,7 @@ export function Landing() {
                       Energiapiloot
                     </p>
                     <h1
-                      className="ep-display mt-4 text-balance text-[2.35rem] font-semibold leading-[1.04] tracking-tight sm:text-5xl md:text-[3.35rem] md:leading-[1.02]"
+                      className="ep-display mt-5 text-balance text-[2.45rem] font-semibold leading-[1.03] tracking-tight sm:text-5xl md:mt-6 md:text-[3.45rem] md:leading-[1.01]"
                       data-reveal
                     >
                       <span className="ep-text-gradient">Energia, mis joonistub selgeks.</span>{" "}
@@ -92,11 +127,14 @@ export function Landing() {
                     <p className="mt-3 max-w-xl text-balance text-lg font-medium leading-snug text-foreground/78 md:text-xl" data-reveal>
                       Elekter, tarbimine ja investeering ühes vaates — nii kodus kui väikses ettevõttes.
                     </p>
-                    <p className="mt-5 max-w-2xl text-pretty text-base leading-relaxed text-foreground/68 md:text-[1.05rem]" data-reveal>
-                      Selge mudel aitab näha, mida “leping”, “tipp” ja “investeering” päriselt tähendavad. Kontot ei küsita.
+                    <p
+                      className="mt-5 max-w-2xl text-pretty text-base leading-relaxed text-foreground/68 md:text-[1.05rem]"
+                      data-reveal
+                    >
+                      Selge mudel, mis seob lepingu, tarbimise ja investeeringu üheks otsuseks — ilma kontota.
                     </p>
 
-                    <div className="pointer-events-auto mt-10 flex flex-col gap-3 sm:flex-row sm:items-center" data-reveal>
+                    <div className="pointer-events-auto mt-9 flex flex-col gap-3 sm:flex-row sm:items-center" data-reveal>
                       <LinkButton
                         href="/simulatsioonid"
                         size="lg"
@@ -115,10 +153,10 @@ export function Landing() {
                       </LinkButton>
                     </div>
 
-                    <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4" data-reveal>
+                    <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4" data-reveal>
                       <Kpi label="Ilma kontota" value="Kohe" hint="Brauseris, ilma hõõrdumiseta." />
-                      <Kpi label="Loogika" value="Jälgitav" hint="Eeldused ja arvutus ühes vaates." />
-                      <Kpi label="Fookus" value="Otsus" hint="Mõju enne allkirja ja ostu." />
+                      <Kpi label="Jälgitav" value="Loogika" hint="Eeldused ja arvutus ühes vaates." />
+                      <Kpi label="Tulemus" value="Otsus" hint="Selge suund, mitte müra." />
                     </div>
                   </div>
                 </div>
@@ -134,9 +172,9 @@ export function Landing() {
                           Vali tööriist ja testi.
                         </p>
                         <p className="mt-3 text-sm leading-relaxed text-foreground/68">
-                          Kolm teed, sama loogika: simulatsioon, leping ja tarbimine. Kihid on testimiseks nähtavad.
+                          Simulatsioon, leping ja tarbimine kasutavad sama mudelit. Kõik kihid on testimiseks avatud.
                         </p>
-                        <div className="mt-6 grid gap-3">
+                        <div className="mt-5 grid gap-3">
                           <LinkButton href="/simulatsioonid" variant="gradient" className="w-full">
                             Simulatsioonid
                           </LinkButton>
@@ -148,9 +186,6 @@ export function Landing() {
                               Tarbimine
                             </LinkButton>
                           </div>
-                          <LinkButton href="/pricing" variant="ghost" className="text-foreground/55 hover:text-foreground/78">
-                            Toote info →
-                          </LinkButton>
                         </div>
                       </div>
                     )}
@@ -160,33 +195,39 @@ export function Landing() {
             </div>
           </section>
 
+          <div className="ep-container py-2">
+            <div className="ep-narrative-divider" aria-hidden />
+          </div>
+
           {/* 2) WHY THIS MATTERS */}
-          <section className="ep-container pb-8 pt-12 md:pb-10 md:pt-16" aria-label="Miks see oluline on">
-            <div className="grid gap-8 md:grid-cols-12 md:items-start">
+          <section className="ep-container pb-12 pt-10 md:pb-16 md:pt-14" aria-label="Miks Energiapiloot olemas on">
+            <div className="grid gap-6 md:grid-cols-12 md:items-start">
               <div className="md:col-span-5">
-                <p className="ep-eyebrow-caps text-foreground/50">Miks see loeb</p>
+                <p className="ep-eyebrow-caps text-foreground/50">Miks</p>
                 <h2 className="ep-display mt-4 text-balance text-2xl font-semibold tracking-tight text-foreground/95 md:text-3xl">
-                  Energiaotsus on tavaliselt udune — kuni arve teeb selle valusaks.
+                  Et energiaotsus oleks põhjendatav, mitte kõhutunne.
                 </h2>
               </div>
               <div className="md:col-span-7">
-                <div className="ep-cinema-card p-6 md:p-7">
-                  <p className="text-sm leading-relaxed text-foreground/72">
-                    Energiapiloot tõmbab lepingu, tarbimise ja investeeringu üheks loogikaks. Sa näed mõju enne kui
-                    kirjutad alla — ja saad otsust hiljem sama keele ja eeldustega uuesti kontrollida.
-                  </p>
-                  <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                    <MiniPoint t="Vähem müra" s="Fookus kõige olulisemale." />
-                    <MiniPoint t="Selged eeldused" s="Tead, mis on “sees”." />
-                    <MiniPoint t="Võrdlus ühes mudelis" s="Õunad õuntega." />
-                  </div>
+                <p className="text-sm leading-relaxed text-foreground/72">
+                  Energiapiloot seob lepingu, tarbimise ja investeeringu üheks loogikaks. Sa näed mõju enne allkirja — ja
+                  saad sama eeldustega otsuse hiljem uuesti kontrollida.
+                </p>
+                <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                  <MiniPoint t="Üks mudel" s="Võrdled õunu õuntega." />
+                  <MiniPoint t="Selged eeldused" s="Tead, mis on “sees”." />
+                  <MiniPoint t="Kiire signaal" s="Mõju muutub kohe." />
                 </div>
               </div>
             </div>
           </section>
 
+          <div className="ep-container py-2">
+            <div className="ep-narrative-divider opacity-80" aria-hidden />
+          </div>
+
           {/* 3) CORE TOOLS PREVIEW */}
-          <section className="ep-container pb-10 pt-4 md:pb-14" aria-label="Põhitööriistad">
+          <section className="ep-container pb-12 pt-10 md:pb-16 md:pt-12" aria-label="Põhitööriistad">
             <div className="flex items-end justify-between gap-6">
               <div>
                 <p className="ep-eyebrow-caps text-foreground/50">Tööriistad</p>
@@ -214,8 +255,12 @@ export function Landing() {
             </div>
           </section>
 
+          <div className="ep-container py-2">
+            <div className="ep-narrative-divider opacity-75" aria-hidden />
+          </div>
+
           {/* 4) LIVE / INTERACTIVE OVERVIEW */}
-          <section className="ep-container pb-10 pt-4 md:pb-14" aria-label="Interaktiivne ülevaade">
+          <section className="ep-container pb-12 pt-10 md:pb-16 md:pt-12" aria-label="Interaktiivne ülevaade">
             <div className="grid gap-8 md:grid-cols-12 md:items-start">
               <div className="md:col-span-5">
                 <p className="ep-eyebrow-caps text-foreground/50">Interaktiivne ülevaade</p>
@@ -223,8 +268,8 @@ export function Landing() {
                   Väike mudel. Päris reaktsioon.
                 </h2>
                 <p className="mt-4 text-sm leading-relaxed text-foreground/68">
-                  Muuda tarbimist või lepingutingimust ja vaata kohe, kuidas suund ja risk nihkuvad. Sama loogika elab
-                  tööriistades tervikuna — siin on see lihtsalt kompaktse preview’na.
+                  Liugurid muudavad arvutust kohe: näed kuu hinnangut, säästu suunda, riskisignaali ja järgmise sammu. Tööriistades
+                  ühendad sama loogika oma profiiliga.
                 </p>
               </div>
               <div className="md:col-span-7">
@@ -233,8 +278,12 @@ export function Landing() {
             </div>
           </section>
 
+          <div className="ep-container py-2">
+            <div className="ep-narrative-divider opacity-70" aria-hidden />
+          </div>
+
           {/* 5) TRUST / RELIABILITY */}
-          <section className="ep-container pb-10 pt-4 md:pb-14" aria-label="Usaldus ja töökindlus">
+          <section className="ep-container pb-12 pt-10 md:pb-16 md:pt-12" aria-label="Usaldus ja töökindlus">
             <div className="grid gap-4 md:grid-cols-12 md:items-start">
               <div className="md:col-span-5">
                 <p className="ep-eyebrow-caps text-foreground/50">Usaldus</p>
@@ -253,8 +302,8 @@ export function Landing() {
           </section>
 
           {/* 6) FINAL CTA */}
-          <section className="ep-container pb-8 pt-4 md:pb-12" aria-label="Järgmine samm">
-            <div className="ep-cinema-panel relative overflow-hidden rounded-[1.75rem] p-8 md:p-10">
+          <section className="ep-container pb-10 pt-8 md:pb-16 md:pt-12" aria-label="Järgmine samm">
+            <div className="ep-cinema-panel relative overflow-hidden rounded-[1.75rem] p-8 md:p-10 md:p-12">
               <div
                 aria-hidden
                 className="pointer-events-none absolute -right-20 -top-24 h-72 w-72 rounded-full bg-[oklch(0.83_0.14_205_/_0.16)] blur-3xl"
@@ -268,7 +317,7 @@ export function Landing() {
                 Tee esimene test nüüd.
               </h2>
               <p className="mt-4 max-w-2xl text-pretty text-sm leading-relaxed text-foreground/68">
-                Alusta simulatsioonist või ava üks labor. Saad kohe signaali, kas suund ja eeldused tunduvad õiged.
+                Ava üks tööriist ja tee 1–2 muudatust. Kui signaal on loogiline, on mudel “päris”.
               </p>
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <LinkButton href="/simulatsioonid" size="lg" variant="gradient" className="min-h-11 rounded-xl px-6 font-semibold">
@@ -308,7 +357,7 @@ function Kpi({
 
 function MiniPoint({ t, s }: { t: string; s: string }) {
   return (
-    <div className="rounded-xl border border-[oklch(1_0_0_/_8%)] bg-[oklch(0_0_0_/_18%)] p-4 shadow-[inset_0_1px_0_0_oklch(1_0_0_/_5%)]">
+    <div className="rounded-xl border border-[oklch(1_0_0_/_10%)] bg-[oklch(0_0_0_/_22%)] p-4 shadow-[inset_0_1px_0_0_oklch(1_0_0_/_6%),0_12px_40px_-28px_oklch(0_0_0_/_65%)]">
       <p className="text-xs font-semibold tracking-tight text-foreground/88">{t}</p>
       <p className="mt-2 text-[11px] leading-relaxed text-foreground/58">{s}</p>
     </div>
@@ -342,6 +391,10 @@ function fmtEur(n: number) {
   return `${Math.round(n).toLocaleString("et-EE")} €`;
 }
 
+function fmtEurCompact(n: number) {
+  return `${n.toLocaleString("et-EE", { maximumFractionDigits: 1, minimumFractionDigits: n % 1 !== 0 ? 1 : 0 })} €`;
+}
+
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n));
 }
@@ -357,9 +410,12 @@ function fmtCentsPerKwh(n: number) {
 function Sparkline({
   values,
   className,
+  gradientId,
 }: {
   values: number[];
   className?: string;
+  /** Unique prefix so multiple SVG defs never clash */
+  gradientId: string;
 }) {
   const w = 240;
   const h = 72;
@@ -380,6 +436,8 @@ function Sparkline({
     .join(" ");
 
   const fillD = `${d} L ${w - pad} ${h - pad} L ${pad} ${h - pad} Z`;
+  const gf = `${gradientId}-fill`;
+  const gl = `${gradientId}-line`;
 
   return (
     <svg
@@ -390,24 +448,27 @@ function Sparkline({
       aria-hidden
     >
       <defs>
-        <linearGradient id="epSparkFill" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id={gf} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="oklch(0.83 0.14 205 / 26%)" />
           <stop offset="100%" stopColor="oklch(0.83 0.14 205 / 0%)" />
         </linearGradient>
-        <linearGradient id="epSparkLine" x1="0" y1="0" x2="1" y2="0">
+        <linearGradient id={gl} x1="0" y1="0" x2="1" y2="0">
           <stop offset="0%" stopColor="oklch(0.83 0.14 205 / 92%)" />
           <stop offset="70%" stopColor="oklch(0.82 0.16 145 / 72%)" />
           <stop offset="100%" stopColor="oklch(0.83 0.14 205 / 78%)" />
         </linearGradient>
       </defs>
-      <path d={fillD} fill="url(#epSparkFill)" />
-      <path d={d} fill="none" stroke="url(#epSparkLine)" strokeWidth="2.5" strokeLinecap="round" />
+      <path d={fillD} fill={`url(#${gf})`} />
+      <path d={d} fill="none" stroke={`url(#${gl})`} strokeWidth="2.5" strokeLinecap="round" />
     </svg>
   );
 }
 
+/** Osakaal teoreetilisest min–max vahest, mida ajastatav tarbimine reaalselt tabab (kompaktne demo-mudel). */
+const SHIFT_SPREAD_CAPTURE = 0.55;
+
 function LiveOverviewPanel() {
-  const rootRef = useRef<HTMLDivElement | null>(null);
+  const sparkGradId = useId().replace(/:/g, "");
   const [tab, setTab] = useState<"consumption" | "contract">("consumption");
 
   const [priceEurPerMwh, setPriceEurPerMwh] = useState(120);
@@ -428,14 +489,15 @@ function LiveOverviewPanel() {
     updatedLabel: string;
   }>({
     ok: false,
-    sourceLabel: "Demo (simuleeritud)",
-    updatedLabel: "kohe",
+    sourceLabel: "Interaktiivne eelvaade",
+    updatedLabel: "demo kontekst",
   });
 
-  const [demoTick, setDemoTick] = useState(0);
+  const [feedLoading, setFeedLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
+    setFeedLoading(true);
     fetch("/api/integrations/day-ahead", { method: "GET" })
       .then(async (res) => {
         const data = (await res.json().catch(() => null)) as
@@ -464,8 +526,8 @@ function LiveOverviewPanel() {
           minEurPerMwh: min,
           maxEurPerMwh: max,
           points,
-          sourceLabel: "Elering NPS (börsihind)",
-          updatedLabel: "täna",
+          sourceLabel: "Päeva börs (NPS)",
+          updatedLabel: typeof data.date === "string" ? data.date : "täna",
         });
 
         if (typeof avg === "number" && Number.isFinite(avg)) {
@@ -474,289 +536,460 @@ function LiveOverviewPanel() {
       })
       .catch(() => {
         /* demo fallback */
+      })
+      .finally(() => {
+        if (!cancelled) setFeedLoading(false);
       });
     return () => {
       cancelled = true;
     };
   }, []);
 
-  useEffect(() => {
-    const el = rootRef.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      (entries) => {
-        const hit = entries.some((e) => e.isIntersecting);
-        if (!hit) return;
-        setDemoTick((t) => t + 1);
-      },
-      { threshold: 0.35 }
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
+  /** Päeva min/max: live või sama viitehinnaga kooskõlas olev illustratiivne vahemik. */
+  const dayContext = useMemo(() => {
+    const ref = clamp(priceEurPerMwh, 40, 280);
+    const live =
+      feed.ok &&
+      typeof feed.minEurPerMwh === "number" &&
+      typeof feed.maxEurPerMwh === "number" &&
+      feed.maxEurPerMwh > feed.minEurPerMwh;
+
+    if (live) {
+      const mn = feed.minEurPerMwh!;
+      const mx = feed.maxEurPerMwh!;
+      return {
+        isLive: true,
+        minMwh: mn,
+        maxMwh: mx,
+        spreadMwh: mx - mn,
+        avgMwh: typeof feed.avgEurPerMwh === "number" ? feed.avgEurPerMwh : (mn + mx) / 2,
+      };
+    }
+
+    const spreadIllustrative = clamp(ref * 0.34, 14, 92);
+    const minMwh = ref - spreadIllustrative * 0.48;
+    const maxMwh = ref + spreadIllustrative * 0.52;
+    return {
+      isLive: false,
+      minMwh,
+      maxMwh,
+      spreadMwh: Math.max(0, maxMwh - minMwh),
+      avgMwh: ref,
+    };
+  }, [feed.avgEurPerMwh, feed.maxEurPerMwh, feed.minEurPerMwh, feed.ok, priceEurPerMwh]);
 
   const sparkValues = useMemo(() => {
     if (feed.ok && feed.points && feed.points.length >= 12) {
-      // Normalize to keep sparkline stable and readable.
       const slice = feed.points.slice(0, 24);
       const vals = slice.map((p) => p.value);
-      const min = Math.min(...vals);
-      const max = Math.max(...vals);
-      const span = Math.max(1e-6, max - min);
-      return vals.map((v) => (v - min) / span);
+      const lo = Math.min(...vals);
+      const hi = Math.max(...vals);
+      const span = Math.max(1e-6, hi - lo);
+      return vals.map((v) => (v - lo) / span);
     }
 
-    const base = clamp(priceEurPerMwh, 40, 280);
-    const amp = clamp(22 + (base / 280) * 26, 18, 44);
-    const seed = (demoTick % 7) + 1;
+    const lo = dayContext.minMwh;
+    const hi = dayContext.maxMwh;
+    const mid = (lo + hi) / 2;
     return Array.from({ length: 24 }, (_, i) => {
-      const x = (i + seed) / 24;
-      const y = 0.5 + Math.sin(x * Math.PI * 2) * 0.22 + Math.sin(x * Math.PI * 6) * 0.08;
-      // tie volatility to price
-      const v = (y * amp + base * 0.02) / (amp + base * 0.02);
-      return clamp(v, 0.06, 0.98);
+      const u = i / 23;
+      const wave =
+        Math.sin(u * Math.PI * 2) * (hi - lo) * 0.12 +
+        Math.sin(u * Math.PI * 5 + 0.7) * (hi - lo) * 0.05;
+      const v = mid + (u - 0.5) * (hi - lo) * 0.55 + wave;
+      const nv = (v - lo) / Math.max(1e-6, hi - lo);
+      return clamp(nv, 0.04, 0.96);
     });
-  }, [demoTick, feed.ok, feed.points, priceEurPerMwh]);
+  }, [dayContext.maxMwh, dayContext.minMwh, feed.ok, feed.points]);
 
-  const model = useMemo(() => {
-    const eurPerKwh = priceEurPerMwh / 1000;
-    const baseMonthly = monthlyKwh * eurPerKwh;
+  const consumption = useMemo(() => {
+    const refMwh = clamp(priceEurPerMwh, 40, 280);
+    const eurPerKwhRef = refMwh / 1000;
+    const baseMonthlyEur = monthlyKwh * eurPerKwhRef;
     const shiftedKwh = (monthlyKwh * shiftPct) / 100;
-    const min = typeof feed.minEurPerMwh === "number" ? feed.minEurPerMwh : priceEurPerMwh * 0.72;
-    const max = typeof feed.maxEurPerMwh === "number" ? feed.maxEurPerMwh : priceEurPerMwh * 1.28;
-    const spread = Math.max(0, max - min);
-    // Heuristic: shifting moves energy from expensive to cheap hours.
-    const savedPerKwh = (spread / 1000) * 0.65;
-    const saved = clamp(shiftedKwh * savedPerKwh, 0, baseMonthly * 0.45);
-    const volatility = clamp(spread / Math.max(1, priceEurPerMwh), 0, 0.9);
 
-    const nextAction =
-      monthlyKwh >= 650 ? "Ava tarbimise labor (tipud + baas-koormus)" : "Kontrolli lepingut (fikseeritud vs börs)";
+    const spreadMwh = Math.max(0, dayContext.spreadMwh);
+    const eurPerKwhRecoverable = (spreadMwh / 1000) * SHIFT_SPREAD_CAPTURE;
+    const savingsEurRaw = shiftedKwh * eurPerKwhRecoverable;
+    const savingsEur = clamp(savingsEurRaw, 0, baseMonthlyEur * 0.4);
+    const afterMonthlyEur = Math.max(0, baseMonthlyEur - savingsEur);
 
-    const insight =
-      volatility >= 0.22 && shiftPct < 10
-        ? "Hind kõigub — isegi väike ajastus võib anda reaalse võidu."
-        : shiftPct >= 20
-          ? "Hea: nihutad juba märgatava osa tarbimisest odavamasse aknasse."
-          : "Tüüpiline muster: sääst tekib siis, kui tippude osa väheneb.";
+    const relativeVolatility = clamp(spreadMwh / Math.max(45, refMwh), 0, 1.15);
+    const riskLabel =
+      relativeVolatility < 0.2 ? "Madal" : relativeVolatility < 0.34 ? "Keskmine" : "Kõrge";
+
+    const theoreticalMaxSavings = clamp(shiftedKwh * (spreadMwh / 1000), 0, baseMonthlyEur * 0.45);
+
+    let nextHref = "/tarbimine";
+    let nextLabel = "Ava tarbimise labor";
+    let nextAction = "";
+
+    if (shiftPct < 1) {
+      nextAction =
+        spreadMwh > 18
+          ? "Lisa ajastatav tarbimine — päeva vahe võimaldab säästu, kui osa koormusest on nihutatav."
+          : "Päeva hinnavahe on väike — keskendu lepingu ja baashinna võrdlusele.";
+      nextHref = shiftPct < 1 && spreadMwh > 18 ? "/tarbimine" : "/leping";
+      nextLabel = nextHref === "/tarbimine" ? "Ava tarbimise labor" : "Ava lepingu labor";
+    } else if (relativeVolatility >= 0.34 && monthlyKwh >= 520) {
+      nextAction = "Kõrge kõikuvus + suurem voog: mõõda tippe ja vaata, kas leping pakub piisavat katet.";
+      nextHref = "/leping";
+      nextLabel = "Ava lepingu labor";
+    } else if (savingsEur < 3 && spreadMwh < 22) {
+      nextAction = "Sääst jääb tagasihoidlikuks — vahe tundide vahel on väike. Võrdle fikseeritud ja börsi rahu eest.";
+      nextHref = "/leping";
+      nextLabel = "Ava lepingu labor";
+    } else if (monthlyKwh >= 650) {
+      nextAction = "Suurema tarbimisega on profiil kriitiline: täpsusta tippe ja baas-koormust tarbimise laboris.";
+      nextHref = "/tarbimine";
+      nextLabel = "Ava tarbimise labor";
+    } else {
+      nextAction = "Lihvi ajastust või võrdle lepingut — mõlemad mõjutavad sama kuu kokkuvõtet.";
+      nextHref = "/simulatsioonid";
+      nextLabel = "Ava simulatsioon";
+    }
+
+    const whyChanged = `Viite hind ${refMwh} €/MWh → ${monthlyKwh} kWh/kuu annab baaskulu ${fmtEurCompact(baseMonthlyEur)}. Ajastatav ${shiftPct}% (${fmtEurCompact(
+      shiftedKwh * eurPerKwhRef
+    )} baasjaotuses) võib päeva vahemikus (Δ ${Math.round(spreadMwh)} €/MWh) tuua kuni ~${fmtEurCompact(
+      theoreticalMaxSavings
+    )} teoreetilist võitu; eelvaates kasutame ${Math.round(SHIFT_SPREAD_CAPTURE * 100)}% tabavust → ${fmtEurCompact(savingsEur)}.`;
 
     return {
-      eurPerKwh,
-      baseMonthly,
-      saved,
-      newMonthly: Math.max(0, baseMonthly - saved),
-      volatility,
-      insight,
+      refMwh,
+      eurPerKwhRef,
+      baseMonthlyEur,
+      shiftedKwh,
+      spreadMwh,
+      savingsEur,
+      afterMonthlyEur,
+      relativeVolatility,
+      riskLabel,
       nextAction,
+      nextHref,
+      nextLabel,
+      whyChanged,
+      savingsDirectionLabel:
+        savingsEur < 0.5 ? "Neutraalne (null või väga väike)" : `Allapoole (~−${fmtEurCompact(savingsEur)} / kuu)`,
     };
-  }, [feed.maxEurPerMwh, feed.minEurPerMwh, monthlyKwh, priceEurPerMwh, shiftPct]);
+  }, [dayContext.spreadMwh, monthlyKwh, priceEurPerMwh, shiftPct]);
 
-  const contractModel = useMemo(() => {
-    const spotCents = (priceEurPerMwh / 10) + retailerMarginCents; // €/MWh -> s/kWh
-    const delta = fixedCentsPerKwh - spotCents;
-    const verdict = delta <= 0 ? "Fikseeritud tundub hetkel odavam" : "Börs + marginaal tundub hetkel odavam";
+  const contract = useMemo(() => {
+    const spotCents = priceEurPerMwh / 10 + retailerMarginCents;
+    const deltaCpk = fixedCentsPerKwh - spotCents;
+    const spotMonthlyEur = (monthlyKwh * spotCents) / 100;
+    const fixedMonthlyEur = (monthlyKwh * fixedCentsPerKwh) / 100;
+    const monthlyDeltaEur = fixedMonthlyEur - spotMonthlyEur;
+
+    const verdict =
+      Math.abs(deltaCpk) < 0.55
+        ? "Ühekuune vahe on väike — otsus on rohkem riski ja mugavuse küsimus."
+        : deltaCpk <= 0
+          ? "Fikseeritud ühikhind on spot+marginaalist madalam või sama joonel."
+          : "Spot + marginaal on fikseeritud ühikuhinnast soodsam selle viite juures.";
+
     const hint =
-      Math.abs(delta) < 0.8
-        ? "Vahe on väike — otsusta riskitaluvuse järgi ja vaata profiili tippe."
-        : delta <= 0
-          ? "Kui su fikseeritud hind on alla spot-keskmise, on see tugev kaitse volatiilsuse vastu."
-          : "Kui spot-keskmine on madal, tasub vaadata, kas tipud on ajastatavad või kas hübriid sobib.";
+      Math.abs(monthlyDeltaEur) < 4
+        ? "Kuine vahe jääb mõne euro kanti — vaata profiili tippe ja lepingu “põranda” taset."
+        : monthlyDeltaEur > 0
+          ? "Kuine mudel eelistab börsi + marginaali: fikseeritud maksab rohkem sama kulu juures."
+          : "Kuine mudel eelistab fikseeritud hinda: see annab stabiilsema ühiku kui spot+margin sel viitel.";
 
-    const nextBestHref = delta <= 0 ? "/leping" : "/tarbimine";
-    const nextBestLabel = delta <= 0 ? "Ava lepingu labor" : "Ava tarbimise labor";
+    const nextBestHref = monthlyDeltaEur > 2 ? "/leping" : monthlyDeltaEur < -2 ? "/tarbimine" : "/leping";
+    const nextBestLabel = monthlyDeltaEur > 2 ? "Süvenda lepingut" : monthlyDeltaEur < -2 ? "Süvenda tarbimist" : "Võrdle lepingut";
+
+    const nextActionDetail =
+      monthlyDeltaEur > 2
+        ? "Kuine võrdlus: fikseeritud tuleb kallimaks. Järgmine samm on lepingu labor — vaata, kas stabiilsus õigustab hinda."
+        : monthlyDeltaEur < -2
+          ? "Kuine võrdlus: spot + marginaal on soodsam. Järgmine samm on tarbimise labor — tipud otsustavad, kas see jääb kehtima."
+          : "Kuine vahe on väike — täpne otsus sõltub profiilist ja lepingu lisatingimustest.";
+
+    const whyChanged = `Spot efektiivne ${spotCents.toFixed(1)} s/kWh = (${priceEurPerMwh} \u20AC/MWh / 10) + ${retailerMarginCents.toFixed(
+      1
+    )} s/kWh marginaal; fikseeritud ${fixedCentsPerKwh.toFixed(1)} s/kWh, vahe ${deltaCpk >= 0 ? "+" : "−"}${Math.abs(deltaCpk).toFixed(
+      1
+    )} s/kWh. Kuu ${monthlyKwh} kWh pealt: spot ~${fmtEurCompact(spotMonthlyEur)}, fikseeritud ~${fmtEurCompact(fixedMonthlyEur)}.`;
 
     return {
       spotCents,
-      delta,
+      deltaCpk,
+      spotMonthlyEur,
+      fixedMonthlyEur,
+      monthlyDeltaEur,
       verdict,
       hint,
       nextBestHref,
       nextBestLabel,
+      nextActionDetail,
+      whyChanged,
     };
-  }, [fixedCentsPerKwh, priceEurPerMwh, retailerMarginCents]);
+  }, [fixedCentsPerKwh, monthlyKwh, priceEurPerMwh, retailerMarginCents]);
 
   return (
-    <div ref={rootRef} className="ep-holo-panel p-6 md:p-8">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="ep-eyebrow-caps text-foreground/50">Elav ülevaade</p>
-            <Badge
-              variant="neutral"
-              className="border-[oklch(1_0_0_/_12%)] bg-[oklch(1_0_0_/_4%)] text-foreground/70"
-            >
-              {feed.sourceLabel} • {feed.updatedLabel}
-            </Badge>
+    <div className="ep-holo-panel relative overflow-hidden p-6 md:p-8">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-24 top-0 h-56 w-56 rounded-full bg-[oklch(0.83_0.14_205_/_0.08)] blur-3xl"
+      />
+      <div className="relative">
+        <div className="flex flex-wrap items-start justify-between gap-6">
+          <div className="min-w-0 max-w-xl">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="ep-eyebrow-caps text-foreground/50">Elav ülevaade</p>
+              <Badge
+                variant="cyan"
+                className="border-[oklch(0.83_0.14_205_/_35%)] bg-[oklch(0.83_0.14_205_/_8%)] text-foreground/85"
+              >
+                {feedLoading ? "Laadin konteksti…" : feed.ok ? "Live andmed + interaktiivne mudel" : "Interaktiivne eelvaade"}
+              </Badge>
+            </div>
+            <p className="ep-display mt-3 text-xl font-semibold tracking-tight md:text-2xl">
+              Sisend → mõju → järgmine samm
+            </p>
+            <p className="mt-3 text-sm leading-relaxed text-foreground/68">
+              Iga liugur muudab arvutust kohe. Numbrid on omavahel seotud: sama viitehind, sama kuu maht, üheselt mõistetav
+              säästu- ja riskisignaal.
+            </p>
           </div>
-          <p className="ep-display mt-3 text-xl font-semibold tracking-tight md:text-2xl">
-            Sisend → mõju → järgmine samm
-          </p>
-          <p className="mt-3 text-sm leading-relaxed text-foreground/68">
-            Muuda tarbimist või lepingutingimust ja vaata kohe, kuhu suund liigub. See on sama loogika, mis tööriistades —
-            lihtsalt kompaktsemalt.
-          </p>
+
+          <div className="w-full max-w-[22rem]">
+            <div className="flex flex-wrap items-end justify-between gap-2">
+              <div>
+                <p className="text-[11px] font-medium uppercase tracking-wider text-foreground/50">Tunnid (normaliseeritud)</p>
+                <p className="mt-1 font-mono text-lg font-semibold text-[oklch(0.88_0.08_205)]">{priceEurPerMwh} €/MWh</p>
+                <p className="mt-1 text-[11px] text-foreground/50">Viite keskmine (sinu liugur)</p>
+              </div>
+              <div className="text-right text-[11px] leading-tight text-foreground/55">
+                <p className="font-mono text-foreground/75">
+                  {Math.round(dayContext.minMwh)} – {Math.round(dayContext.maxMwh)} €/MWh
+                </p>
+                <p>Δ {Math.round(dayContext.spreadMwh)} · {dayContext.isLive ? "päev NPS" : "demo vahemik"}</p>
+              </div>
+            </div>
+            <div className="relative mt-3 rounded-2xl border border-[oklch(1_0_0_/_10%)] bg-[oklch(0_0_0_/_22%)] p-3 shadow-[inset_0_1px_0_0_oklch(1_0_0_/_6%)]">
+              {feedLoading ? (
+                <div className="flex h-[72px] w-full items-center justify-center rounded-xl bg-[oklch(0_0_0_/_25%)]">
+                  <p className="text-xs text-foreground/55">Laen börsi päeva…</p>
+                </div>
+              ) : (
+                <Sparkline values={sparkValues} gradientId={sparkGradId} />
+              )}
+            </div>
+          </div>
         </div>
-        <div className="w-full max-w-[20rem]">
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-foreground/50">Börsihind (€/MWh)</p>
-            <p className="font-mono text-lg font-semibold text-[oklch(0.88_0.08_205)]">{priceEurPerMwh}</p>
-          </div>
-          <div className="mt-2 rounded-2xl border border-[oklch(1_0_0_/_10%)] bg-[oklch(0_0_0_/_18%)] p-3 shadow-[inset_0_1px_0_0_oklch(1_0_0_/_6%)]">
-            <Sparkline values={sparkValues} />
-          </div>
-        </div>
-      </div>
 
-      <div className="mt-6 flex flex-wrap items-center gap-2">
-        <button
-          type="button"
-          onClick={() => setTab("consumption")}
-          className={cn(
-            "rounded-xl border px-3 py-2 text-xs font-semibold tracking-tight transition",
-            tab === "consumption"
-              ? "border-[oklch(0.83_0.14_205_/_40%)] bg-[oklch(0.83_0.14_205_/_10%)] text-foreground"
-              : "border-[oklch(1_0_0_/_12%)] bg-[oklch(1_0_0_/_4%)] text-foreground/70 hover:text-foreground"
-          )}
-        >
-          Tarbimine
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab("contract")}
-          className={cn(
-            "rounded-xl border px-3 py-2 text-xs font-semibold tracking-tight transition",
-            tab === "contract"
-              ? "border-[oklch(0.82_0.16_145_/_38%)] bg-[oklch(0.82_0.16_145_/_10%)] text-foreground"
-              : "border-[oklch(1_0_0_/_12%)] bg-[oklch(1_0_0_/_4%)] text-foreground/70 hover:text-foreground"
-          )}
-        >
-          Leping
-        </button>
-      </div>
-
-      {tab === "consumption" ? (
-        <>
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
-            <StatChip label="Kuukulu (hinnang)" value={fmtEur(model.newMonthly)} hint={`~${fmtEur(model.baseMonthly)} enne`} />
-            <StatChip label="Säästu suund" value={model.saved > 1 ? `−${fmtEur(model.saved)}` : "Neutraalne"} hint={`${shiftPct}% ajastust`} />
-            <StatChip label="Hind (kWh)" value={`${model.eurPerKwh.toFixed(3)} €/kWh`} hint={`${monthlyKwh} kWh/kuu`} />
-          </div>
-
-          <div className="mt-7 grid gap-4">
+        <div className="mt-8 rounded-2xl border border-[oklch(1_0_0_/_10%)] bg-[oklch(0_0_0_/_14%)] p-5 shadow-[inset_0_1px_0_0_oklch(1_0_0_/_5%)]">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-foreground/50">Ühised baasarvud</p>
+          <p className="mt-2 text-xs leading-relaxed text-foreground/58">
+            Mõlemad vahekaardid kasutavad sama kuu mahtu ja viite börsihinda — nii on võrdlus aus.
+          </p>
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
             <SliderRow
-              label="Börsihind (€/MWh)"
-              value={priceEurPerMwh}
-              min={40}
-              max={280}
-              step={5}
-              onChange={setPriceEurPerMwh}
-            />
-            <SliderRow
-              label="Kuu tarbimine (kWh)"
+              label="Kuu elektri maht (kWh)"
               value={monthlyKwh}
               min={120}
               max={1400}
               step={20}
+              format={(v) => `${v} kWh`}
               onChange={setMonthlyKwh}
             />
             <SliderRow
-              label="Ajastatav osa (%)"
-              value={shiftPct}
-              min={0}
-              max={40}
-              step={1}
-              onChange={setShiftPct}
+              label="Viite börsihind (€/MWh)"
+              value={priceEurPerMwh}
+              min={40}
+              max={280}
+              step={5}
+              format={(v) => `${v} €/MWh`}
+              onChange={setPriceEurPerMwh}
             />
           </div>
+        </div>
 
-          <div className="mt-7 grid gap-3 rounded-2xl border border-[oklch(1_0_0_/_10%)] bg-[oklch(0_0_0_/_18%)] p-5 shadow-[inset_0_1px_0_0_oklch(1_0_0_/_6%)]">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-xs font-semibold tracking-tight text-foreground/88">Insight</p>
-                <p className="mt-2 text-sm leading-relaxed text-foreground/68">{model.insight}</p>
+        <div className="mt-6 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setTab("consumption")}
+            className={cn(
+              "rounded-xl border px-3 py-2 text-xs font-semibold tracking-tight transition",
+              tab === "consumption"
+                ? "border-[oklch(0.83_0.14_205_/_40%)] bg-[oklch(0.83_0.14_205_/_10%)] text-foreground"
+                : "border-[oklch(1_0_0_/_12%)] bg-[oklch(1_0_0_/_4%)] text-foreground/70 hover:text-foreground"
+            )}
+          >
+            Tarbimine & ajastus
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab("contract")}
+            className={cn(
+              "rounded-xl border px-3 py-2 text-xs font-semibold tracking-tight transition",
+              tab === "contract"
+                ? "border-[oklch(0.82_0.16_145_/_38%)] bg-[oklch(0.82_0.16_145_/_10%)] text-foreground"
+                : "border-[oklch(1_0_0_/_12%)] bg-[oklch(1_0_0_/_4%)] text-foreground/70 hover:text-foreground"
+            )}
+          >
+            Leping & ühikuhind
+          </button>
+        </div>
+
+        {tab === "consumption" ? (
+          <>
+            <div className="mt-6 grid gap-4 md:grid-cols-3">
+              <StatChip
+                label="Kuu kulu (hinnang)"
+                value={fmtEurCompact(consumption.afterMonthlyEur)}
+                hint={`Baas (ilma ajastuseta) ${fmtEurCompact(consumption.baseMonthlyEur)}`}
+              />
+              <StatChip
+                label="Säästu suund"
+                value={consumption.savingsEur < 0.5 ? "Neutraalne" : `−${fmtEurCompact(consumption.savingsEur)}`}
+                hint={consumption.savingsDirectionLabel}
+              />
+              <StatChip
+                label="Risk / kõikuvus"
+                value={consumption.riskLabel}
+                hint={`Δ ${Math.round(consumption.spreadMwh)} €/MWh vs viide ${consumption.refMwh}`}
+              />
+            </div>
+
+            <div className="mt-6">
+              <div className="mb-2 flex items-center justify-between gap-3">
+                <p className="text-[11px] font-medium uppercase tracking-wider text-foreground/50">Kõikuvuse skaala</p>
+                <p className="font-mono text-[11px] text-foreground/60">
+                  min-max / viide ~{" "}
+                  {Math.min(100, Math.round((consumption.spreadMwh / Math.max(consumption.refMwh, 1)) * 100))}%
+                </p>
               </div>
-              <div className="text-right">
-                <p className="text-[11px] font-medium uppercase tracking-wider text-foreground/50">Volatiilsus</p>
-                <p className="mt-2 font-mono text-sm text-foreground/80">{fmtPct(model.volatility * 100)}</p>
+              <div className="h-2 overflow-hidden rounded-full bg-[oklch(1_0_0_/_8%)]">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-[oklch(0.82_0.16_145_/_0.85)] via-[oklch(0.83_0.14_205_/_0.9)] to-[oklch(0.95_0.06_85_/_0.75)]"
+                  style={{ width: `${clamp(consumption.relativeVolatility * 100, 4, 100)}%` }}
+                />
               </div>
             </div>
-            <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs leading-relaxed text-foreground/50">Järgmine parim samm: {model.nextAction}</p>
-              <LinkButton
-                href={monthlyKwh >= 650 ? "/tarbimine" : "/leping"}
-                size="sm"
-                variant="secondary"
-                className="shrink-0 border-[oklch(1_0_0_/_14%)] bg-[oklch(1_0_0_/_4%)]"
-              >
-                {monthlyKwh >= 650 ? "Ava tarbimise labor" : "Ava lepingu labor"}
-              </LinkButton>
+
+            <div className="mt-7 grid gap-4 md:max-w-xl">
+              <SliderRow
+                label="Ajastatav tarbimise osa (%)"
+                value={shiftPct}
+                min={0}
+                max={40}
+                step={1}
+                format={(v) => `${v}%`}
+                onChange={setShiftPct}
+              />
             </div>
-          </div>
-        </>
-      ) : (
-        <>
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
-            <StatChip label="Spot + marginaal" value={fmtCentsPerKwh(contractModel.spotCents)} hint={`~${priceEurPerMwh} €/MWh + ${retailerMarginCents.toFixed(1)} s`} />
-            <StatChip label="Fikseeritud" value={fmtCentsPerKwh(fixedCentsPerKwh)} hint="Sinu lepinguhind" />
-            <StatChip label="Vahe" value={`${contractModel.delta <= 0 ? "−" : "+"}${fmtCentsPerKwh(Math.abs(contractModel.delta))}`} hint={contractModel.verdict} />
-          </div>
 
-          <div className="mt-7 grid gap-4">
-            <SliderRow
-              label="Fikseeritud hind (s/kWh)"
-              value={Number(fixedCentsPerKwh.toFixed(1))}
-              min={9.5}
-              max={29.9}
-              step={0.1}
-              onChange={(v) => setFixedCentsPerKwh(v)}
-            />
-            <SliderRow
-              label="Müüja marginaal (s/kWh)"
-              value={Number(retailerMarginCents.toFixed(1))}
-              min={0.0}
-              max={3.5}
-              step={0.1}
-              onChange={(v) => setRetailerMarginCents(v)}
-            />
-          </div>
-
-          <div className="mt-7 grid gap-3 rounded-2xl border border-[oklch(1_0_0_/_10%)] bg-[oklch(0_0_0_/_18%)] p-5 shadow-[inset_0_1px_0_0_oklch(1_0_0_/_6%)]">
-            <p className="text-sm font-semibold tracking-tight text-foreground/88">{contractModel.verdict}</p>
-            <p className="text-sm leading-relaxed text-foreground/68">{contractModel.hint}</p>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs leading-relaxed text-foreground/50">
-                Järgmine parim samm: vaata kas su tarbimise tipud suurendavad “halba tundi” või kas leping kaitseb piisavalt.
-              </p>
-              <LinkButton
-                href={contractModel.nextBestHref}
-                size="sm"
-                variant="secondary"
-                className="shrink-0 border-[oklch(1_0_0_/_14%)] bg-[oklch(1_0_0_/_4%)]"
-              >
-                {contractModel.nextBestLabel}
-              </LinkButton>
+            <div className="mt-7 grid gap-4 rounded-2xl border border-[oklch(1_0_0_/_10%)] bg-[oklch(0_0_0_/_18%)] p-5 shadow-[inset_0_1px_0_0_oklch(1_0_0_/_6%)]">
+              <div>
+                <p className="text-xs font-semibold tracking-tight text-foreground/88">Mis muutus ja miks</p>
+                <p className="mt-2 text-sm leading-relaxed text-foreground/70">{consumption.whyChanged}</p>
+              </div>
+              <div className="flex flex-col gap-3 border-t border-[oklch(1_0_0_/_8%)] pt-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-wider text-foreground/50">Järgmine parim samm</p>
+                  <p className="mt-2 text-sm font-medium text-foreground/85">{consumption.nextAction}</p>
+                </div>
+                <LinkButton
+                  href={consumption.nextHref}
+                  size="sm"
+                  variant="secondary"
+                  className="shrink-0 border-[oklch(1_0_0_/_14%)] bg-[oklch(1_0_0_/_4%)]"
+                >
+                  {consumption.nextLabel}
+                </LinkButton>
+              </div>
             </div>
-          </div>
-        </>
-      )}
+          </>
+        ) : (
+          <>
+            <div className="mt-6 grid gap-4 md:grid-cols-3">
+              <StatChip
+                label="Spot + marginaal"
+                value={fmtCentsPerKwh(contract.spotCents)}
+                hint={`(${priceEurPerMwh} \u20AC/MWh / 10) + ${retailerMarginCents.toFixed(1)} s/kWh`}
+              />
+              <StatChip label="Fikseeritud" value={fmtCentsPerKwh(fixedCentsPerKwh)} hint="Ühiku hind lepingus" />
+              <StatChip
+                label="Kuu võrdlus"
+                value={
+                  Math.abs(contract.monthlyDeltaEur) < 0.05
+                    ? "Sama järk"
+                    : contract.monthlyDeltaEur > 0
+                      ? `Spot −${fmtEurCompact(contract.monthlyDeltaEur)} / kuu`
+                      : `Fikseeritud −${fmtEurCompact(-contract.monthlyDeltaEur)} / kuu`
+                }
+                hint={`${fmtEurCompact(contract.fixedMonthlyEur)} vs ${fmtEurCompact(contract.spotMonthlyEur)} · ${monthlyKwh} kWh`}
+              />
+            </div>
 
-      <div className="mt-7 flex flex-wrap items-center justify-between gap-3 border-t border-[oklch(1_0_0_/_10%)] pt-5">
-        <p className="text-xs leading-relaxed text-foreground/50">
-          {feed.ok ? (
-            <>
-              Allikas: <span className="text-foreground/70">Elering Dashboard (NPS)</span>. See paneel näitab põhimõtet —
-              tööriistades seod tulemuse oma profiiliga.
-            </>
-          ) : (
-            <>
-              Demo-vaade: loogika ja reaktsioon on päris, hinnamuster on simuleeritud. Kui live-feed on saadaval, ilmub
-              see siia automaatselt.
-            </>
-          )}
-        </p>
-        <LinkButton href="/tarbimine" size="sm" variant="ghost" className="text-foreground/55 hover:text-foreground/78">
-          Ava detailne vaade →
-        </LinkButton>
+            <div className="mt-7 grid gap-4 md:grid-cols-2 md:max-w-3xl">
+              <SliderRow
+                label="Fikseeritud hind (s/kWh)"
+                value={Number(fixedCentsPerKwh.toFixed(1))}
+                min={9.5}
+                max={29.9}
+                step={0.1}
+                format={(v) => `${v.toFixed(1)} s/kWh`}
+                onChange={(v) => setFixedCentsPerKwh(v)}
+              />
+              <SliderRow
+                label="Müüja marginaal börsi peale (s/kWh)"
+                value={Number(retailerMarginCents.toFixed(1))}
+                min={0.0}
+                max={3.5}
+                step={0.1}
+                format={(v) => `${v.toFixed(1)} s/kWh`}
+                onChange={(v) => setRetailerMarginCents(v)}
+              />
+            </div>
+
+            <div className="mt-7 grid gap-4 rounded-2xl border border-[oklch(1_0_0_/_10%)] bg-[oklch(0_0_0_/_18%)] p-5 shadow-[inset_0_1px_0_0_oklch(1_0_0_/_6%)]">
+              <p className="text-sm font-semibold tracking-tight text-foreground/88">{contract.verdict}</p>
+              <p className="text-sm leading-relaxed text-foreground/68">{contract.hint}</p>
+              <div>
+                <p className="text-xs font-semibold tracking-tight text-foreground/88">Mis muutus ja miks</p>
+                <p className="mt-2 text-sm leading-relaxed text-foreground/70">{contract.whyChanged}</p>
+              </div>
+              <div className="flex flex-col gap-3 border-t border-[oklch(1_0_0_/_8%)] pt-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-[11px] font-medium uppercase tracking-wider text-foreground/50">Järgmine parim samm</p>
+                  <p className="mt-2 text-sm font-medium text-foreground/85">{contract.nextActionDetail}</p>
+                </div>
+                <LinkButton
+                  href={contract.nextBestHref}
+                  size="sm"
+                  variant="secondary"
+                  className="shrink-0 border-[oklch(1_0_0_/_14%)] bg-[oklch(1_0_0_/_4%)]"
+                >
+                  {contract.nextBestLabel}
+                </LinkButton>
+              </div>
+            </div>
+          </>
+        )}
+
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-[oklch(1_0_0_/_10%)] pt-5">
+          <p className="max-w-2xl text-xs leading-relaxed text-foreground/55">
+            {feed.ok ? (
+              <>
+                <span className="text-foreground/75">Päeva min/max</span> tuleb Elering NPS-ist;{" "}
+                <span className="text-foreground/75">kuu kulu</span> eeldab viite keskmist (liugur). Ajastuse sääst kasutab
+                fikseeritud {Math.round(SHIFT_SPREAD_CAPTURE * 100)}% tabavust teoreetilisest vahest — see on eelvaate
+                lihtsustus, mitte personaalne profiil.
+              </>
+            ) : (
+              <>
+                <span className="text-foreground/75">Demo kontekst:</span> hinnakõver ja vahemik on illustratiivne, kuid
+                valemid on omavahel järjekindlad. Kui NPS vastab, asendub kontekst päeva päris min/max-iga.
+              </>
+            )}
+          </p>
+          <LinkButton href="/tarbimine" size="sm" variant="ghost" className="text-foreground/55 hover:text-foreground/78">
+            Täielik tööriist →
+          </LinkButton>
+        </div>
       </div>
     </div>
   );
@@ -779,6 +1012,7 @@ function SliderRow({
   max,
   step,
   onChange,
+  format,
 }: {
   label: string;
   value: number;
@@ -786,12 +1020,14 @@ function SliderRow({
   max: number;
   step: number;
   onChange: (v: number) => void;
+  format?: (v: number) => string;
 }) {
+  const display = format ? format(value) : String(value);
   return (
     <div className="rounded-2xl border border-[oklch(1_0_0_/_10%)] bg-[oklch(0_0_0_/_18%)] p-4 shadow-[inset_0_1px_0_0_oklch(1_0_0_/_6%)]">
       <div className="flex items-center justify-between gap-3">
         <p className="text-xs font-medium tracking-wide text-foreground/65">{label}</p>
-        <p className="font-mono text-xs text-foreground/70">{value}</p>
+        <p className="font-mono text-xs text-foreground/70">{display}</p>
       </div>
       <input
         className={cn("mt-3 w-full accent-[oklch(0.83_0.14_205)]")}
